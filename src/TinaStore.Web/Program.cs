@@ -17,6 +17,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie();
 
+builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<SessionStateService>();
 builder.Services.AddScoped<AuthenticationStateProvider, TinaStoreAuthStateProvider>();
@@ -39,14 +40,14 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
-// ⚠ UseAuthorization() intencionalmente ausente:
-//   los [Authorize] en páginas Blazor son metadatos de endpoint que el middleware HTTP
-//   procesaría antes del circuito Blazor, causando redirect a /Account/Login.
-//   AuthorizeRouteView en Routes.razor protege las páginas dentro del circuito.
+app.UseAuthorization();
 app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
+    .AddInteractiveServerRenderMode()
+    .AllowAnonymous(); // Permite acceso HTTP a todos los endpoints Razor;
+                       // la autorización real la gestiona AuthorizeRouteView
+                       // dentro del circuito Blazor con [Authorize] en los componentes.
 
 app.Run();
 

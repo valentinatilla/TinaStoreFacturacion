@@ -71,8 +71,8 @@
                 _error = "Credenciales inválidas. Verifique su correo y contraseña.";
                 return;
             }
-            Session.SetSession(response.Token, response.UserName, response.Email, response.Role);
-            Nav.NavigateTo("/", forceLoad: false);
+            Session.SetSession(response.AccessToken, response.User.FullName, response.User.Email, response.User.Role);
+            Nav.NavigateTo("/", forceLoad: true);
         }
         catch
         {

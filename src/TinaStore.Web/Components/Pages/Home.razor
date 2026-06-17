@@ -1,6 +1,8 @@
 ﻿@page "/"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@attribute [Authorize]
 @inject TinaStoreApiClient Api
+@inject IConfiguration Config
+@inject SessionStateService Session
 
 <PageTitle>Dashboard — Tina Store</PageTitle>
 
@@ -126,18 +128,28 @@ else if (_data is not null)
 else
 {
     <div class="alert alert-warning">
-        <i class="bi bi-wifi-off me-2"></i>No se pudo conectar con la API. Verifique que esté ejecutándose en @("<ApiBaseUrl>").
+        <i class="bi bi-wifi-off me-2"></i>No se pudo conectar con la API en <strong>@Config["ApiBaseUrl"]</strong>.
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <div class="small mt-1 text-muted">@_error</div>
+        }
     </div>
 }
 
 @code {
     private DashboardDto? _data;
     private bool _loading = true;
+    private string? _error;
 
     protected override async Task OnInitializedAsync()
     {
+        if (!Session.IsAuthenticated) { _loading = false; return; }
         try { _data = await Api.GetDashboardAsync(); }
-        catch { }
+        catch (HttpRequestException ex) when ((int?)ex.StatusCode == 401)
+        {
+            // Token expirado o inválido; AuthorizeRouteView redirigirá a /login
+        }
+        catch (Exception ex) { _error = ex.Message; }
         finally { _loading = false; }
     }
 }

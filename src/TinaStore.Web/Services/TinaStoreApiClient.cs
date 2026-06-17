@@ -4,7 +4,8 @@ namespace TinaStore.Web.Services;
 
 // ─── DTOs de respuesta de la API ──────────────────────────────────────────────
 
-public record TokenResponseDto(string Token, string UserName, string Email, string Role, int ExpiresInMinutes);
+public record TokenResponseDto(string AccessToken, string TokenType, int ExpiresInMinutes, UserInfoDto User);
+public record UserInfoDto(int Id, string FullName, string Email, string Role, bool IsActive);
 
 public record DashboardDto(
     decimal VentasHoy, decimal VentasMes, int FacturasHoy,
@@ -78,32 +79,41 @@ public class TinaStoreApiClient
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _session.Token);
     }
 
+    // Helper: GET que devuelve null en lugar de lanzar excepción ante 401/403/red caída
+    private async Task<T?> GetSafeAsync<T>(string url) where T : class
+    {
+        SetAuthHeader();
+        try
+        {
+            var response = await _http.GetAsync(url);
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<T>();
+        }
+        catch { return null; }
+    }
+
     // ── Auth ──────────────────────────────────────────────────────────────────
-    public Task<TokenResponseDto?> LoginAsync(string email, string password) =>
-        _http.PostAsJsonAsync("/api/auth/login", new { email, password })
-             .ContinueWith(t => t.Result.IsSuccessStatusCode
-                 ? t.Result.Content.ReadFromJsonAsync<TokenResponseDto>().Result
-                 : null);
+    public async Task<TokenResponseDto?> LoginAsync(string email, string password)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync("/api/auth/login", new { email, password });
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<TokenResponseDto>();
+        }
+        catch { return null; }
+    }
 
     // ── Dashboard ─────────────────────────────────────────────────────────────
-    public async Task<DashboardDto?> GetDashboardAsync()
-    {
-        SetAuthHeader();
-        return await _http.GetFromJsonAsync<DashboardDto>("/api/dashboard");
-    }
+    public Task<DashboardDto?> GetDashboardAsync() =>
+        GetSafeAsync<DashboardDto>("/api/dashboard");
 
     // ── Clientes ──────────────────────────────────────────────────────────────
-    public async Task<List<ClienteDto>?> GetClientesAsync()
-    {
-        SetAuthHeader();
-        return await _http.GetFromJsonAsync<List<ClienteDto>>("/api/customers");
-    }
+    public Task<List<ClienteDto>?> GetClientesAsync() =>
+        GetSafeAsync<List<ClienteDto>>("/api/customers");
 
-    public async Task<ClienteDto?> GetClienteAsync(int id)
-    {
-        SetAuthHeader();
-        return await _http.GetFromJsonAsync<ClienteDto>($"/api/customers/{id}");
-    }
+    public Task<ClienteDto?> GetClienteAsync(int id) =>
+        GetSafeAsync<ClienteDto>($"/api/customers/{id}");
 
     public async Task<bool> CreateClienteAsync(CreateClienteDto dto)
     {
@@ -127,11 +137,8 @@ public class TinaStoreApiClient
     }
 
     // ── Categorías ────────────────────────────────────────────────────────────
-    public async Task<List<CategoriaDto>?> GetCategoriasAsync()
-    {
-        SetAuthHeader();
-        return await _http.GetFromJsonAsync<List<CategoriaDto>>("/api/categories");
-    }
+    public Task<List<CategoriaDto>?> GetCategoriasAsync() =>
+        GetSafeAsync<List<CategoriaDto>>("/api/categories");
 
     public async Task<bool> CreateCategoriaAsync(CreateCategoriaDto dto)
     {
@@ -148,11 +155,8 @@ public class TinaStoreApiClient
     }
 
     // ── Proveedores ───────────────────────────────────────────────────────────
-    public async Task<List<ProveedorDto>?> GetProveedoresAsync()
-    {
-        SetAuthHeader();
-        return await _http.GetFromJsonAsync<List<ProveedorDto>>("/api/suppliers");
-    }
+    public Task<List<ProveedorDto>?> GetProveedoresAsync() =>
+        GetSafeAsync<List<ProveedorDto>>("/api/suppliers");
 
     public async Task<bool> CreateProveedorAsync(CreateProveedorDto dto)
     {
@@ -169,24 +173,15 @@ public class TinaStoreApiClient
     }
 
     // ── Métodos de pago ───────────────────────────────────────────────────────
-    public async Task<List<MetodoPagoDto>?> GetMetodosPagoAsync()
-    {
-        SetAuthHeader();
-        return await _http.GetFromJsonAsync<List<MetodoPagoDto>>("/api/paymentmethods");
-    }
+    public Task<List<MetodoPagoDto>?> GetMetodosPagoAsync() =>
+        GetSafeAsync<List<MetodoPagoDto>>("/api/paymentmethods");
 
     // ── Productos ─────────────────────────────────────────────────────────────
-    public async Task<List<ProductoDto>?> GetProductosAsync()
-    {
-        SetAuthHeader();
-        return await _http.GetFromJsonAsync<List<ProductoDto>>("/api/products");
-    }
+    public Task<List<ProductoDto>?> GetProductosAsync() =>
+        GetSafeAsync<List<ProductoDto>>("/api/products");
 
-    public async Task<ProductoDto?> GetProductoAsync(int id)
-    {
-        SetAuthHeader();
-        return await _http.GetFromJsonAsync<ProductoDto>($"/api/products/{id}");
-    }
+    public Task<ProductoDto?> GetProductoAsync(int id) =>
+        GetSafeAsync<ProductoDto>($"/api/products/{id}");
 
     public async Task<bool> CreateProductoAsync(CreateProductoDto dto)
     {
@@ -210,11 +205,8 @@ public class TinaStoreApiClient
     }
 
     // ── Facturas ──────────────────────────────────────────────────────────────
-    public async Task<List<FacturaDto>?> GetFacturasAsync()
-    {
-        SetAuthHeader();
-        return await _http.GetFromJsonAsync<List<FacturaDto>>("/api/invoices");
-    }
+    public Task<List<FacturaDto>?> GetFacturasAsync() =>
+        GetSafeAsync<List<FacturaDto>>("/api/invoices");
 
     public async Task<bool> CreateFacturaAsync(CreateFacturaDto dto)
     {
@@ -238,17 +230,11 @@ public class TinaStoreApiClient
     }
 
     // ── Egresos ───────────────────────────────────────────────────────────────
-    public async Task<List<EgresoDto>?> GetEgresosAsync()
-    {
-        SetAuthHeader();
-        return await _http.GetFromJsonAsync<List<EgresoDto>>("/api/expenses");
-    }
+    public Task<List<EgresoDto>?> GetEgresosAsync() =>
+        GetSafeAsync<List<EgresoDto>>("/api/expenses");
 
-    public async Task<List<CategoriaGastoDto>?> GetCategoriasGastoAsync()
-    {
-        SetAuthHeader();
-        return await _http.GetFromJsonAsync<List<CategoriaGastoDto>>("/api/expensecategories");
-    }
+    public Task<List<CategoriaGastoDto>?> GetCategoriasGastoAsync() =>
+        GetSafeAsync<List<CategoriaGastoDto>>("/api/expensecategories");
 
     public async Task<bool> CreateEgresoAsync(CreateEgresoDto dto)
     {
@@ -258,11 +244,8 @@ public class TinaStoreApiClient
     }
 
     // ── Configuración de tienda ───────────────────────────────────────────────
-    public async Task<ConfiguracionTiendaDto?> GetConfiguracionAsync()
-    {
-        SetAuthHeader();
-        return await _http.GetFromJsonAsync<ConfiguracionTiendaDto>("/api/settings");
-    }
+    public Task<ConfiguracionTiendaDto?> GetConfiguracionAsync() =>
+        GetSafeAsync<ConfiguracionTiendaDto>("/api/settings");
 
     public async Task<bool> UpdateConfiguracionAsync(UpdateConfiguracionDto dto)
     {
@@ -272,25 +255,16 @@ public class TinaStoreApiClient
     }
 
     // ── Reportes ──────────────────────────────────────────────────────────────
-    public async Task<List<ReporteVentasDto>?> GetReporteVentasAsync(DateTime desde, DateTime hasta)
-    {
-        SetAuthHeader();
-        return await _http.GetFromJsonAsync<List<ReporteVentasDto>>(
+    public Task<List<ReporteVentasDto>?> GetReporteVentasAsync(DateTime desde, DateTime hasta) =>
+        GetSafeAsync<List<ReporteVentasDto>>(
             $"/api/reports/sales?from={desde:yyyy-MM-dd}&to={hasta:yyyy-MM-dd}");
-    }
 
-    public async Task<List<ReporteGastosDto>?> GetReporteGastosAsync(DateTime desde, DateTime hasta)
-    {
-        SetAuthHeader();
-        return await _http.GetFromJsonAsync<List<ReporteGastosDto>>(
+    public Task<List<ReporteGastosDto>?> GetReporteGastosAsync(DateTime desde, DateTime hasta) =>
+        GetSafeAsync<List<ReporteGastosDto>>(
             $"/api/reports/expenses?from={desde:yyyy-MM-dd}&to={hasta:yyyy-MM-dd}");
-    }
 
-    public async Task<List<ReporteCuentasPorCobrarDto>?> GetReporteCuentasPorCobrarAsync()
-    {
-        SetAuthHeader();
-        return await _http.GetFromJsonAsync<List<ReporteCuentasPorCobrarDto>>("/api/reports/accounts-receivable");
-    }
+    public Task<List<ReporteCuentasPorCobrarDto>?> GetReporteCuentasPorCobrarAsync() =>
+        GetSafeAsync<List<ReporteCuentasPorCobrarDto>>("/api/reports/accounts-receivable");
 
     public async Task<byte[]?> ExportarProductosExcelAsync()
     {
