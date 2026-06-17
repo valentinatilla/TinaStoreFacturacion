@@ -1,0 +1,143 @@
+@page "/proveedores"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject TinaStoreApiClient Api
+
+<PageTitle>Proveedores — Tina Store</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0"><i class="bi bi-truck me-2 text-purple"></i>Proveedores</h4>
+    <button class="btn bg-purple text-white" @onclick="AbrirModal">
+        <i class="bi bi-plus-lg me-1"></i>Nuevo proveedor
+    </button>
+</div>
+
+@if (!string.IsNullOrEmpty(_mensaje))
+{
+    <div class="alert @(_exito ? "alert-success" : "alert-danger") py-2">@_mensaje</div>
+}
+
+@if (_loading)
+{
+    <div class="text-center py-5"><div class="spinner-border text-purple"></div></div>
+}
+else
+{
+    <div class="card ts-table border-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr><th>Nombre</th><th>Contacto</th><th>Teléfono</th><th>Email</th><th>Estado</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in _proveedores)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@p.Name</td>
+                            <td>@p.ContactName</td>
+                            <td>@p.Phone</td>
+                            <td>@p.Email</td>
+                            <td><span class="badge @(p.IsActive ? "bg-success" : "bg-secondary")">@(p.IsActive ? "Activo" : "Inactivo")</span></td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => Eliminar(p.Id)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@if (_mostrarModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nuevo proveedor</h5>
+                    <button class="btn-close" @onclick="() => _mostrarModal = false"></button>
+                </div>
+                <div class="modal-body row g-3">
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Nombre *</label>
+                        <input class="form-control" @bind="_form.Name" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Contacto</label>
+                        <input class="form-control" @bind="_form.ContactName" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Teléfono</label>
+                        <input class="form-control" @bind="_form.Phone" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Email</label>
+                        <input class="form-control" @bind="_form.Email" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Dirección</label>
+                        <input class="form-control" @bind="_form.Address" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => _mostrarModal = false">Cancelar</button>
+                    <button class="btn bg-purple text-white" @onclick="Guardar" disabled="@_guardando">
+                        @if (_guardando) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<ProveedorDto> _proveedores = [];
+    private bool _loading = true;
+    private bool _mostrarModal;
+    private bool _guardando;
+    private string? _mensaje;
+    private bool _exito;
+    private ProveedorForm _form = new();
+
+    protected override async Task OnInitializedAsync() => await Cargar();
+
+    private async Task Cargar()
+    {
+        _loading = true;
+        _proveedores = await Api.GetProveedoresAsync() ?? [];
+        _loading = false;
+    }
+
+    private void AbrirModal() { _form = new(); _mostrarModal = true; _mensaje = null; }
+
+    private async Task Guardar()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Name)) return;
+        _guardando = true;
+        var ok = await Api.CreateProveedorAsync(new CreateProveedorDto(_form.Name, _form.ContactName, _form.Phone, _form.Email, _form.Address));
+        _guardando = false;
+        _exito = ok;
+        _mensaje = ok ? "Proveedor creado." : "Error al crear el proveedor.";
+        if (ok) { _mostrarModal = false; await Cargar(); }
+    }
+
+    private async Task Eliminar(int id)
+    {
+        var ok = await Api.DeleteProveedorAsync(id);
+        _exito = ok;
+        _mensaje = ok ? "Proveedor eliminado." : "No se pudo eliminar el proveedor.";
+        if (ok) await Cargar();
+    }
+
+    private class ProveedorForm
+    {
+        public string Name { get; set; } = "";
+        public string? ContactName { get; set; }
+        public string? Phone { get; set; }
+        public string? Email { get; set; }
+        public string? Address { get; set; }
+    }
+}

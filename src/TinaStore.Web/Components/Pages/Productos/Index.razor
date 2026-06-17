@@ -1,0 +1,256 @@
+@page "/productos"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject TinaStoreApiClient Api
+@inject IJSRuntime JS
+
+<PageTitle>Productos — Tina Store</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0"><i class="bi bi-box-seam me-2 text-purple"></i>Productos</h4>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-success btn-sm" @onclick="ExportarExcel">
+            <i class="bi bi-file-earmark-excel me-1"></i>Exportar Excel
+        </button>
+        <button class="btn bg-purple text-white" @onclick="() => AbrirModal()">
+            <i class="bi bi-plus-lg me-1"></i>Nuevo producto
+        </button>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(_mensaje))
+{
+    <div class="alert @(_exito ? "alert-success" : "alert-danger") py-2">@_mensaje</div>
+}
+
+@if (_loading)
+{
+    <div class="text-center py-5"><div class="spinner-border text-purple"></div></div>
+}
+else
+{
+    <div class="mb-3">
+        <input class="form-control" style="max-width:320px" placeholder="🔍 Buscar producto o SKU..." @oninput="Filtrar" />
+    </div>
+    <div class="card ts-table border-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>SKU</th><th>Producto</th><th>Categoría</th>
+                        <th class="text-end">Precio venta</th>
+                        <th class="text-center">Stock</th><th>Estado</th><th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in _filtrados)
+                    {
+                        <tr>
+                            <td class="text-muted small">@p.SKU</td>
+                            <td class="fw-semibold">@p.Name</td>
+                            <td>@p.CategoryName</td>
+                            <td class="text-end">@p.SalePrice.ToString("C0")</td>
+                            <td class="text-center">
+                                <span class="badge @(p.Stock <= p.MinStock ? "bg-danger" : "bg-success")">@p.Stock</span>
+                            </td>
+                            <td>
+                                <span class="badge @(p.IsActive ? "bg-success" : "bg-secondary")">
+                                    @(p.IsActive ? "Activo" : "Inactivo")
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => AbrirModal(p)">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => Eliminar(p.Id)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@if (_mostrarModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(_editando ? "Editar" : "Nuevo") producto</h5>
+                    <button class="btn-close" @onclick="CerrarModal"></button>
+                </div>
+                <div class="modal-body row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label small fw-semibold">Nombre *</label>
+                        <input class="form-control" @bind="_form.Name" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">SKU</label>
+                        <input class="form-control" @bind="_form.SKU" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Descripción</label>
+                        <input class="form-control" @bind="_form.Description" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Precio de venta *</label>
+                        <input type="number" class="form-control" @bind="_form.SalePrice" min="0" step="0.01" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Precio de costo</label>
+                        <input type="number" class="form-control" @bind="_form.PurchasePrice" min="0" step="0.01" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Stock inicial</label>
+                        <input type="number" class="form-control" @bind="_form.Stock" min="0" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Stock mínimo</label>
+                        <input type="number" class="form-control" @bind="_form.MinStock" min="0" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Categoría *</label>
+                        <select class="form-select" @bind="_form.CategoryId">
+                            <option value="0">Seleccione...</option>
+                            @foreach (var c in _categorias)
+                            {
+                                <option value="@c.Id">@c.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Proveedor</label>
+                        <select class="form-select" @bind="_form.SupplierId">
+                            <option value="">Sin proveedor</option>
+                            @foreach (var s in _proveedores)
+                            {
+                                <option value="@s.Id">@s.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CerrarModal">Cancelar</button>
+                    <button class="btn bg-purple text-white" @onclick="Guardar" disabled="@_guardando">
+                        @if (_guardando) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<ProductoDto> _productos = [];
+    private List<ProductoDto> _filtrados = [];
+    private List<CategoriaDto> _categorias = [];
+    private List<ProveedorDto> _proveedores = [];
+    private bool _loading = true;
+    private bool _mostrarModal;
+    private bool _editando;
+    private bool _guardando;
+    private int _editandoId;
+    private string? _mensaje;
+    private bool _exito;
+    private ProductoForm _form = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(Cargar(), CargarCatalogos());
+    }
+
+    private async Task Cargar()
+    {
+        _loading = true;
+        _productos = await Api.GetProductosAsync() ?? [];
+        _filtrados = _productos;
+        _loading = false;
+    }
+
+    private async Task CargarCatalogos()
+    {
+        _categorias = await Api.GetCategoriasAsync() ?? [];
+        _proveedores = await Api.GetProveedoresAsync() ?? [];
+    }
+
+    private void Filtrar(ChangeEventArgs e)
+    {
+        var q = e.Value?.ToString()?.ToLower() ?? "";
+        _filtrados = string.IsNullOrWhiteSpace(q)
+            ? _productos
+            : _productos.Where(p => p.Name.ToLower().Contains(q) || (p.SKU?.ToLower().Contains(q) ?? false)).ToList();
+    }
+
+    private void AbrirModal(ProductoDto? p = null)
+    {
+        _editando = p is not null;
+        _editandoId = p?.Id ?? 0;
+        _form = p is null
+            ? new()
+            : new() { Name = p.Name, SKU = p.SKU, Description = p.Description, SalePrice = p.SalePrice, PurchasePrice = p.PurchasePrice, Stock = p.Stock, MinStock = p.MinStock, CategoryId = p.CategoryId, SupplierId = p.SupplierId };
+        _mostrarModal = true;
+        _mensaje = null;
+    }
+
+    private void CerrarModal() => _mostrarModal = false;
+
+    private async Task Guardar()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Name) || _form.CategoryId == 0) return;
+        _guardando = true;
+        bool ok;
+        if (_editando)
+        {
+            var dto = new UpdateProductoDto(_form.Name, _form.SKU, _form.Description, _form.SalePrice, _form.PurchasePrice, _form.MinStock, true, _form.CategoryId, _form.SupplierId);
+            ok = await Api.UpdateProductoAsync(_editandoId, dto);
+        }
+        else
+        {
+            var dto = new CreateProductoDto(_form.Name, _form.SKU, _form.Description, _form.SalePrice, _form.PurchasePrice, _form.Stock, _form.MinStock, _form.CategoryId, _form.SupplierId);
+            ok = await Api.CreateProductoAsync(dto);
+        }
+        _guardando = false;
+        _exito = ok;
+        _mensaje = ok ? "Producto guardado." : "Error al guardar el producto.";
+        if (ok) { CerrarModal(); await Cargar(); }
+    }
+
+    private async Task Eliminar(int id)
+    {
+        var ok = await Api.DeleteProductoAsync(id);
+        _exito = ok;
+        _mensaje = ok ? "Producto eliminado." : "No se pudo eliminar el producto.";
+        if (ok) await Cargar();
+    }
+
+    private async Task ExportarExcel()
+    {
+        try
+        {
+            var bytes = await Api.ExportarProductosExcelAsync();
+            if (bytes is not null)
+            {
+                var base64 = Convert.ToBase64String(bytes);
+                await JS.InvokeVoidAsync("downloadFileFromBase64", base64, "productos.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            }
+        }
+        catch { _mensaje = "Error al exportar Excel."; _exito = false; }
+    }
+
+    private class ProductoForm
+    {
+        public string Name { get; set; } = "";
+        public string? SKU { get; set; }
+        public string? Description { get; set; }
+        public decimal SalePrice { get; set; }
+        public decimal PurchasePrice { get; set; }
+        public int Stock { get; set; }
+        public int MinStock { get; set; } = 5;
+        public int CategoryId { get; set; }
+        public int? SupplierId { get; set; }
+    }
+}

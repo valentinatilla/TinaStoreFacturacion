@@ -1,0 +1,94 @@
+@page "/login"
+@layout EmptyLayout
+@inject TinaStoreApiClient Api
+@inject SessionStateService Session
+@inject NavigationManager Nav
+
+<div class="login-page">
+    <div class="login-card card p-4">
+        <div class="text-center mb-4">
+            <div style="font-size: 2.5rem; color: #7c3aed;">
+                <i class="bi bi-bag-heart-fill"></i>
+            </div>
+            <h4 class="fw-bold mt-2 mb-0">Tina Store</h4>
+            <small class="text-muted">Panel Administrativo</small>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <div class="alert alert-danger py-2 small">
+                <i class="bi bi-exclamation-triangle me-1"></i>@_error
+            </div>
+        }
+
+        <EditForm Model="_model" OnValidSubmit="HandleLogin">
+            <DataAnnotationsValidator />
+            <div class="mb-3">
+                <label class="form-label small fw-semibold">Correo electrónico</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                    <InputText class="form-control" @bind-Value="_model.Email" placeholder="admin@tinastore.com" />
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label small fw-semibold">Contraseña</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                    <InputText type="password" class="form-control" @bind-Value="_model.Password" placeholder="••••••••" />
+                </div>
+            </div>
+            <button type="submit" class="btn w-100 bg-purple text-white fw-semibold" disabled="@_loading">
+                @if (_loading)
+                {
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                }
+                Ingresar
+            </button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private LoginModel _model = new();
+    private string? _error;
+    private bool _loading;
+
+    protected override void OnInitialized()
+    {
+        if (Session.IsAuthenticated)
+            Nav.NavigateTo("/", forceLoad: false);
+    }
+
+    private async Task HandleLogin()
+    {
+        _error = null;
+        _loading = true;
+        try
+        {
+            var response = await Api.LoginAsync(_model.Email, _model.Password);
+            if (response is null)
+            {
+                _error = "Credenciales inválidas. Verifique su correo y contraseña.";
+                return;
+            }
+            Session.SetSession(response.Token, response.UserName, response.Email, response.Role);
+            Nav.NavigateTo("/", forceLoad: false);
+        }
+        catch
+        {
+            _error = "No se pudo conectar con el servidor. Verifique que la API esté en ejecución.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private class LoginModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Email { get; set; } = "";
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Password { get; set; } = "";
+    }
+}

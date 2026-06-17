@@ -1,0 +1,137 @@
+@page "/configuracion"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@inject TinaStoreApiClient Api
+
+<PageTitle>Configuración — Tina Store</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0"><i class="bi bi-gear me-2 text-purple"></i>Configuración de la Tienda</h4>
+</div>
+
+@if (_loading)
+{
+    <div class="text-center py-5"><div class="spinner-border text-purple"></div></div>
+}
+else if (_cargado)
+{
+    @if (!string.IsNullOrEmpty(_mensaje))
+    {
+        <div class="alert @(_exito ? "alert-success" : "alert-danger") py-2">
+            <i class="bi bi-@(_exito ? "check-circle" : "exclamation-triangle") me-2"></i>@_mensaje
+        </div>
+    }
+
+    <div class="card border-0 shadow-sm p-4" style="max-width: 700px;">
+        <h6 class="fw-bold mb-3 text-purple">Información general</h6>
+        <div class="row g-3 mb-4">
+            <div class="col-md-8">
+                <label class="form-label small fw-semibold">Nombre de la tienda *</label>
+                <input class="form-control" @bind="_modelo.StoreName" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Moneda</label>
+                <input class="form-control" @bind="_modelo.Currency" placeholder="COP" />
+            </div>
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Dirección</label>
+                <input class="form-control" @bind="_modelo.Address" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Teléfono</label>
+                <input class="form-control" @bind="_modelo.Phone" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">Correo</label>
+                <input class="form-control" @bind="_modelo.Email" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">NIT / RUT</label>
+                <input class="form-control" @bind="_modelo.TaxId" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold">IVA (%)</label>
+                <input type="number" class="form-control" @bind="_modelo.TaxPercentage" min="0" max="100" step="0.01" />
+            </div>
+            <div class="col-12">
+                <label class="form-label small fw-semibold">Mensaje pie de factura</label>
+                <textarea class="form-control" rows="2" @bind="_modelo.InvoiceFooterMessage"></textarea>
+            </div>
+            <div class="col-md-6">
+                <div class="form-check form-switch mt-2">
+                    <input class="form-check-input" type="checkbox" @bind="_modelo.AllowNegativeStock" id="negStock" />
+                    <label class="form-check-label small" for="negStock">Permitir stock negativo</label>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn bg-purple text-white px-4" @onclick="Guardar" disabled="@_guardando">
+            @if (_guardando)
+            {
+                <span class="spinner-border spinner-border-sm me-2"></span>
+            }
+            <i class="bi bi-floppy me-1"></i>Guardar cambios
+        </button>
+    </div>
+}
+
+@code {
+    private ConfigForm _modelo = new();
+    private bool _cargado;
+    private bool _loading = true;
+    private bool _guardando;
+    private string? _mensaje;
+    private bool _exito;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var cfg = await Api.GetConfiguracionAsync();
+            if (cfg is not null)
+            {
+                _modelo.StoreName           = cfg.StoreName;
+                _modelo.Address             = cfg.Address;
+                _modelo.Phone               = cfg.Phone;
+                _modelo.Email               = cfg.Email;
+                _modelo.TaxId               = cfg.TaxId;
+                _modelo.InvoiceFooterMessage = cfg.InvoiceFooterMessage;
+                _modelo.Currency            = cfg.Currency;
+                _modelo.TaxPercentage       = cfg.TaxPercentage;
+                _modelo.AllowNegativeStock  = cfg.AllowNegativeStock;
+                _cargado = true;
+            }
+        }
+        finally { _loading = false; }
+    }
+
+    private async Task Guardar()
+    {
+        _guardando = true;
+        _mensaje = null;
+        try
+        {
+            var dto = new UpdateConfiguracionDto(
+                _modelo.StoreName, _modelo.Address, _modelo.Phone, _modelo.Email,
+                _modelo.TaxId, _modelo.InvoiceFooterMessage, _modelo.Currency,
+                _modelo.TaxPercentage, _modelo.AllowNegativeStock);
+
+            _exito = await Api.UpdateConfiguracionAsync(dto);
+            _mensaje = _exito ? "Configuración guardada correctamente." : "Error al guardar la configuración.";
+        }
+        catch { _mensaje = "Error al comunicarse con la API."; _exito = false; }
+        finally { _guardando = false; }
+    }
+
+    private class ConfigForm
+    {
+        public string  StoreName            { get; set; } = "";
+        public string? Address              { get; set; }
+        public string? Phone                { get; set; }
+        public string? Email                { get; set; }
+        public string? TaxId               { get; set; }
+        public string? InvoiceFooterMessage { get; set; }
+        public string  Currency             { get; set; } = "COP";
+        public decimal TaxPercentage        { get; set; }
+        public bool    AllowNegativeStock   { get; set; }
+    }
+}

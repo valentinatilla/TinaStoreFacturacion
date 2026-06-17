@@ -1,0 +1,201 @@
+@page "/clientes"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject TinaStoreApiClient Api
+
+<PageTitle>Clientes — Tina Store</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0"><i class="bi bi-people me-2 text-purple"></i>Clientes</h4>
+    <button class="btn bg-purple text-white" @onclick="() => AbrirModal()">
+        <i class="bi bi-plus-lg me-1"></i>Nuevo cliente
+    </button>
+</div>
+
+@if (!string.IsNullOrEmpty(_mensaje))
+{
+    <div class="alert @(_exito ? "alert-success" : "alert-danger") py-2">
+        <i class="bi bi-@(_exito ? "check-circle" : "exclamation-triangle") me-1"></i>@_mensaje
+    </div>
+}
+
+@if (_loading)
+{
+    <div class="text-center py-5"><div class="spinner-border text-purple"></div></div>
+}
+else
+{
+    <div class="mb-3">
+        <input class="form-control" style="max-width:300px" placeholder="🔍 Buscar cliente..." @oninput="Filtrar" />
+    </div>
+    <div class="card ts-table border-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Nombre</th><th>Documento</th><th>Teléfono</th><th>Email</th>
+                        <th class="text-end">Saldo</th><th>Estado</th><th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in _filtrados)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@c.FullName</td>
+                            <td>@c.DocumentNumber</td>
+                            <td>@c.Phone</td>
+                            <td>@c.Email</td>
+                            <td class="text-end @(c.SaldoPendiente > 0 ? "text-danger fw-semibold" : "")">
+                                @c.SaldoPendiente.ToString("C0")
+                            </td>
+                            <td>
+                                <span class="badge @(c.IsActive ? "bg-success" : "bg-secondary")">
+                                    @(c.IsActive ? "Activo" : "Inactivo")
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => AbrirModal(c)">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => Eliminar(c.Id)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                    @if (!_filtrados.Any())
+                    {
+                        <tr><td colspan="7" class="text-center text-muted py-4">Sin resultados</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<!-- Modal nuevo / editar -->
+@if (_mostrarModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(_editando ? "Editar" : "Nuevo") cliente</h5>
+                    <button class="btn-close" @onclick="CerrarModal"></button>
+                </div>
+                <div class="modal-body row g-3">
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Nombre completo *</label>
+                        <input class="form-control" @bind="_form.FullName" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Documento</label>
+                        <input class="form-control" @bind="_form.DocumentNumber" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Teléfono</label>
+                        <input class="form-control" @bind="_form.Phone" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Email</label>
+                        <input class="form-control" @bind="_form.Email" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Dirección</label>
+                        <input class="form-control" @bind="_form.Address" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CerrarModal">Cancelar</button>
+                    <button class="btn bg-purple text-white" @onclick="Guardar" disabled="@_guardando">
+                        @if (_guardando) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<ClienteDto> _clientes = [];
+    private List<ClienteDto> _filtrados = [];
+    private bool _loading = true;
+    private bool _mostrarModal;
+    private bool _editando;
+    private bool _guardando;
+    private int _editandoId;
+    private string? _mensaje;
+    private bool _exito;
+    private ClienteForm _form = new();
+
+    protected override async Task OnInitializedAsync() => await Cargar();
+
+    private async Task Cargar()
+    {
+        _loading = true;
+        _clientes = await Api.GetClientesAsync() ?? [];
+        _filtrados = _clientes;
+        _loading = false;
+    }
+
+    private void Filtrar(ChangeEventArgs e)
+    {
+        var q = e.Value?.ToString()?.ToLower() ?? "";
+        _filtrados = string.IsNullOrWhiteSpace(q)
+            ? _clientes
+            : _clientes.Where(c => c.FullName.ToLower().Contains(q)
+                || (c.DocumentNumber?.ToLower().Contains(q) ?? false)
+                || (c.Phone?.Contains(q) ?? false)).ToList();
+    }
+
+    private void AbrirModal(ClienteDto? c = null)
+    {
+        _editando = c is not null;
+        _editandoId = c?.Id ?? 0;
+        _form = c is null
+            ? new()
+            : new() { FullName = c.FullName, DocumentNumber = c.DocumentNumber, Phone = c.Phone, Email = c.Email, Address = c.Address };
+        _mostrarModal = true;
+        _mensaje = null;
+    }
+
+    private void CerrarModal() => _mostrarModal = false;
+
+    private async Task Guardar()
+    {
+        if (string.IsNullOrWhiteSpace(_form.FullName)) return;
+        _guardando = true;
+        bool ok;
+        if (_editando)
+        {
+            var dto = new UpdateClienteDto(_form.FullName, _form.DocumentNumber, _form.Phone, _form.Email, _form.Address, true);
+            ok = await Api.UpdateClienteAsync(_editandoId, dto);
+        }
+        else
+        {
+            var dto = new CreateClienteDto(_form.FullName, _form.DocumentNumber, _form.Phone, _form.Email, _form.Address);
+            ok = await Api.CreateClienteAsync(dto);
+        }
+        _guardando = false;
+        _exito = ok;
+        _mensaje = ok ? "Cliente guardado correctamente." : "Error al guardar el cliente.";
+        if (ok) { CerrarModal(); await Cargar(); }
+    }
+
+    private async Task Eliminar(int id)
+    {
+        var ok = await Api.DeleteClienteAsync(id);
+        _exito = ok;
+        _mensaje = ok ? "Cliente eliminado." : "No se pudo eliminar el cliente.";
+        if (ok) await Cargar();
+    }
+
+    private class ClienteForm
+    {
+        public string FullName { get; set; } = "";
+        public string? DocumentNumber { get; set; }
+        public string? Phone { get; set; }
+        public string? Email { get; set; }
+        public string? Address { get; set; }
+    }
+}

@@ -1,30 +1,65 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">TinaStore.Web</a>
-    </div>
-</div>
+﻿@inject NavigationManager Nav
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+<ul class="ts-nav">
+    <li>
+        <NavLink href="/" Match="NavLinkMatch.All">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </NavLink>
+    </li>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+    <li class="ts-nav-group">COMERCIAL</li>
+    <li>
+        <NavLink href="/clientes">
+            <i class="bi bi-people"></i> Clientes
+        </NavLink>
+    </li>
+    <li>
+        <NavLink href="/facturas">
+            <i class="bi bi-receipt"></i> Facturas
+        </NavLink>
+    </li>
+    <li>
+        <NavLink href="/cuentas-por-cobrar">
+            <i class="bi bi-cash-stack"></i> Por cobrar
+        </NavLink>
+    </li>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
+    <li class="ts-nav-group">INVENTARIO</li>
+    <li>
+        <NavLink href="/productos">
+            <i class="bi bi-box-seam"></i> Productos
+        </NavLink>
+    </li>
+    <li>
+        <NavLink href="/categorias">
+            <i class="bi bi-tags"></i> Categorías
+        </NavLink>
+    </li>
+    <li>
+        <NavLink href="/proveedores">
+            <i class="bi bi-truck"></i> Proveedores
+        </NavLink>
+    </li>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
-</div>
+    <li class="ts-nav-group">GASTOS</li>
+    <li>
+        <NavLink href="/egresos">
+            <i class="bi bi-arrow-down-circle"></i> Egresos
+        </NavLink>
+    </li>
+
+    <li class="ts-nav-group">REPORTES</li>
+    <li>
+        <NavLink href="/reportes">
+            <i class="bi bi-bar-chart-line"></i> Reportes
+        </NavLink>
+    </li>
+
+    <li class="ts-nav-group">ADMIN</li>
+    <li>
+        <NavLink href="/configuracion">
+            <i class="bi bi-gear"></i> Configuración
+        </NavLink>
+    </li>
+</ul>
 

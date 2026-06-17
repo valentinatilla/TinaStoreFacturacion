@@ -1,0 +1,148 @@
+@page "/facturas"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject TinaStoreApiClient Api
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<PageTitle>Facturas — Tina Store</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0"><i class="bi bi-receipt me-2 text-purple"></i>Facturas</h4>
+    <NavLink href="/facturas/nueva" class="btn bg-purple text-white">
+        <i class="bi bi-plus-lg me-1"></i>Nueva factura
+    </NavLink>
+</div>
+
+@if (!string.IsNullOrEmpty(_mensaje))
+{
+    <div class="alert @(_exito ? "alert-success" : "alert-danger") py-2">@_mensaje</div>
+}
+
+@if (_loading)
+{
+    <div class="text-center py-5"><div class="spinner-border text-purple"></div></div>
+}
+else
+{
+    <div class="mb-3 d-flex gap-2">
+        <input class="form-control" style="max-width:280px" placeholder="🔍 N° o cliente..." @oninput="Filtrar" />
+        <select class="form-select" style="max-width:160px" @onchange="FiltrarEstado">
+            <option value="">Todos</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Pagada">Pagada</option>
+            <option value="Parcial">Parcial</option>
+            <option value="Anulada">Anulada</option>
+        </select>
+    </div>
+
+    <div class="card ts-table border-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>N° Factura</th><th>Cliente</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-end">Pagado</th>
+                        <th>Estado</th><th>Fecha</th><th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var f in _filtradas)
+                    {
+                        <tr>
+                            <td><span class="badge bg-dark">@f.Numero</span></td>
+                            <td>@f.ClienteNombre</td>
+                            <td class="text-end fw-semibold">@f.Total.ToString("C0")</td>
+                            <td class="text-end @(f.TotalPagado < f.Total ? "text-danger" : "text-success")">
+                                @f.TotalPagado.ToString("C0")
+                            </td>
+                            <td>
+                                <span class="badge badge-estado-@f.Estado.ToLower()">@f.Estado</span>
+                            </td>
+                            <td class="text-muted small">@f.FechaEmision.ToString("dd/MM/yyyy")</td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-secondary me-1" title="Descargar PDF"
+                                        @onclick="() => DescargarPdf(f.Id)">
+                                    <i class="bi bi-file-earmark-pdf"></i>
+                                </button>
+                                @if (f.Estado != "Anulada")
+                                {
+                                    <button class="btn btn-sm btn-outline-danger" title="Anular"
+                                            @onclick="() => Anular(f.Id)">
+                                        <i class="bi bi-x-circle"></i>
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    @if (!_filtradas.Any())
+                    {
+                        <tr><td colspan="7" class="text-center text-muted py-4">Sin facturas</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@code {
+    private List<FacturaDto> _facturas = [];
+    private List<FacturaDto> _filtradas = [];
+    private bool _loading = true;
+    private string? _mensaje;
+    private bool _exito;
+    private string _busqueda = "";
+    private string _estadoFiltro = "";
+
+    protected override async Task OnInitializedAsync() => await Cargar();
+
+    private async Task Cargar()
+    {
+        _loading = true;
+        _facturas = await Api.GetFacturasAsync() ?? [];
+        AplicarFiltros();
+        _loading = false;
+    }
+
+    private void Filtrar(ChangeEventArgs e)
+    {
+        _busqueda = e.Value?.ToString() ?? "";
+        AplicarFiltros();
+    }
+
+    private void FiltrarEstado(ChangeEventArgs e)
+    {
+        _estadoFiltro = e.Value?.ToString() ?? "";
+        AplicarFiltros();
+    }
+
+    private void AplicarFiltros()
+    {
+        _filtradas = _facturas
+            .Where(f => (string.IsNullOrEmpty(_busqueda) || f.Numero.Contains(_busqueda, StringComparison.OrdinalIgnoreCase) || f.ClienteNombre.Contains(_busqueda, StringComparison.OrdinalIgnoreCase))
+                     && (string.IsNullOrEmpty(_estadoFiltro) || f.Estado == _estadoFiltro))
+            .ToList();
+    }
+
+    private async Task Anular(int id)
+    {
+        var ok = await Api.AnularFacturaAsync(id);
+        _exito = ok;
+        _mensaje = ok ? "Factura anulada." : "No se pudo anular la factura.";
+        if (ok) await Cargar();
+    }
+
+    private async Task DescargarPdf(int id)
+    {
+        try
+        {
+            var bytes = await Api.DescargarPdfFacturaAsync(id);
+            if (bytes is not null)
+            {
+                var base64 = Convert.ToBase64String(bytes);
+                await JS.InvokeVoidAsync("downloadFileFromBase64", base64, $"factura-{id}.pdf", "application/pdf");
+            }
+        }
+        catch { _mensaje = "Error al generar el PDF."; _exito = false; }
+    }
+}
