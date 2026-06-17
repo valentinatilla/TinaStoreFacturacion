@@ -1,11 +1,9 @@
-using Microsoft.EntityFrameworkCore;
 using TinaStore.Application.DTOs;
 using TinaStore.Application.Interfaces;
 using TinaStore.Domain.Entities;
 using TinaStore.Domain.Enums;
 using TinaStore.Domain.Exceptions;
 using TinaStore.Domain.Interfaces;
-using TinaStore.Infrastructure.Data;
 
 namespace TinaStore.Application.Services;
 
@@ -16,7 +14,7 @@ public sealed class InvoiceService : IInvoiceService
     private readonly IAccountReceivableRepository _receivables;
     private readonly IRepository<Payment> _payments;
     private readonly IRepository<InventoryMovement> _movements;
-    private readonly AppDbContext _db;
+    private readonly IRepository<StoreSettings> _settings;
 
     public InvoiceService(
         IInvoiceRepository invoices,
@@ -24,14 +22,14 @@ public sealed class InvoiceService : IInvoiceService
         IAccountReceivableRepository receivables,
         IRepository<Payment> payments,
         IRepository<InventoryMovement> movements,
-        AppDbContext db)
+        IRepository<StoreSettings> settings)
     {
         _invoices = invoices;
         _products = products;
         _receivables = receivables;
         _payments = payments;
         _movements = movements;
-        _db = db;
+        _settings = settings;
     }
 
     public async Task<IEnumerable<InvoiceSummaryDto>> GetAllAsync()
@@ -64,7 +62,7 @@ public sealed class InvoiceService : IInvoiceService
             throw new DomainException("La factura debe tener al menos un producto.");
 
         // ── Configuración de la tienda (consecutivo y stock) ──────────────────
-        var settings = await _db.StoreSettings.FirstOrDefaultAsync()
+        var settings = await _settings.GetByIdAsync(1)
             ?? throw new DomainException("No se encontró la configuración de la tienda.");
 
         // ── Validar productos y calcular subtotal ─────────────────────────────
@@ -155,7 +153,7 @@ public sealed class InvoiceService : IInvoiceService
 
         // ── Incrementar consecutivo ───────────────────────────────────────────
         settings.InvoiceConsecutive++;
-        _db.StoreSettings.Update(settings);
+        await _settings.UpdateAsync(settings);
 
         // ── Cuenta por cobrar si queda saldo ──────────────────────────────────
         if (invoice.Balance > 0)
@@ -179,7 +177,7 @@ public sealed class InvoiceService : IInvoiceService
             }
         }
 
-        await _db.SaveChangesAsync();
+        await _invoices.SaveChangesAsync();
 
         var result = await _invoices.GetWithDetailsAsync(invoice.Id);
         return ToDto(result!);
@@ -190,7 +188,7 @@ public sealed class InvoiceService : IInvoiceService
         var invoice = await _invoices.GetWithDetailsAsync(invoiceId);
         if (invoice is null) return null;
         if (invoice.Status == InvoiceStatus.Cancelled)
-            throw new InvoiceCancelledException(invoice.InvoiceNumber);
+            throw new InvoiceCancelledException(invoice.Id);
 
         var montoPendiente = invoice.Balance;
         var montoAplicado = Math.Min(dto.Amount, montoPendiente);
@@ -223,7 +221,7 @@ public sealed class InvoiceService : IInvoiceService
             await _receivables.UpdateAsync(cxc);
         }
 
-        await _db.SaveChangesAsync();
+        await _invoices.SaveChangesAsync();
 
         var result = await _invoices.GetWithDetailsAsync(invoiceId);
         return ToDto(result!);
@@ -234,9 +232,9 @@ public sealed class InvoiceService : IInvoiceService
         var invoice = await _invoices.GetWithDetailsAsync(invoiceId);
         if (invoice is null) return null;
         if (invoice.Status == InvoiceStatus.Cancelled)
-            throw new InvoiceCancelledException(invoice.InvoiceNumber);
+            throw new InvoiceCancelledException(invoice.Id);
 
-        // ── Revertir stock ────────────────────────────────────────────────────
+        // ── Revertir stock
         foreach (var detalle in invoice.Details)
         {
             var producto = await _products.GetByIdAsync(detalle.ProductId);
@@ -273,7 +271,7 @@ public sealed class InvoiceService : IInvoiceService
         invoice.Status = InvoiceStatus.Cancelled;
         invoice.CancellationReason = dto.Reason;
         await _invoices.UpdateAsync(invoice);
-        await _db.SaveChangesAsync();
+        await _invoices.SaveChangesAsync();
 
         var result = await _invoices.GetWithDetailsAsync(invoiceId);
         return ToDto(result!);

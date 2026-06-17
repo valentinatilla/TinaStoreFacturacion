@@ -86,3 +86,23 @@ public interface IDashboardService
 {
     Task<DashboardDto> GetSummaryAsync();
 }
+
+public interface IReportService
+{
+    Task<ReporteVentasDto> GetSalesReportAsync(DateTime from, DateTime to);
+    Task<ReporteGastosDto> GetExpensesReportAsync(DateTime from, DateTime to);
+    Task<ReporteCuentasPorCobrarDto> GetReceivablesReportAsync();
+    Task<IEnumerable<TopProductoDto>> GetTopProductsAsync(DateTime from, DateTime to, int top = 10);
+}
+
+public interface IPdfService
+{
+    Task<byte[]> GenerateInvoicePdfAsync(int invoiceId);
+}
+
+public interface IExcelService
+{
+    Task<byte[]> ExportProductsAsync();
+    Task<ExcelImportResultDto> ImportProductsAsync(Stream excelStream);
+    Task<byte[]> GetProductTemplateAsync();
+}

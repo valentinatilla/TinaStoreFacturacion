@@ -39,3 +39,27 @@ public interface IExpenseRepository : IRepository<Expense>
     Task<IReadOnlyList<Expense>> GetByCategoryAsync(int categoryId, CancellationToken ct = default);
     Task<decimal> GetTotalByDateRangeAsync(DateTime from, DateTime to, CancellationToken ct = default);
 }
+
+public interface IDashboardRepository
+{
+    Task<decimal> GetSalesTodayAsync(DateTime from, DateTime to, CancellationToken ct = default);
+    Task<int> GetInvoiceCountTodayAsync(DateTime from, DateTime to, CancellationToken ct = default);
+    Task<decimal> GetSalesWeekAsync(DateTime from, CancellationToken ct = default);
+    Task<decimal> GetSalesMonthAsync(DateTime from, CancellationToken ct = default);
+    Task<decimal> GetTotalReceivableAsync(CancellationToken ct = default);
+    Task<int> GetCustomersWithDebtAsync(CancellationToken ct = default);
+    Task<decimal> GetExpensesTodayAsync(DateTime from, DateTime to, CancellationToken ct = default);
+    Task<decimal> GetExpensesMonthAsync(DateTime from, CancellationToken ct = default);
+    Task<int> GetLowStockCountAsync(CancellationToken ct = default);
+    Task<int> GetActiveProductCountAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<Invoice>> GetLastInvoicesTodayAsync(DateTime from, DateTime to, int top, CancellationToken ct = default);
+    Task<IReadOnlyList<AccountReceivable>> GetTopDebtorsAsync(int top, CancellationToken ct = default);
+}
+
+public interface IReportRepository
+{
+    Task<IReadOnlyList<Invoice>> GetInvoicesByRangeAsync(DateTime from, DateTime to, CancellationToken ct = default);
+    Task<IReadOnlyList<InvoiceDetail>> GetSoldDetailsByRangeAsync(DateTime from, DateTime to, CancellationToken ct = default);
+    Task<IReadOnlyList<Expense>> GetExpensesByRangeAsync(DateTime from, DateTime to, CancellationToken ct = default);
+    Task<IReadOnlyList<AccountReceivable>> GetAllReceivablesAsync(CancellationToken ct = default);
+}

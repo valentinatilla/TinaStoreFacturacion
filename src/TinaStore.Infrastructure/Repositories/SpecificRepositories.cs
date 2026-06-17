@@ -134,3 +134,103 @@ public class ExpenseRepository(AppDbContext context) : Repository<Expense>(conte
             .Where(e => e.ExpenseDate >= from && e.ExpenseDate <= to && e.Status == Domain.Enums.ExpenseStatus.Active)
             .SumAsync(e => e.Amount, ct);
 }
+
+public class DashboardRepository(AppDbContext context) : IDashboardRepository
+{
+    private readonly AppDbContext _db = context;
+
+    public async Task<decimal> GetSalesTodayAsync(DateTime from, DateTime to, CancellationToken ct = default)
+        => await _db.Invoices
+            .Where(i => i.Status != Domain.Enums.InvoiceStatus.Cancelled && i.InvoiceDate >= from && i.InvoiceDate <= to)
+            .SumAsync(i => i.Total, ct);
+
+    public async Task<int> GetInvoiceCountTodayAsync(DateTime from, DateTime to, CancellationToken ct = default)
+        => await _db.Invoices
+            .CountAsync(i => i.Status != Domain.Enums.InvoiceStatus.Cancelled && i.InvoiceDate >= from && i.InvoiceDate <= to, ct);
+
+    public async Task<decimal> GetSalesWeekAsync(DateTime from, CancellationToken ct = default)
+        => await _db.Invoices
+            .Where(i => i.Status != Domain.Enums.InvoiceStatus.Cancelled && i.InvoiceDate >= from)
+            .SumAsync(i => i.Total, ct);
+
+    public async Task<decimal> GetSalesMonthAsync(DateTime from, CancellationToken ct = default)
+        => await _db.Invoices
+            .Where(i => i.Status != Domain.Enums.InvoiceStatus.Cancelled && i.InvoiceDate >= from)
+            .SumAsync(i => i.Total, ct);
+
+    public async Task<decimal> GetTotalReceivableAsync(CancellationToken ct = default)
+        => await _db.AccountsReceivable
+            .Where(a => a.TotalDebt > a.TotalPaid)
+            .SumAsync(a => a.TotalDebt - a.TotalPaid, ct);
+
+    public async Task<int> GetCustomersWithDebtAsync(CancellationToken ct = default)
+        => await _db.AccountsReceivable.CountAsync(a => a.TotalDebt > a.TotalPaid, ct);
+
+    public async Task<decimal> GetExpensesTodayAsync(DateTime from, DateTime to, CancellationToken ct = default)
+        => await _db.Expenses
+            .Where(e => e.Status == Domain.Enums.ExpenseStatus.Active && e.ExpenseDate >= from && e.ExpenseDate <= to)
+            .SumAsync(e => e.Amount, ct);
+
+    public async Task<decimal> GetExpensesMonthAsync(DateTime from, CancellationToken ct = default)
+        => await _db.Expenses
+            .Where(e => e.Status == Domain.Enums.ExpenseStatus.Active && e.ExpenseDate >= from)
+            .SumAsync(e => e.Amount, ct);
+
+    public async Task<int> GetLowStockCountAsync(CancellationToken ct = default)
+        => await _db.Products.CountAsync(p => p.IsActive && !p.IsDeleted && p.CurrentStock <= p.MinimumStock, ct);
+
+    public async Task<int> GetActiveProductCountAsync(CancellationToken ct = default)
+        => await _db.Products.CountAsync(p => p.IsActive && !p.IsDeleted, ct);
+
+    public async Task<IReadOnlyList<Invoice>> GetLastInvoicesTodayAsync(DateTime from, DateTime to, int top, CancellationToken ct = default)
+        => await _db.Invoices
+            .Include(i => i.Customer)
+            .Where(i => i.Status != Domain.Enums.InvoiceStatus.Cancelled && i.InvoiceDate >= from && i.InvoiceDate <= to)
+            .OrderByDescending(i => i.InvoiceDate)
+            .Take(top)
+            .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<AccountReceivable>> GetTopDebtorsAsync(int top, CancellationToken ct = default)
+        => await _db.AccountsReceivable
+            .Include(a => a.Customer)
+            .Where(a => a.TotalDebt > a.TotalPaid)
+            .OrderByDescending(a => a.TotalDebt - a.TotalPaid)
+            .Take(top)
+            .ToListAsync(ct);
+}
+
+public class ReportRepository(AppDbContext context) : IReportRepository
+{
+    private readonly AppDbContext _db = context;
+
+    public async Task<IReadOnlyList<Invoice>> GetInvoicesByRangeAsync(DateTime from, DateTime to, CancellationToken ct = default)
+        => await _db.Invoices
+            .Include(i => i.Customer)
+            .Where(i => i.Status != Domain.Enums.InvoiceStatus.Cancelled
+                        && i.InvoiceDate >= from && i.InvoiceDate <= to)
+            .OrderBy(i => i.InvoiceDate)
+            .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<InvoiceDetail>> GetSoldDetailsByRangeAsync(DateTime from, DateTime to, CancellationToken ct = default)
+        => await _db.InvoiceDetails
+            .Include(d => d.Invoice)
+            .Include(d => d.Product)
+            .Where(d => d.Invoice!.Status != Domain.Enums.InvoiceStatus.Cancelled
+                        && d.Invoice.InvoiceDate >= from && d.Invoice.InvoiceDate <= to)
+            .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<Expense>> GetExpensesByRangeAsync(DateTime from, DateTime to, CancellationToken ct = default)
+        => await _db.Expenses
+            .Include(e => e.ExpenseCategory)
+            .Where(e => e.Status == Domain.Enums.ExpenseStatus.Active
+                        && e.ExpenseDate >= from && e.ExpenseDate <= to)
+            .OrderBy(e => e.ExpenseDate)
+            .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<AccountReceivable>> GetAllReceivablesAsync(CancellationToken ct = default)
+        => await _db.AccountsReceivable
+            .Include(a => a.Customer)
+            .Where(a => a.TotalDebt > a.TotalPaid)
+            .OrderByDescending(a => a.TotalDebt - a.TotalPaid)
+            .ToListAsync(ct);
+}
