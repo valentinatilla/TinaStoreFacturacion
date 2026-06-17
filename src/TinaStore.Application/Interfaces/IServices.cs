@@ -50,3 +50,39 @@ public interface IPaymentMethodService
     Task<PaymentMethodDto?> UpdateAsync(int id, UpdatePaymentMethodDto dto);
     Task<bool> DeleteAsync(int id);
 }
+
+public interface IInvoiceService
+{
+    Task<IEnumerable<InvoiceSummaryDto>> GetAllAsync();
+    Task<IEnumerable<InvoiceSummaryDto>> GetByCustomerAsync(int customerId);
+    Task<IEnumerable<InvoiceSummaryDto>> GetByDateRangeAsync(DateTime from, DateTime to);
+    Task<InvoiceDto?> GetByIdAsync(int id);
+    Task<InvoiceDto> CreateAsync(CreateInvoiceDto dto);
+    Task<InvoiceDto?> RegisterPaymentAsync(int invoiceId, RegisterPaymentDto dto);
+    Task<InvoiceDto?> CancelAsync(int invoiceId, CancelInvoiceDto dto);
+}
+
+public interface IExpenseCategoryService
+{
+    Task<IEnumerable<ExpenseCategoryDto>> GetAllAsync(bool soloActivas = false);
+    Task<ExpenseCategoryDto?> GetByIdAsync(int id);
+    Task<ExpenseCategoryDto> CreateAsync(CreateExpenseCategoryDto dto);
+    Task<ExpenseCategoryDto?> UpdateAsync(int id, UpdateExpenseCategoryDto dto);
+    Task<bool> DeleteAsync(int id);
+}
+
+public interface IExpenseService
+{
+    Task<IEnumerable<ExpenseDto>> GetAllAsync();
+    Task<IEnumerable<ExpenseDto>> GetByDateRangeAsync(DateTime from, DateTime to);
+    Task<IEnumerable<ExpenseDto>> GetByCategoryAsync(int categoryId);
+    Task<ExpenseDto?> GetByIdAsync(int id);
+    Task<ExpenseDto> CreateAsync(CreateExpenseDto dto);
+    Task<ExpenseDto?> UpdateAsync(int id, UpdateExpenseDto dto);
+    Task<bool> CancelAsync(int id);
+}
+
+public interface IDashboardService
+{
+    Task<DashboardDto> GetSummaryAsync();
+}

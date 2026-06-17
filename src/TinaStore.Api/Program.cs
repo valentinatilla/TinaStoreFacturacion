@@ -18,6 +18,7 @@ try
     // ─── Serilog como proveedor de logging ────────────────────────────────────
     builder.Host.UseSerilog((ctx, lc) => lc
         .ReadFrom.Configuration(ctx.Configuration)
+        .MinimumLevel.Override("Microsoft.Hosting.Lifetime", Serilog.Events.LogEventLevel.Information)
         .WriteTo.Console()
         .WriteTo.File("logs/tinastore-.log", rollingInterval: RollingInterval.Day));
 
