@@ -1,5 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using TinaStore.Application.Interfaces;
+using TinaStore.Application.Services;
 
 namespace TinaStore.Application;
 
@@ -10,8 +12,15 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        // Registra automáticamente todos los validadores de FluentValidation de este ensamblado
+        // Validadores de FluentValidation (registro automático por ensamblado)
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
+
+        // Servicios de aplicación — casos de uso por módulo
+        services.AddScoped<ICustomerService, CustomerService>();
+        services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<IProductService, ProductService>();
+        services.AddScoped<ISupplierService, SupplierService>();
+        services.AddScoped<IPaymentMethodService, PaymentMethodService>();
 
         return services;
     }
