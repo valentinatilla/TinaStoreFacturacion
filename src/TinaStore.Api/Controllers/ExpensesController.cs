@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using TinaStore.Application.DTOs;
@@ -7,6 +8,7 @@ namespace TinaStore.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public sealed class ExpensesController : ControllerBase
 {
     private readonly IExpenseService _service;

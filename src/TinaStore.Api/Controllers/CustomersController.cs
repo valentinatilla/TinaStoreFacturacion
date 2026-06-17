@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TinaStore.Application.DTOs;
 using TinaStore.Application.Interfaces;
@@ -7,6 +8,7 @@ namespace TinaStore.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public sealed class CustomersController : ControllerBase
 {
     private readonly ICustomerService _service;

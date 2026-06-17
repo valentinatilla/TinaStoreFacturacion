@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TinaStore.Application.Interfaces;
+using TinaStore.Domain.Entities;
 using TinaStore.Domain.Interfaces;
 using TinaStore.Infrastructure.Data;
 using TinaStore.Infrastructure.Repositories;
@@ -35,10 +37,16 @@ public static class DependencyInjection
         services.AddScoped<IExpenseRepository, ExpenseRepository>();
         services.AddScoped<IDashboardRepository, DashboardRepository>();
         services.AddScoped<IReportRepository, ReportRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
 
-        // Servicios de infraestructura (PDF y Excel)
+        // Hash de contraseñas (sin Identity completo)
+        services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+        services.AddScoped<IAppPasswordHasher, AppPasswordHasher>();
+
+        // Servicios de infraestructura (PDF, Excel y JWT)
         services.AddScoped<IPdfService, PdfService>();
         services.AddScoped<IExcelService, ExcelService>();
+        services.AddScoped<ITokenService, TokenService>();
 
         return services;
     }

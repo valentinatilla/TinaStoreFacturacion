@@ -63,3 +63,10 @@ public interface IReportRepository
     Task<IReadOnlyList<Expense>> GetExpensesByRangeAsync(DateTime from, DateTime to, CancellationToken ct = default);
     Task<IReadOnlyList<AccountReceivable>> GetAllReceivablesAsync(CancellationToken ct = default);
 }
+
+public interface IUserRepository : IRepository<User>
+{
+    Task<User?> GetByEmailAsync(string email, CancellationToken ct = default);
+    Task<bool> EmailExistsAsync(string email, CancellationToken ct = default);
+    Task<IReadOnlyList<User>> GetAllUsersAsync(CancellationToken ct = default);
+}

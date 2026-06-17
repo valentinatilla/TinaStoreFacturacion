@@ -234,3 +234,21 @@ public class ReportRepository(AppDbContext context) : IReportRepository
             .OrderByDescending(a => a.TotalDebt - a.TotalPaid)
             .ToListAsync(ct);
 }
+
+// ─── UserRepository ───────────────────────────────────────────────────────────
+
+public class UserRepository : Repository<User>, IUserRepository
+{
+    private readonly AppDbContext _db;
+
+    public UserRepository(AppDbContext db) : base(db) => _db = db;
+
+    public async Task<User?> GetByEmailAsync(string email, CancellationToken ct = default)
+        => await _db.Users.FirstOrDefaultAsync(u => u.Email == email, ct);
+
+    public async Task<bool> EmailExistsAsync(string email, CancellationToken ct = default)
+        => await _db.Users.AnyAsync(u => u.Email == email, ct);
+
+    public async Task<IReadOnlyList<User>> GetAllUsersAsync(CancellationToken ct = default)
+        => await _db.Users.OrderBy(u => u.FullName).ToListAsync(ct);
+}

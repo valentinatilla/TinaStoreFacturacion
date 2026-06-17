@@ -106,3 +106,32 @@ public interface IExcelService
     Task<ExcelImportResultDto> ImportProductsAsync(Stream excelStream);
     Task<byte[]> GetProductTemplateAsync();
 }
+
+public interface IAuthService
+{
+    Task<TokenResponseDto?> LoginAsync(LoginDto dto);
+    Task<UserInfoDto?> GetProfileAsync(int userId);
+    Task<bool> ChangePasswordAsync(int userId, ChangePasswordDto dto);
+}
+
+public interface ITokenService
+{
+    string GenerateToken(int userId, string email, string fullName, string role);
+    int ExpiresInMinutes { get; }
+}
+
+public interface IAppPasswordHasher
+{
+    string Hash(string password);
+    bool Verify(string hashedPassword, string providedPassword);
+}
+
+public interface IUserService
+{
+    Task<IEnumerable<UserInfoDto>> GetAllAsync();
+    Task<UserInfoDto?> GetByIdAsync(int id);
+    Task<UserInfoDto> CreateAsync(CreateUserDto dto);
+    Task<UserInfoDto?> UpdateAsync(int id, UpdateUserDto dto);
+    Task<bool> ResetPasswordAsync(int id, ResetPasswordDto dto);
+    Task<bool> DeleteAsync(int id);
+}

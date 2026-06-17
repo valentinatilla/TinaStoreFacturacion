@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TinaStore.Application.Interfaces;
 
@@ -5,6 +6,7 @@ namespace TinaStore.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public sealed class DocumentsController : ControllerBase
 {
     private readonly IPdfService _pdf;
