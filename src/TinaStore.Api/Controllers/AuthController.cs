@@ -81,22 +81,30 @@ public sealed class AuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(dto.IdToken))
             return BadRequest(new { message = "El id_token es requerido." });
 
+        var clientId = _config["Google:ClientId"];
+        if (string.IsNullOrWhiteSpace(clientId))
+            return StatusCode(501, new { message = "El inicio de sesión con Google no está configurado en este servidor." });
+
         GoogleJsonWebSignature.Payload payload;
         try
         {
-            var settings = new GoogleJsonWebSignature.ValidationSettings
+            var validationSettings = new GoogleJsonWebSignature.ValidationSettings
             {
-                Audience = [_config["Google:ClientId"]]
+                Audience = [clientId]
             };
-            payload = await GoogleJsonWebSignature.ValidateAsync(dto.IdToken, settings);
+            payload = await GoogleJsonWebSignature.ValidateAsync(dto.IdToken, validationSettings);
         }
         catch (InvalidJwtException)
         {
             return Unauthorized(new { message = "Token de Google inválido o expirado." });
         }
 
-        // Verificar que el correo esté en la lista de correos autorizados
-        var allowedEmails = _config.GetSection("Google:AllowedEmails").Get<string[]>() ?? [];
+        // Verificar que el correo esté en la lista de correos autorizados.
+        // Se leen tanto arrays JSON como entradas individuales de user-secrets (Google:AllowedEmails:0, :1, ...)
+        var allowedSection = _config.GetSection("Google:AllowedEmails");
+        var allowedEmails  = allowedSection.Get<string[]>()
+                          ?? allowedSection.GetChildren().Select(c => c.Value ?? "").ToArray();
+
         if (allowedEmails.Length > 0 && !allowedEmails.Contains(payload.Email, StringComparer.OrdinalIgnoreCase))
             return Unauthorized(new { message = "Este correo de Google no está autorizado para acceder al sistema." });
 

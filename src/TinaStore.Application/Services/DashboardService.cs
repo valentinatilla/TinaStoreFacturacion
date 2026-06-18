@@ -7,16 +7,21 @@ namespace TinaStore.Application.Services;
 public sealed class DashboardService : IDashboardService
 {
     private readonly IDashboardRepository _repo;
+    private readonly IAppClock _clock;
 
-    public DashboardService(IDashboardRepository repo) => _repo = repo;
+    public DashboardService(IDashboardRepository repo, IAppClock clock)
+    {
+        _repo = repo;
+        _clock = clock;
+    }
 
     public async Task<DashboardDto> GetSummaryAsync()
     {
-        var ahora = DateTime.UtcNow;
+        var ahora = _clock.Now;
         var hoyInicio = ahora.Date;
         var hoyFin = hoyInicio.AddDays(1).AddTicks(-1);
         var semanaInicio = hoyInicio.AddDays(-6);
-        var mesInicio = new DateTime(ahora.Year, ahora.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var mesInicio = new DateTime(ahora.Year, ahora.Month, 1);
 
         var ventasHoy = await _repo.GetSalesTodayAsync(hoyInicio, hoyFin);
         var cantidadHoy = await _repo.GetInvoiceCountTodayAsync(hoyInicio, hoyFin);

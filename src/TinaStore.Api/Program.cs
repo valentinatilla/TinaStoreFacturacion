@@ -102,14 +102,15 @@ try
         db.Database.Migrate();
         Log.Information("Base de datos migrada correctamente.");
 
-        // Crear usuario administrador inicial si no existe ningún usuario
-        if (!db.Users.Any())
+        // Crear usuario administrador inicial
+        const string adminEmail = "admin@tinastore.com";
+        if (!db.Users.Any(u => u.Email == adminEmail))
         {
             var hasher = scope.ServiceProvider.GetRequiredService<IAppPasswordHasher>();
             var admin = new User
             {
                 FullName = "Administrador",
-                Email = "admin@tinastore.com",
+                Email = adminEmail,
                 Role = UserRole.Admin,
                 IsActive = true,
                 PasswordHash = string.Empty

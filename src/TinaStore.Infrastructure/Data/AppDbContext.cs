@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using TinaStore.Application.Interfaces;
 using TinaStore.Domain.Entities;
 
 namespace TinaStore.Infrastructure.Data;
@@ -11,7 +12,12 @@ namespace TinaStore.Infrastructure.Data;
 /// </summary>
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+    private readonly IAppClock _clock;
+
+    public AppDbContext(DbContextOptions<AppDbContext> options, IAppClock clock) : base(options)
+    {
+        _clock = clock;
+    }
 
     public DbSet<User> Users => Set<User>();
     public DbSet<StoreSettings> StoreSettings => Set<StoreSettings>();
@@ -117,9 +123,9 @@ public class AppDbContext : DbContext
         {
             var entity = (Domain.Entities.BaseEntity)entry.Entity;
             if (entry.State == EntityState.Added)
-                entity.CreatedAt = DateTime.UtcNow;
+                entity.CreatedAt = _clock.Now;
             else
-                entity.UpdatedAt = DateTime.UtcNow;
+                entity.UpdatedAt = _clock.Now;
         }
     }
 }

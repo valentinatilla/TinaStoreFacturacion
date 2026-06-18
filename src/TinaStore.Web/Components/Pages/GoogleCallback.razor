@@ -37,10 +37,10 @@
             return;
         }
 
-        var response = await Api.LoginConGoogleAsync(IdToken);
+        var (response, errorMsg) = await Api.LoginConGoogleAsync(IdToken);
         if (response is null)
         {
-            _error = "Tu cuenta de Google no está autorizada. Contacta al administrador.";
+            _error = errorMsg ?? "Tu cuenta de Google no está autorizada. Contacta al administrador.";
             return;
         }
 

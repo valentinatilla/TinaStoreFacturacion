@@ -10,15 +10,18 @@ public class AuthService : IAuthService
     private readonly IUserRepository _users;
     private readonly IAppPasswordHasher _hasher;
     private readonly ITokenService _tokenService;
+    private readonly IAppClock _clock;
 
     public AuthService(
         IUserRepository users,
         IAppPasswordHasher hasher,
-        ITokenService tokenService)
+        ITokenService tokenService,
+        IAppClock clock)
     {
         _users = users;
         _hasher = hasher;
         _tokenService = tokenService;
+        _clock = clock;
     }
 
     public async Task<TokenResponseDto?> LoginAsync(LoginDto dto)
@@ -30,7 +33,7 @@ public class AuthService : IAuthService
         if (!_hasher.Verify(user.PasswordHash, dto.Password))
             return null;
 
-        user.LastLoginAt = DateTime.UtcNow;
+        user.LastLoginAt = _clock.Now;
         await _users.UpdateAsync(user);
         await _users.SaveChangesAsync();
 
@@ -91,7 +94,7 @@ public class AuthService : IAuthService
             return null;
         }
 
-        user.LastLoginAt = DateTime.UtcNow;
+        user.LastLoginAt = _clock.Now;
         await _users.UpdateAsync(user);
         await _users.SaveChangesAsync();
 
@@ -107,41 +110,4 @@ public class AuthService : IAuthService
 
     private static UserInfoDto MapToInfo(User u) => new(
         u.Id, u.FullName, u.Email, u.Role.ToString(), u.IsActive, u.LastLoginAt);
-
-    public async Task<TokenResponseDto?> LoginWithGoogleAsync(GoogleUserInfoDto googleUser)
-    {
-        var email = googleUser.Email.Trim().ToLower();
-        var user = await _users.GetByEmailAsync(email);
-
-        if (user is null)
-        {
-            user = new User
-            {
-                FullName = googleUser.FullName,
-                Email = email,
-                Role = Domain.Enums.UserRole.Admin,
-                IsActive = true,
-                PasswordHash = _hasher.Hash(Guid.NewGuid().ToString())
-            };
-            await _users.AddAsync(user);
-            await _users.SaveChangesAsync();
-        }
-        else if (!user.IsActive)
-        {
-            return null;
-        }
-
-        user.LastLoginAt = DateTime.UtcNow;
-        await _users.UpdateAsync(user);
-        await _users.SaveChangesAsync();
-
-        var token = _tokenService.GenerateToken(
-            user.Id, user.Email, user.FullName, user.Role.ToString());
-
-        return new TokenResponseDto(
-            AccessToken: token,
-            TokenType: "Bearer",
-            ExpiresInMinutes: _tokenService.ExpiresInMinutes,
-            User: MapToInfo(user));
-    }
 }

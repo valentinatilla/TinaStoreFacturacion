@@ -64,15 +64,4 @@ public class SessionStateService
     }
 
     private void NotifyStateChanged() => OnChange?.Invoke();
-
-    /// <summary>Persiste el token JWT en una cookie HTTP-only vía fetch al endpoint /session/set.</summary>
-    public static async Task PersistAsync(IJSRuntime js, string token)
-    {
-        try
-        {
-            await js.InvokeVoidAsync("eval",
-                $"fetch('/session/set',{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{token:'{token}'}})}})");
-        }
-        catch { /* Si JS no está disponible, se omite */ }
-    }
 }
