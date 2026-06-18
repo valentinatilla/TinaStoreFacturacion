@@ -418,3 +418,7 @@ docker-compose.override.yml
 
 # Carpeta de publicaciÃ³n (se genera con dotnet publish)
 publish/
+
+# Configuración local con secretos (no subir al repo)
+src/TinaStore.Web/appsettings.Development.json
+src/TinaStore.Api/appsettings.Development.json

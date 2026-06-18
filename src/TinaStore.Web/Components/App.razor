@@ -22,6 +22,7 @@
 </head>
 
 <body>
+    <SessionRestorer />
     <Routes @rendermode="@(new InteractiveServerRenderMode(prerender: false))" />
     <ReconnectModal />
     <script src="@Assets["lib/bootstrap/dist/js/bootstrap.bundle.min.js"]"></script>
@@ -36,6 +37,20 @@
         };
     </script>
     <script src="@Assets["_framework/blazor.web.js"]"></script>
+    <script>
+        // Helpers para persistir y borrar la cookie de sesión (HTTP-only) desde Blazor
+        window.tinaSession = {
+            save: (token) => fetch('/session/set', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token })
+            }),
+            clear: () => fetch('/session/clear', { method: 'POST' }),
+            get: () => fetch('/session/get')
+                .then(r => r.ok ? r.json() : { token: '' })
+                .then(d => d.token || '')
+        };
+    </script>
 </body>
 
 </html>

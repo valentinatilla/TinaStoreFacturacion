@@ -32,7 +32,7 @@ public class CustomerRepository(AppDbContext context) : Repository<Customer>(con
 public class ProductRepository(AppDbContext context) : Repository<Product>(context), IProductRepository
 {
     public async Task<Product?> GetByInternalCodeAsync(string code, CancellationToken ct = default)
-        => await DbSet.FirstOrDefaultAsync(p => p.InternalCode == code, ct);
+        => await DbSet.FirstOrDefaultAsync(p => p.Sku == code, ct);  // redirigido a SKU
 
     public async Task<Product?> GetBySkuAsync(string sku, CancellationToken ct = default)
         => await DbSet.FirstOrDefaultAsync(p => p.Sku == sku, ct);
@@ -45,7 +45,6 @@ public class ProductRepository(AppDbContext context) : Repository<Product>(conte
             .Include(p => p.Supplier)
             .Where(p => p.IsActive &&
                         (p.Name.ToLower().Contains(lower) ||
-                         p.InternalCode.Contains(term) ||
                          (p.Sku != null && p.Sku.Contains(term))))
             .ToListAsync(ct);
     }

@@ -1,7 +1,7 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager Nav
 @inject SessionStateService Session
-@inject TinaStoreApiClient Api
+@inject IJSRuntime JS
 
 <div class="ts-wrapper">
     @if (Session.IsAuthenticated)
@@ -9,15 +9,8 @@
         <!-- Sidebar -->
         <nav class="ts-sidebar" id="sidebar">
             <a href="/" class="ts-brand">
-                @if (!string.IsNullOrEmpty(_logoUrl))
-                {
-                    <img src="@_logoUrl" alt="Logo" style="height:36px;width:auto;object-fit:contain;max-width:160px;" />
-                }
-                else
-                {
-                    <span class="ts-brand-emoji">🛍️</span>
-                    <span>Tina Store</span>
-                }
+                <span class="ts-brand-emoji">🛍️</span>
+                <span>Tina Store</span>
             </a>
             <NavMenu />
         </nav>
@@ -51,20 +44,9 @@
 </div>
 
 @code {
-    private string? _logoUrl;
-
-    protected override async Task OnInitializedAsync()
+    private async Task Logout()
     {
-        if (Session.IsAuthenticated)
-        {
-            var cfg = await Api.GetConfiguracionAsync();
-            if (cfg is not null && !string.IsNullOrEmpty(cfg.LogoPath))
-                _logoUrl = $"{Api.BaseUrl.TrimEnd('/')}{cfg.LogoPath}";
-        }
-    }
-
-    private void Logout()
-    {
+        await SessionStateService.ClearPersistenceAsync(JS);
         Session.Clear();
         Nav.NavigateTo("/login", forceLoad: true);
     }

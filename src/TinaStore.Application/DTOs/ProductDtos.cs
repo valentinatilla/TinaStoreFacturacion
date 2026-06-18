@@ -3,7 +3,6 @@ namespace TinaStore.Application.DTOs;
 /// <summary>DTO de respuesta completo de un producto.</summary>
 public record ProductDto(
     int Id,
-    string InternalCode,
     string? Sku,
     string Name,
     string? Description,
@@ -19,25 +18,25 @@ public record ProductDto(
     string CategoryName,
     int? SupplierId,
     string? SupplierName,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    string? ImagePath
 );
 
 /// <summary>DTO resumido para listados de productos.</summary>
 public record ProductSummaryDto(
     int Id,
-    string InternalCode,
     string? Sku,
     string Name,
     decimal SalePrice,
     int CurrentStock,
     bool IsLowStock,
     bool IsActive,
-    string CategoryName
+    string CategoryName,
+    string? ImagePath
 );
 
 /// <summary>DTO para crear un nuevo producto.</summary>
 public record CreateProductDto(
-    string InternalCode,
     string? Sku,
     string Name,
     string? Description,

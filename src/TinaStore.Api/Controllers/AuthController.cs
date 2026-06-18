@@ -70,7 +70,10 @@ public sealed class AuthController : ControllerBase
             : BadRequest(new { message = "Contraseña actual incorrecta." });
     }
 
-    /// <summary>Valida un id_token de Google y devuelve un JWT de TinaStore.</summary>
+    /// <summary>
+    /// Valida un id_token de Google, verifica que el correo esté en la lista de permitidos
+    /// y devuelve un JWT de TinaStore.
+    /// </summary>
     [HttpPost("google")]
     [AllowAnonymous]
     public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDto dto)
@@ -92,9 +95,10 @@ public sealed class AuthController : ControllerBase
             return Unauthorized(new { message = "Token de Google inválido o expirado." });
         }
 
+        // Verificar que el correo esté en la lista de correos autorizados
         var allowedEmails = _config.GetSection("Google:AllowedEmails").Get<string[]>() ?? [];
         if (allowedEmails.Length > 0 && !allowedEmails.Contains(payload.Email, StringComparer.OrdinalIgnoreCase))
-            return Unauthorized(new { message = "Este correo de Google no está autorizado." });
+            return Unauthorized(new { message = "Este correo de Google no está autorizado para acceder al sistema." });
 
         var result = await _auth.LoginWithGoogleAsync(new GoogleUserInfoDto(payload.Email, payload.Name));
         if (result is null)

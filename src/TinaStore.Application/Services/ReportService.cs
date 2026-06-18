@@ -33,7 +33,7 @@ public sealed class ReportService : IReportService
             .ToList();
 
         var topProductos = detalles
-            .GroupBy(d => new { d.ProductId, d.ProductName, Sku = d.Product?.InternalCode })
+            .GroupBy(d => new { d.ProductId, d.ProductName, Sku = d.Product?.Sku })
             .OrderByDescending(g => g.Sum(d => d.Quantity))
             .Take(10)
             .Select(g => new TopProductoDto(
@@ -103,7 +103,7 @@ public sealed class ReportService : IReportService
         var detalles = await _repo.GetSoldDetailsByRangeAsync(from.Date, toFin);
 
         return detalles
-            .GroupBy(d => new { d.ProductId, d.ProductName, Sku = d.Product?.InternalCode })
+            .GroupBy(d => new { d.ProductId, d.ProductName, Sku = d.Product?.Sku })
             .OrderByDescending(g => g.Sum(d => d.Quantity))
             .Take(top)
             .Select(g => new TopProductoDto(

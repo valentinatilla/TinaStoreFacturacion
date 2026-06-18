@@ -10,7 +10,7 @@
         @if (_error is null)
         {
             <div style="font-size: 2.5rem; color: #7c3aed;" class="mb-3">
-                <span class="spinner-border" style="width:2rem;height:2rem;border-color:#7c3aed;border-right-color:transparent;"></span>
+                <span class="spinner-border" style="width: 2rem; height: 2rem; border-color: #F472B6; border-right-color: transparent;"></span>
             </div>
             <p class="text-muted small">Verificando cuenta con Google...</p>
         }
@@ -29,14 +29,11 @@
 
     private string? _error;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnInitializedAsync()
     {
-        if (!firstRender) return;
-
         if (string.IsNullOrWhiteSpace(IdToken))
         {
             _error = "No se recibió el token de Google. Intenta de nuevo.";
-            StateHasChanged();
             return;
         }
 
@@ -44,7 +41,6 @@
         if (response is null)
         {
             _error = "Tu cuenta de Google no está autorizada. Contacta al administrador.";
-            StateHasChanged();
             return;
         }
 

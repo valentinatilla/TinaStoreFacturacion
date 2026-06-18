@@ -24,7 +24,6 @@ public class InvoiceServiceTests
     {
         Id = 10,
         Name = "Producto Test",
-        InternalCode = "PT001",
         SalePrice = 1000,
         CurrentStock = 50,
         IsActive = true,
@@ -115,7 +114,7 @@ public class InvoiceServiceTests
     {
         var sinStock = new Product
         {
-            Id = 10, Name = "Sin Stock", InternalCode = "SS", CurrentStock = 0,
+            Id = 10, Name = "Sin Stock", CurrentStock = 0,
             IsActive = true, CategoryId = 1, Category = new Category { Id = 1, Name = "G" }
         };
         _settingsMock.Setup(r => r.GetByIdAsync(1, default)).ReturnsAsync(NuevasSettings());

@@ -37,9 +37,8 @@ public record UpdateProveedorDto(string Name, string? TaxId, string? ContactName
 
 public record MetodoPagoDto(int Id, string Name, string? Description, bool IsActive);
 
-public record ProductoDto(int Id, string InternalCode, string? Sku, string Name, decimal SalePrice, int CurrentStock, bool IsLowStock, bool IsActive, string CategoryName);
-public record ProductoDetalleDto(int Id, string InternalCode, string? Sku, string Name, string? Description, string? Unit, decimal PurchasePrice, decimal SalePrice, int CurrentStock, int MinimumStock, bool IsActive, bool IsLowStock, decimal ProfitMargin, int CategoryId, string CategoryName, int? SupplierId, string? SupplierName, DateTime CreatedAt);
-public record CreateProductoDto(string InternalCode, string? Sku, string Name, string? Description, string? Unit, decimal PurchasePrice, decimal SalePrice, int CurrentStock, int MinimumStock, int CategoryId, int? SupplierId);
+public record ProductoDto(int Id, string? Sku, string Name, string? Description, string? Unit, decimal SalePrice, decimal PurchasePrice, int CurrentStock, int MinimumStock, bool IsActive, bool IsLowStock, int CategoryId, string CategoryName, int? SupplierId, string? SupplierName, string? ImagePath);
+public record CreateProductoDto(string? Sku, string Name, string? Description, string? Unit, decimal PurchasePrice, decimal SalePrice, int CurrentStock, int MinimumStock, int CategoryId, int? SupplierId);
 public record UpdateProductoDto(string? Sku, string Name, string? Description, string? Unit, decimal PurchasePrice, decimal SalePrice, int MinimumStock, bool IsActive, int CategoryId, int? SupplierId);
 
 public record FacturaDto(int Id, string InvoiceNumber, DateTime InvoiceDate, string CustomerName, decimal Subtotal, decimal DiscountAmount, decimal TaxAmount, decimal Total, decimal AmountPaid, decimal Balance, int Status, string StatusName, string? Notes);
@@ -59,15 +58,13 @@ public record RegisterPagoDto(int PaymentMethodId, decimal Amount, string? Refer
 public record ConfiguracionTiendaDto(
     int Id, string StoreName, string? LogoPath, string? Address,
     string? Phone, string? Email, string? TaxId,
-    string? InvoiceFooterMessage, string? ReminderMessage, string Currency,
+    string? InvoiceFooterMessage, string Currency,
     decimal TaxPercentage, int InvoiceConsecutive, bool AllowNegativeStock);
 
 public record UpdateConfiguracionDto(
     string StoreName, string? Address, string? Phone, string? Email,
-    string? TaxId, string? InvoiceFooterMessage, string? ReminderMessage,
-    string Currency, decimal TaxPercentage, bool AllowNegativeStock);
-
-public record ImportResultDto(int TotalFilas, int Importados, int Errores, List<string> MensajesError);
+    string? TaxId, string? InvoiceFooterMessage, string Currency,
+    decimal TaxPercentage, bool AllowNegativeStock);
 
 public record UsuarioDto(int Id, string FullName, string Email, string Role, bool IsActive, DateTime? LastLoginAt);
 public record CreateUsuarioDto(string FullName, string Email, string Password, string Role);
@@ -92,8 +89,6 @@ public class TinaStoreApiClient
 {
     private readonly HttpClient _http;
     private readonly SessionStateService _session;
-
-    public string BaseUrl => _http.BaseAddress?.ToString() ?? string.Empty;
 
     public TinaStoreApiClient(HttpClient http, SessionStateService session)
     {
@@ -129,6 +124,35 @@ public class TinaStoreApiClient
             var response = await _http.PostAsJsonAsync("/api/auth/login", new { email, password });
             if (!response.IsSuccessStatusCode) return null;
             return await response.Content.ReadFromJsonAsync<TokenResponseDto>();
+        }
+        catch { return null; }
+    }
+
+    public async Task<TokenResponseDto?> LoginConGoogleAsync(string idToken)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync("/api/auth/google", new { idToken });
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<TokenResponseDto>();
+        }
+        catch { return null; }
+    }
+
+    /// <summary>
+    /// Obtiene el perfil del usuario usando un token explícito.
+    /// Usado para restaurar la sesión desde la cookie al arrancar el circuito Blazor.
+    /// </summary>
+    public async Task<UserInfoDto?> GetPerfilAsync(string token)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/api/auth/profile");
+            request.Headers.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            var response = await _http.SendAsync(request);
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<UserInfoDto>();
         }
         catch { return null; }
     }
@@ -216,14 +240,15 @@ public class TinaStoreApiClient
     public Task<List<ProductoDto>?> GetProductosAsync() =>
         GetSafeAsync<List<ProductoDto>>("/api/products");
 
-    public Task<ProductoDetalleDto?> GetProductoAsync(int id) =>
-        GetSafeAsync<ProductoDetalleDto>($"/api/products/{id}");
+    public Task<ProductoDto?> GetProductoAsync(int id) =>
+        GetSafeAsync<ProductoDto>($"/api/products/{id}");
 
-    public async Task<bool> CreateProductoAsync(CreateProductoDto dto)
+    public async Task<ProductoDto?> CreateProductoAsync(CreateProductoDto dto)
     {
         SetAuthHeader();
         var r = await _http.PostAsJsonAsync("/api/products", dto);
-        return r.IsSuccessStatusCode;
+        if (!r.IsSuccessStatusCode) return null;
+        return await r.Content.ReadFromJsonAsync<ProductoDto>();
     }
 
     public async Task<bool> UpdateProductoAsync(int id, UpdateProductoDto dto)
@@ -237,6 +262,25 @@ public class TinaStoreApiClient
     {
         SetAuthHeader();
         var r = await _http.DeleteAsync($"/api/products/{id}");
+        return r.IsSuccessStatusCode;
+    }
+
+    public async Task<ProductoDto?> SubirImagenProductoAsync(int id, Stream contenido, string nombreArchivo)
+    {
+        SetAuthHeader();
+        using var form = new MultipartFormDataContent();
+        using var sc = new StreamContent(contenido);
+        sc.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        form.Add(sc, "archivo", nombreArchivo);
+        var r = await _http.PostAsync($"/api/products/{id}/imagen", form);
+        if (!r.IsSuccessStatusCode) return null;
+        return await r.Content.ReadFromJsonAsync<ProductoDto>();
+    }
+
+    public async Task<bool> EliminarImagenProductoAsync(int id)
+    {
+        SetAuthHeader();
+        var r = await _http.DeleteAsync($"/api/products/{id}/imagen");
         return r.IsSuccessStatusCode;
     }
 
@@ -309,40 +353,6 @@ public class TinaStoreApiClient
         SetAuthHeader();
         var r = await _http.PutAsJsonAsync("/api/settings", dto);
         return r.IsSuccessStatusCode;
-    }
-
-    public async Task<ConfiguracionTiendaDto?> UploadLogoAsync(Stream fileStream, string fileName)
-    {
-        SetAuthHeader();
-        using var content = new MultipartFormDataContent();
-        using var sc = new StreamContent(fileStream);
-        sc.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(
-            fileName.EndsWith(".png") ? "image/png" : "image/jpeg");
-        content.Add(sc, "file", fileName);
-        var r = await _http.PostAsync("/api/settings/logo", content);
-        if (!r.IsSuccessStatusCode) return null;
-        return await r.Content.ReadFromJsonAsync<ConfiguracionTiendaDto>();
-    }
-
-    // ── Importación masiva de productos ───────────────────────────────────────
-    public async Task<ImportResultDto?> ImportProductosAsync(Stream fileStream, string fileName)
-    {
-        SetAuthHeader();
-        using var content = new MultipartFormDataContent();
-        using var sc = new StreamContent(fileStream);
-        sc.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        content.Add(sc, "file", fileName);
-        var r = await _http.PostAsync("/api/documents/productos/importar", content);
-        if (!r.IsSuccessStatusCode) return null;
-        return await r.Content.ReadFromJsonAsync<ImportResultDto>();
-    }
-
-    public async Task<byte[]?> DescargarPlantillaProductosAsync()
-    {
-        SetAuthHeader();
-        var r = await _http.GetAsync("/api/documents/productos/plantilla");
-        return r.IsSuccessStatusCode ? await r.Content.ReadAsByteArrayAsync() : null;
     }
 
     // ── Reportes ──────────────────────────────────────────────────────────────

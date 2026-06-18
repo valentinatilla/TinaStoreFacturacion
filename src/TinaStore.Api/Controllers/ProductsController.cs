@@ -11,18 +11,24 @@ namespace TinaStore.Api.Controllers;
 [Authorize]
 public sealed class ProductsController : ControllerBase
 {
+    private static readonly string[] _extensionesPermitidas = [".jpg", ".jpeg", ".png", ".webp"];
+    private const long _tamañoMaximoBytes = 2 * 1024 * 1024; // 2 MB
+
     private readonly IProductService _service;
     private readonly IValidator<CreateProductDto> _createValidator;
     private readonly IValidator<UpdateProductDto> _updateValidator;
+    private readonly IWebHostEnvironment _env;
 
     public ProductsController(
         IProductService service,
         IValidator<CreateProductDto> createValidator,
-        IValidator<UpdateProductDto> updateValidator)
+        IValidator<UpdateProductDto> updateValidator,
+        IWebHostEnvironment env)
     {
         _service = service;
         _createValidator = createValidator;
         _updateValidator = updateValidator;
+        _env = env;
     }
 
     /// <summary>Obtiene todos los productos. Parámetro opcional: soloActivos=true.</summary>
@@ -90,5 +96,65 @@ public sealed class ProductsController : ControllerBase
     {
         var eliminado = await _service.DeleteAsync(id);
         return eliminado ? NoContent() : NotFound(new { mensaje = $"Producto {id} no encontrado." });
+    }
+
+    /// <summary>Sube o reemplaza la imagen de un producto. Máximo 2 MB; JPG, PNG o WEBP.</summary>
+    [HttpPost("{id:int}/imagen")]
+    public async Task<IActionResult> UploadImage(int id, IFormFile archivo)
+    {
+        if (archivo is null || archivo.Length == 0)
+            return BadRequest(new { mensaje = "No se recibió ningún archivo." });
+
+        if (archivo.Length > _tamañoMaximoBytes)
+            return BadRequest(new { mensaje = "La imagen supera el tamaño máximo de 2 MB." });
+
+        var ext = Path.GetExtension(archivo.FileName).ToLowerInvariant();
+        if (!_extensionesPermitidas.Contains(ext))
+            return BadRequest(new { mensaje = "Solo se permiten imágenes JPG, PNG o WEBP." });
+
+        var producto = await _service.GetByIdAsync(id);
+        if (producto is null)
+            return NotFound(new { mensaje = $"Producto {id} no encontrado." });
+
+        var carpeta = Path.Combine(_env.WebRootPath, "uploads", "productos");
+        Directory.CreateDirectory(carpeta);
+
+        // Borrar imagen anterior si existe
+        if (!string.IsNullOrEmpty(producto.ImagePath))
+        {
+            var rutaAnterior = Path.Combine(_env.WebRootPath, producto.ImagePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            if (System.IO.File.Exists(rutaAnterior))
+                System.IO.File.Delete(rutaAnterior);
+        }
+
+        var nombreArchivo = $"{id}_{Guid.NewGuid():N}{ext}";
+        var rutaFisica = Path.Combine(carpeta, nombreArchivo);
+
+        await using (var stream = System.IO.File.Create(rutaFisica))
+            await archivo.CopyToAsync(stream);
+
+        var rutaRelativa = $"/uploads/productos/{nombreArchivo}";
+        var actualizado = await _service.UpdateImagePathAsync(id, rutaRelativa);
+
+        return Ok(actualizado);
+    }
+
+    /// <summary>Elimina la imagen de un producto.</summary>
+    [HttpDelete("{id:int}/imagen")]
+    public async Task<IActionResult> DeleteImage(int id)
+    {
+        var producto = await _service.GetByIdAsync(id);
+        if (producto is null)
+            return NotFound(new { mensaje = $"Producto {id} no encontrado." });
+
+        if (!string.IsNullOrEmpty(producto.ImagePath))
+        {
+            var rutaFisica = Path.Combine(_env.WebRootPath, producto.ImagePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            if (System.IO.File.Exists(rutaFisica))
+                System.IO.File.Delete(rutaFisica);
+        }
+
+        await _service.UpdateImagePathAsync(id, null);
+        return NoContent();
     }
 }
