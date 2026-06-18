@@ -29,4 +29,20 @@ public sealed class SettingsController : ControllerBase
         var result = await _service.UpdateAsync(dto);
         return Ok(result);
     }
+
+    /// <summary>Sube el logo de la tienda (multipart/form-data, campo: file).</summary>
+    [HttpPost("logo")]
+    public async Task<IActionResult> UploadLogo(IFormFile file)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(new { mensaje = "Debes enviar un archivo de imagen." });
+
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".webp")
+            return BadRequest(new { mensaje = "Solo se admiten imágenes JPG, PNG o WebP." });
+
+        await using var stream = file.OpenReadStream();
+        var result = await _service.UploadLogoAsync(stream, file.FileName);
+        return Ok(result);
+    }
 }

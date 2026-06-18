@@ -26,6 +26,7 @@ public record ProductDto(
 public record ProductSummaryDto(
     int Id,
     string InternalCode,
+    string? Sku,
     string Name,
     decimal SalePrice,
     int CurrentStock,

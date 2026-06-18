@@ -22,6 +22,9 @@
 }
 else
 {
+    <div class="mb-3">
+        <input class="form-control" style="max-width:300px" placeholder="🔍 Buscar proveedor..." @oninput="Filtrar" />
+    </div>
     <div class="card ts-table border-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
@@ -29,7 +32,7 @@ else
                     <tr><th>Nombre</th><th>NIT</th><th>Contacto</th><th>Teléfono</th><th>Email</th><th>Estado</th><th></th></tr>
                 </thead>
                 <tbody>
-                    @foreach (var p in _proveedores)
+                    @foreach (var p in _filtrados)
                     {
                         <tr>
                             <td class="fw-semibold">@p.Name</td>
@@ -108,6 +111,7 @@ else
 
 @code {
     private List<ProveedorDto> _proveedores = [];
+    private List<ProveedorDto> _filtrados = [];
     private bool _loading = true;
     private bool _mostrarModal;
     private bool _guardando;
@@ -122,7 +126,20 @@ else
     {
         _loading = true;
         _proveedores = await Api.GetProveedoresAsync() ?? [];
+        _filtrados = _proveedores;
         _loading = false;
+    }
+
+    private void Filtrar(ChangeEventArgs e)
+    {
+        var q = e.Value?.ToString()?.ToLower() ?? "";
+        _filtrados = string.IsNullOrWhiteSpace(q)
+            ? _proveedores
+            : _proveedores.Where(p =>
+                p.Name.ToLower().Contains(q) ||
+                (p.TaxId?.ToLower().Contains(q) ?? false) ||
+                (p.ContactName?.ToLower().Contains(q) ?? false) ||
+                (p.Phone?.Contains(q) ?? false)).ToList();
     }
 
     private void AbrirModal() { _editandoId = 0; _form = new(); _mostrarModal = true; _mensaje = null; }

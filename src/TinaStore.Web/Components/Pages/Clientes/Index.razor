@@ -1,6 +1,7 @@
 @page "/clientes"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
+@inject IJSRuntime JS
 
 <PageTitle>Clientes — Tina Store</PageTitle>
 
@@ -53,6 +54,13 @@ else
                                 </span>
                             </td>
                             <td class="text-end">
+                                @if (!string.IsNullOrWhiteSpace(c.Phone))
+                                {
+                                    <button class="btn btn-sm btn-outline-success me-1" title="Enviar recordatorio por WhatsApp"
+                                            @onclick="() => EnviarWhatsApp(c)">
+                                        <i class="bi bi-whatsapp"></i>
+                                    </button>
+                                }
                                 <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => AbrirModal(c)">
                                     <i class="bi bi-pencil"></i>
                                 </button>
@@ -89,7 +97,15 @@ else
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Tipo doc.</label>
-                        <input class="form-control" @bind="_form.DocumentType" placeholder="CC, NIT, CE…" />
+                        <select class="form-select" @bind="_form.DocumentType">
+                            <option value="">— Selecciona —</option>
+                            <option value="CC">CC — Cédula de ciudadanía</option>
+                            <option value="NIT">NIT — Número de identificación tributaria</option>
+                            <option value="CE">CE — Cédula de extranjería</option>
+                            <option value="PP">PP — Pasaporte</option>
+                            <option value="TI">TI — Tarjeta de identidad</option>
+                            <option value="Otro">Otro</option>
+                        </select>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Documento</label>
@@ -135,8 +151,16 @@ else
     private string? _mensaje;
     private bool _exito;
     private ClienteForm _form = new();
+    private string? _reminderMessage;
 
-    protected override async Task OnInitializedAsync() => await Cargar();
+    protected override async Task OnInitializedAsync()
+    {
+        var t1 = Cargar();
+        var t2 = Api.GetConfiguracionAsync();
+        await t1;
+        var cfg = await t2;
+        _reminderMessage = cfg?.ReminderMessage;
+    }
 
     private async Task Cargar()
     {
@@ -196,6 +220,18 @@ else
         _exito = ok;
         _mensaje = ok ? "Cliente eliminado." : "No se pudo eliminar el cliente.";
         if (ok) await Cargar();
+    }
+
+    private async Task EnviarWhatsApp(ClienteDto c)
+    {
+        var telefono = c.Phone?.Replace(" ", "").Replace("-", "").Replace("+", "") ?? "";
+        var mensajePlantilla = _reminderMessage
+            ?? "Hola {nombre}, te recordamos que tienes un saldo pendiente de {saldo}. Gracias 🌸";
+        var mensaje = mensajePlantilla
+            .Replace("{nombre}", c.FullName)
+            .Replace("{saldo}", c.PendingBalance.ToString("C0"));
+        var url = $"https://wa.me/{telefono}?text={Uri.EscapeDataString(mensaje)}";
+        await JS.InvokeVoidAsync("open", url, "_blank");
     }
 
     private class ClienteForm

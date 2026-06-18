@@ -1,7 +1,6 @@
 @page "/reportes"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
-@inject IJSRuntime JS
 
 <PageTitle>Reportes — Tina Store</PageTitle>
 
@@ -24,16 +23,20 @@
             @if (_loading) { <span class="spinner-border spinner-border-sm me-1"></span> }
             <i class="bi bi-search me-1"></i>Consultar
         </button>
-        <div class="ms-auto d-flex gap-2">
-            <button class="btn btn-outline-secondary btn-sm" @onclick="ExportarExcel" disabled="@_exportando">
-                @if (_exportando) { <span class="spinner-border spinner-border-sm me-1"></span> }
-                <i class="bi bi-file-earmark-excel me-1"></i>Excel productos
-            </button>
-        </div>
     </div>
 </div>
 
-@if (_ventasData is not null)
+@if (_loading)
+{
+    <div class="text-center py-5"><div class="spinner-border text-purple"></div></div>
+}
+else if (_ventasData is null && _gastosData is null && _cxcData is null)
+{
+    <div class="alert alert-info py-2">
+        <i class="bi bi-info-circle me-2"></i>Selecciona un período y pulsa <strong>Consultar</strong> para ver los reportes.
+    </div>
+}
+else if (_ventasData is not null)
 {
     <div class="row g-4">
         <!-- Reporte de ventas -->
@@ -155,13 +158,17 @@
     private ReporteGastosDto? _gastosData;
     private ReporteCuentasPorCobrarDto? _cxcData;
     private bool _loading;
-    private bool _exportando;
 
-    protected override async Task OnInitializedAsync() => await Consultar();
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        await Consultar();
+    }
 
     private async Task Consultar()
     {
         _loading = true;
+        StateHasChanged();
         var t1 = Api.GetReporteVentasAsync(_desde, _hasta);
         var t2 = Api.GetReporteGastosAsync(_desde, _hasta);
         var t3 = Api.GetReporteCuentasPorCobrarAsync();
@@ -170,22 +177,6 @@
         _gastosData = t2.Result;
         _cxcData    = t3.Result;
         _loading = false;
-    }
-
-    private async Task ExportarExcel()
-    {
-        _exportando = true;
-        try
-        {
-            var bytes = await Api.ExportarProductosExcelAsync();
-            if (bytes is not null)
-            {
-                var base64 = Convert.ToBase64String(bytes);
-                await JS.InvokeVoidAsync("downloadFileFromBase64", base64,
-                    $"productos-{DateTime.Today:yyyyMMdd}.xlsx",
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-            }
-        }
-        finally { _exportando = false; }
+        StateHasChanged();
     }
 }

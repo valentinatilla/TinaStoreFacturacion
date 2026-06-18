@@ -31,6 +31,7 @@ public static class DependencyInjection
         // Repositorios
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<ICustomerRepository, CustomerRepository>();
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IInvoiceRepository, InvoiceRepository>();
         services.AddScoped<IAccountReceivableRepository, AccountReceivableRepository>();

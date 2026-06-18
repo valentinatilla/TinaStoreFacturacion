@@ -8,10 +8,16 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold mb-0"><i class="bi bi-box-seam me-2 text-purple"></i>Productos</h4>
     <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary btn-sm" @onclick="DescargarPlantilla" title="Descargar plantilla Excel">
+            <i class="bi bi-file-earmark-arrow-down me-1"></i>Plantilla
+        </button>
+        <button class="btn btn-outline-success btn-sm" @onclick="() => _mostrarModalImportar = true">
+            <i class="bi bi-file-earmark-arrow-up me-1"></i>Importar Excel
+        </button>
         <button class="btn btn-outline-success btn-sm" @onclick="ExportarExcel">
             <i class="bi bi-file-earmark-excel me-1"></i>Exportar Excel
         </button>
-        <button class="btn bg-purple text-white" @onclick="() => AbrirModal()">
+        <button class="btn bg-purple text-white" @onclick="() => AbrirModal(0)">
             <i class="bi bi-plus-lg me-1"></i>Nuevo producto
         </button>
     </div>
@@ -50,15 +56,28 @@ else
                             <td>@p.CategoryName</td>
                             <td class="text-end">@p.SalePrice.ToString("C0")</td>
                             <td class="text-center">
-                                <span class="badge @(p.IsLowStock ? "bg-danger" : "bg-success")">@p.CurrentStock</span>
+                                <span class="badge @(p.CurrentStock == 0 ? "badge-sin-stock" : p.IsLowStock ? "badge-bajo-stock" : "bg-success")">@p.CurrentStock</span>
                             </td>
                             <td>
-                                <span class="badge @(p.IsActive ? "bg-success" : "bg-secondary")">
-                                    @(p.IsActive ? "Activo" : "Inactivo")
-                                </span>
+                                @if (!p.IsActive)
+                                {
+                                    <span class="badge badge-estado-inactivo">Inactivo</span>
+                                }
+                                else if (p.CurrentStock == 0)
+                                {
+                                    <span class="badge badge-sin-stock">Sin stock</span>
+                                }
+                                else if (p.IsLowStock)
+                                {
+                                    <span class="badge badge-bajo-stock">Stock bajo</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-estado-activo">Activo</span>
+                                }
                             </td>
                             <td class="text-end">
-                                <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => AbrirModal(p)">
+                                <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => AbrirModal(p.Id)">
                                     <i class="bi bi-pencil"></i>
                                 </button>
                                 <button class="btn btn-sm btn-outline-danger" @onclick="() => Eliminar(p.Id)">
@@ -83,13 +102,9 @@ else
                     <button class="btn-close" @onclick="CerrarModal"></button>
                 </div>
                 <div class="modal-body row g-3">
-                    <div class="col-md-5">
+                    <div class="col-md-9">
                         <label class="form-label small fw-semibold">Nombre *</label>
                         <input class="form-control" @bind="_form.Name" />
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label small fw-semibold">Cód. interno *</label>
-                        <input class="form-control" @bind="_form.InternalCode" />
                     </div>
                     <div class="col-md-3">
                         <label class="form-label small fw-semibold">SKU</label>
@@ -152,6 +167,59 @@ else
     </div>
 }
 
+<!-- Modal importar Excel -->
+@if (_mostrarModalImportar)
+{
+    <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-file-earmark-arrow-up text-success me-2"></i>Importar productos desde Excel</h5>
+                    <button class="btn-close" @onclick="CerrarModalImportar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">
+                        Sube un archivo <strong>.xlsx</strong> con las columnas de la plantilla.
+                        Descarga la plantilla con el botón <i class="bi bi-file-earmark-arrow-down"></i> si aún no la tienes.
+                    </p>
+                    <InputFile id="importInput" OnChange="SeleccionarArchivoImportar"
+                               accept=".xlsx,.xls" class="form-control mb-2" />
+                    @if (_resultadoImport is not null)
+                    {
+                        <div class="alert @(_resultadoImport.Errores == 0 ? "alert-success" : "alert-warning") py-2 mt-2">
+                            <strong>@_resultadoImport.Importados</strong> productos importados
+                            @if (_resultadoImport.Errores > 0)
+                            {
+                                <span> · <strong class="text-danger">@_resultadoImport.Errores errores</strong></span>
+                            }
+                        </div>
+                        @if (_resultadoImport.MensajesError.Any())
+                        {
+                            <ul class="small text-danger mb-0" style="max-height:120px;overflow-y:auto;">
+                                @foreach (var e in _resultadoImport.MensajesError)
+                                {
+                                    <li>@e</li>
+                                }
+                            </ul>
+                        }
+                    }
+                    @if (!string.IsNullOrEmpty(_errorImport))
+                    {
+                        <div class="text-danger small mt-1">@_errorImport</div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary btn-sm" @onclick="CerrarModalImportar">Cerrar</button>
+                    <button class="btn btn-success btn-sm" @onclick="EjecutarImportacion" disabled="@(_archivoImport is null || _importando)">
+                        @if (_importando) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                        <i class="bi bi-cloud-upload me-1"></i>Importar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<ProductoDto> _productos = [];
     private List<ProductoDto> _filtrados = [];
@@ -164,6 +232,11 @@ else
     private int _editandoId;
     private string? _mensaje;
     private bool _exito;
+    private bool _mostrarModalImportar;
+    private bool _importando;
+    private IBrowserFile? _archivoImport;
+    private ImportResultDto? _resultadoImport;
+    private string? _errorImport;
     private ProductoForm _form = new();
 
     protected override async Task OnInitializedAsync()
@@ -193,22 +266,30 @@ else
             : _productos.Where(p => p.Name.ToLower().Contains(q) || (p.Sku?.ToLower().Contains(q) ?? false)).ToList();
     }
 
-    private void AbrirModal(ProductoDto? p = null)
+    private async Task AbrirModal(int id)
     {
-        _editando = p is not null;
-        _editandoId = p?.Id ?? 0;
-        _form = p is null
-            ? new()
-            : new() { Name = p.Name, InternalCode = p.InternalCode, Sku = p.Sku, Description = p.Description, Unit = p.Unit, SalePrice = p.SalePrice, PurchasePrice = p.PurchasePrice, CurrentStock = p.CurrentStock, MinimumStock = p.MinimumStock, CategoryId = p.CategoryId, SupplierId = p.SupplierId };
-        _mostrarModal = true;
+        _editando = id > 0;
+        _editandoId = id;
         _mensaje = null;
+        if (_editando)
+        {
+            var p = await Api.GetProductoAsync(id);
+            _form = p is null
+                ? new()
+                : new() { Name = p.Name, InternalCode = p.InternalCode, Sku = p.Sku, Description = p.Description, Unit = p.Unit, SalePrice = p.SalePrice, PurchasePrice = p.PurchasePrice, CurrentStock = p.CurrentStock, MinimumStock = p.MinimumStock, CategoryId = p.CategoryId, SupplierId = p.SupplierId };
+        }
+        else
+        {
+            _form = new();
+        }
+        _mostrarModal = true;
     }
 
     private void CerrarModal() => _mostrarModal = false;
 
     private async Task Guardar()
     {
-        if (string.IsNullOrWhiteSpace(_form.Name) || string.IsNullOrWhiteSpace(_form.InternalCode) || _form.CategoryId == 0) return;
+        if (string.IsNullOrWhiteSpace(_form.Name) || _form.CategoryId == 0) return;
         _guardando = true;
         bool ok;
         if (_editando)
@@ -218,7 +299,9 @@ else
         }
         else
         {
-            var dto = new CreateProductoDto(_form.InternalCode, _form.Sku, _form.Name, _form.Description, _form.Unit, _form.PurchasePrice, _form.SalePrice, _form.CurrentStock, _form.MinimumStock, _form.CategoryId, _form.SupplierId);
+            // InternalCode se genera automáticamente para no pedírselo al usuario
+            var internalCode = $"PROD-{Guid.NewGuid().ToString()[..8].ToUpper()}";
+            var dto = new CreateProductoDto(internalCode, _form.Sku, _form.Name, _form.Description, _form.Unit, _form.PurchasePrice, _form.SalePrice, _form.CurrentStock, _form.MinimumStock, _form.CategoryId, _form.SupplierId);
             ok = await Api.CreateProductoAsync(dto);
         }
         _guardando = false;
@@ -247,6 +330,55 @@ else
             }
         }
         catch { _mensaje = "Error al exportar Excel."; _exito = false; }
+    }
+
+    private async Task DescargarPlantilla()
+    {
+        try
+        {
+            var bytes = await Api.DescargarPlantillaProductosAsync();
+            if (bytes is not null)
+            {
+                var base64 = Convert.ToBase64String(bytes);
+                await JS.InvokeVoidAsync("downloadFileFromBase64", base64,
+                    "plantilla-productos.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            }
+        }
+        catch { _mensaje = "Error al descargar la plantilla."; _exito = false; }
+    }
+
+    private void SeleccionarArchivoImportar(InputFileChangeEventArgs e)
+    {
+        _archivoImport  = e.File;
+        _resultadoImport = null;
+        _errorImport     = null;
+    }
+
+    private void CerrarModalImportar()
+    {
+        _mostrarModalImportar = false;
+        _archivoImport        = null;
+        _resultadoImport      = null;
+        _errorImport          = null;
+    }
+
+    private async Task EjecutarImportacion()
+    {
+        if (_archivoImport is null) return;
+        _importando  = true;
+        _errorImport = null;
+        try
+        {
+            await using var stream = _archivoImport.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            _resultadoImport = await Api.ImportProductosAsync(stream, _archivoImport.Name);
+            if (_resultadoImport is null)
+                _errorImport = "Error al procesar el archivo. Verifica que sea un Excel válido.";
+            else if (_resultadoImport.Importados > 0)
+                await Cargar();
+        }
+        catch { _errorImport = "Error al comunicarse con la API."; }
+        finally { _importando = false; }
     }
 
     private class ProductoForm

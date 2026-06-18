@@ -34,7 +34,7 @@ public sealed class InvoiceService : IInvoiceService
 
     public async Task<IEnumerable<InvoiceSummaryDto>> GetAllAsync()
     {
-        var lista = await _invoices.GetAllAsync();
+        var lista = await _invoices.GetAllWithCustomerAsync();
         return lista.OrderByDescending(i => i.InvoiceDate).Select(ToSummaryDto);
     }
 

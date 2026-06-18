@@ -62,6 +62,12 @@ public class ProductRepository(AppDbContext context) : Repository<Product>(conte
             .Include(p => p.Supplier)
             .Where(p => p.IsActive)
             .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<Product>> GetAllWithNavigationAsync(CancellationToken ct = default)
+        => await DbSet
+            .Include(p => p.Category)
+            .Include(p => p.Supplier)
+            .ToListAsync(ct);
 }
 
 public class InvoiceRepository(AppDbContext context) : Repository<Invoice>(context), IInvoiceRepository
@@ -93,6 +99,20 @@ public class InvoiceRepository(AppDbContext context) : Repository<Invoice>(conte
         var consecutive = settings?.InvoiceConsecutive ?? 1;
         return $"TIN-{consecutive:D6}";
     }
+
+    public async Task<IReadOnlyList<Invoice>> GetAllWithCustomerAsync(CancellationToken ct = default)
+        => await DbSet
+            .Include(i => i.Customer)
+            .OrderByDescending(i => i.InvoiceDate)
+            .ToListAsync(ct);
+}
+
+public class CategoryRepository(AppDbContext context) : Repository<Category>(context), ICategoryRepository
+{
+    public async Task<IReadOnlyList<Category>> GetAllWithProductsAsync(CancellationToken ct = default)
+        => await DbSet
+            .Include(c => c.Products)
+            .ToListAsync(ct);
 }
 
 public class AccountReceivableRepository(AppDbContext context) : Repository<AccountReceivable>(context), IAccountReceivableRepository

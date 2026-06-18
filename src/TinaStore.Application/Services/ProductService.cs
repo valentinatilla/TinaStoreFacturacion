@@ -24,10 +24,8 @@ public sealed class ProductService : IProductService
 
     public async Task<IEnumerable<ProductSummaryDto>> GetAllAsync(bool soloActivos = false)
     {
-        var lista = soloActivos
-            ? await _products.GetActivesAsync()
-            : await _products.GetAllAsync();
-
+        var lista = await _products.GetAllWithNavigationAsync();
+        if (soloActivos) lista = lista.Where(p => p.IsActive).ToList();
         return lista.Select(ToSummaryDto);
     }
 
@@ -122,6 +120,7 @@ public sealed class ProductService : IProductService
     private static ProductSummaryDto ToSummaryDto(Product p) => new(
         p.Id,
         p.InternalCode,
+        p.Sku,
         p.Name,
         p.SalePrice,
         p.CurrentStock,

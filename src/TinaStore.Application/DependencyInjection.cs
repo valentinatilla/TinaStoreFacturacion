@@ -28,7 +28,7 @@ public static class DependencyInjection
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
-        services.AddScoped<IStoreSettingsService, StoreSettingsService>();
+        // IStoreSettingsService se registra en Infrastructure (necesita WebRootPath)
 
         return services;
     }

@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TinaStore.Application.DTOs;
@@ -11,8 +12,13 @@ namespace TinaStore.Api.Controllers;
 public sealed class AuthController : ControllerBase
 {
     private readonly IAuthService _auth;
+    private readonly IConfiguration _config;
 
-    public AuthController(IAuthService auth) => _auth = auth;
+    public AuthController(IAuthService auth, IConfiguration config)
+    {
+        _auth = auth;
+        _config = config;
+    }
 
     /// <summary>Inicia sesión y retorna un token JWT.</summary>
     [HttpPost("login")]
@@ -62,5 +68,38 @@ public sealed class AuthController : ControllerBase
         return ok
             ? Ok(new { message = "Contraseña actualizada correctamente." })
             : BadRequest(new { message = "Contraseña actual incorrecta." });
+    }
+
+    /// <summary>Valida un id_token de Google y devuelve un JWT de TinaStore.</summary>
+    [HttpPost("google")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.IdToken))
+            return BadRequest(new { message = "El id_token es requerido." });
+
+        GoogleJsonWebSignature.Payload payload;
+        try
+        {
+            var settings = new GoogleJsonWebSignature.ValidationSettings
+            {
+                Audience = [_config["Google:ClientId"]]
+            };
+            payload = await GoogleJsonWebSignature.ValidateAsync(dto.IdToken, settings);
+        }
+        catch (InvalidJwtException)
+        {
+            return Unauthorized(new { message = "Token de Google inválido o expirado." });
+        }
+
+        var allowedEmails = _config.GetSection("Google:AllowedEmails").Get<string[]>() ?? [];
+        if (allowedEmails.Length > 0 && !allowedEmails.Contains(payload.Email, StringComparer.OrdinalIgnoreCase))
+            return Unauthorized(new { message = "Este correo de Google no está autorizado." });
+
+        var result = await _auth.LoginWithGoogleAsync(new GoogleUserInfoDto(payload.Email, payload.Name));
+        if (result is null)
+            return Unauthorized(new { message = "Usuario inactivo o no autorizado." });
+
+        return Ok(result);
     }
 }

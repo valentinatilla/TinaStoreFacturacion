@@ -1,0 +1,55 @@
+@page "/auth/google-complete-blazor"
+@layout EmptyLayout
+@inject TinaStoreApiClient Api
+@inject SessionStateService Session
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<div class="login-page">
+    <div class="login-card card p-4 text-center">
+        @if (_error is null)
+        {
+            <div style="font-size: 2.5rem; color: #7c3aed;" class="mb-3">
+                <span class="spinner-border" style="width:2rem;height:2rem;border-color:#7c3aed;border-right-color:transparent;"></span>
+            </div>
+            <p class="text-muted small">Verificando cuenta con Google...</p>
+        }
+        else
+        {
+            <div style="font-size: 2.5rem;" class="mb-3">❌</div>
+            <p class="text-danger small fw-semibold">@_error</p>
+            <a href="/login" class="btn btn-outline-secondary btn-sm mt-2">Volver al inicio de sesión</a>
+        }
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "idToken")]
+    public string? IdToken { get; set; }
+
+    private string? _error;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        if (string.IsNullOrWhiteSpace(IdToken))
+        {
+            _error = "No se recibió el token de Google. Intenta de nuevo.";
+            StateHasChanged();
+            return;
+        }
+
+        var response = await Api.LoginConGoogleAsync(IdToken);
+        if (response is null)
+        {
+            _error = "Tu cuenta de Google no está autorizada. Contacta al administrador.";
+            StateHasChanged();
+            return;
+        }
+
+        Session.SetSession(response.AccessToken, response.User.FullName, response.User.Email, response.User.Role);
+        await SessionStateService.PersistAsync(JS, response.AccessToken);
+        Nav.NavigateTo("/", forceLoad: false);
+    }
+}

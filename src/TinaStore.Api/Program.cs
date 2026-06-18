@@ -33,6 +33,13 @@ try
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
 
+    // Registra IStoreSettingsService con la ruta física de wwwroot
+    var webRootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
+    builder.Services.AddScoped<TinaStore.Application.Interfaces.IStoreSettingsService>(sp =>
+        new TinaStore.Application.Services.StoreSettingsService(
+            sp.GetRequiredService<TinaStore.Domain.Interfaces.IRepository<TinaStore.Domain.Entities.StoreSettings>>(),
+            webRootPath));
+
     // ─── Autenticación JWT ────────────────────────────────────────────────────
     var jwtKey = builder.Configuration["Jwt:Key"]!;
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -122,6 +129,7 @@ try
     }
 
     app.UseSerilogRequestLogging();
+    app.UseStaticFiles();
     app.UseCors("AllowAll");
     app.UseHttpsRedirection();
     app.UseAuthentication();

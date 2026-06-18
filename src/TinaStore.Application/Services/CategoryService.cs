@@ -7,16 +7,16 @@ namespace TinaStore.Application.Services;
 
 public sealed class CategoryService : ICategoryService
 {
-    private readonly IRepository<Category> _categories;
+    private readonly ICategoryRepository _categories;
 
-    public CategoryService(IRepository<Category> categories)
+    public CategoryService(ICategoryRepository categories)
     {
         _categories = categories;
     }
 
     public async Task<IEnumerable<CategoryDto>> GetAllAsync(bool soloActivas = false)
     {
-        var lista = await _categories.GetAllAsync();
+        var lista = await _categories.GetAllWithProductsAsync();
         var resultado = soloActivas ? lista.Where(c => c.IsActive) : lista;
         return resultado.Select(ToDto);
     }

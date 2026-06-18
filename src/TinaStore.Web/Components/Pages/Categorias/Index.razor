@@ -86,13 +86,18 @@ else
     private string? _mensaje;
     private bool _exito;
 
-    protected override async Task OnInitializedAsync() => await Cargar();
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        await Cargar();
+    }
 
     private async Task Cargar()
     {
         _loading = true;
         _categorias = await Api.GetCategoriasAsync() ?? [];
         _loading = false;
+        StateHasChanged();
     }
 
     private void AbrirModal() { _nombre = ""; _descripcion = null; _mostrarModal = true; }
