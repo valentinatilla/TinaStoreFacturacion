@@ -138,14 +138,15 @@ Formato: `tipo: descripción corta en español`
 
 | Versión | Qué incluye | Estado |
 |---|---|---|
-| `v0.1.0` | Base técnica: estructura, login, dashboard, layout kawaii | ✅ En progreso |
-| `v0.2.0` | Clientes e inventario (productos, categorías) | ⏳ Pendiente |
-| `v0.3.0` | Facturación básica + generación de PDF | ⏳ Pendiente |
-| `v0.4.0` | Cuentas por cobrar + métodos de pago | ⏳ Pendiente |
-| `v0.5.0` | Egresos + proveedores + reportes básicos | ⏳ Pendiente |
-| `v0.6.0` | Importación/exportación Excel | ⏳ Pendiente |
-| `v0.7.0` | Configuración de tienda + usuarios | ⏳ Pendiente |
-| `v1.0.0` | Primera versión completa y estable para la tienda | 🎯 Meta |
+| `v0.1.0` | Base técnica: estructura, login, dashboard, layout kawaii | ✅ Completada |
+| `v0.2.0` | Clientes e inventario (productos, categorías) | ✅ Completada |
+| `v0.3.0` | Facturación básica + generación de PDF + registro de pagos | ✅ Completada |
+| `v0.4.0` | Cuentas por cobrar + métodos de pago | ✅ Completada |
+| `v0.5.0` | Egresos + proveedores + reportes básicos | ✅ Completada |
+| `v0.6.0` | Importación/exportación Excel | ✅ Completada |
+| `v0.7.0` | Configuración de tienda + administración de usuarios | ✅ Completada |
+| `v0.8.0` | Cobertura de tests unitarios (CustomerService, ExpenseService, InvoiceService) | ✅ Completada |
+| `v1.0.0` | Primera versión completa y estable para la tienda | 🔄 En progreso |
 
 ---
 

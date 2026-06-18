@@ -72,7 +72,7 @@
                 return;
             }
             Session.SetSession(response.AccessToken, response.User.FullName, response.User.Email, response.User.Role);
-            Nav.NavigateTo("/", forceLoad: true);
+            Nav.NavigateTo("/", forceLoad: false);
         }
         catch
         {

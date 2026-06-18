@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+	<!-- Versión central de Tina Store — actualizar aquí en cada release -->
+	<!-- MAJOR.MINOR.PATCH  →  patch +1 por bugfix, minor +1 por feature, major +1 por cambio disruptivo -->
+	<VersionPrefix>0.1.1</VersionPrefix>
+	<AssemblyVersion>0.1.1.0</AssemblyVersion>
+	<FileVersion>0.1.1.0</FileVersion>
+	<Company>Tina Store</Company>
+	<Product>TinaStore Facturación</Product>
+	<Copyright>© 2025 Tina Store</Copyright>
+  </PropertyGroup>
+</Project>

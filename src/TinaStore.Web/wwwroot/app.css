@@ -349,7 +349,15 @@ body {
     background: var(--ts-surface);
 }
 
-/* ── Badges de estado ───────────────────────────────────────────────── */
+.bg-purple {
+    background-color: #7c3aed !important;
+}
+
+.bg-purple:hover {
+    background-color: #6d28d9 !important;
+}
+
+/* ── Badges de estado
 .badge-estado-pagada,
 .badge-estado-pagado {
     background-color: #D1FAE5;

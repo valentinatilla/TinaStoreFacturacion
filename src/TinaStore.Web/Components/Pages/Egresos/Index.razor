@@ -26,22 +26,35 @@ else
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
-                    <tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th class="text-end">Monto</th><th>Estado</th></tr>
+                    <tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th class="text-end">Monto</th><th>Estado</th><th></th></tr>
                 </thead>
                 <tbody>
                     @foreach (var e in _egresos)
                     {
                         <tr>
-                            <td class="text-muted small">@e.Fecha.ToString("dd/MM/yyyy")</td>
-                            <td>@e.Descripcion</td>
-                            <td><span class="badge bg-secondary">@e.Categoria</span></td>
-                            <td class="text-end fw-semibold">@e.Monto.ToString("C0")</td>
-                            <td><span class="badge @(e.Estado == "Activo" ? "bg-success" : "bg-danger")">@e.Estado</span></td>
+                            <td class="text-muted small">@e.ExpenseDate.ToString("dd/MM/yyyy")</td>
+                            <td>@e.Description</td>
+                            <td><span class="badge bg-secondary">@e.ExpenseCategoryName</span></td>
+                            <td class="text-end fw-semibold">@e.Amount.ToString("C0")</td>
+                            <td><span class="badge @(e.StatusName == "Activo" ? "bg-success" : "bg-danger")">@e.StatusName</span></td>
+                            <td class="text-end">
+                                @if (e.StatusName == "Activo")
+                                {
+                                    <button class="btn btn-sm btn-outline-secondary me-1" title="Editar"
+                                            @onclick="() => AbrirEditar(e)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" title="Anular"
+                                            @onclick="() => AnularEgreso(e.Id)">
+                                        <i class="bi bi-x-circle"></i>
+                                    </button>
+                                }
+                            </td>
                         </tr>
                     }
                     @if (!_egresos.Any())
                     {
-                        <tr><td colspan="5" class="text-center text-muted py-4">Sin egresos registrados</td></tr>
+                        <tr><td colspan="6" class="text-center text-muted py-4">Sin egresos registrados</td></tr>
                     }
                 </tbody>
             </table>
@@ -55,7 +68,7 @@ else
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Registrar Egreso</h5>
+                    <h5 class="modal-title">@(_editandoId > 0 ? "Editar" : "Registrar") Egreso</h5>
                     <button class="btn-close" @onclick="() => _mostrarModal = false"></button>
                 </div>
                 <div class="modal-body row g-3">
@@ -118,28 +131,65 @@ else
     private string? _mensaje;
     private bool _exito;
     private EgresoForm _form = new();
+    private int _editandoId;
 
     protected override async Task OnInitializedAsync()
     {
         _loading = true;
-        var t1 = Api.GetEgresosAsync().ContinueWith(t => _egresos = t.Result ?? []);
-        var t2 = Api.GetCategoriasGastoAsync().ContinueWith(t => _categoriasGasto = t.Result ?? []);
-        var t3 = Api.GetMetodosPagoAsync().ContinueWith(t => _metodosPago = t.Result ?? []);
+        var t1 = Api.GetEgresosAsync();
+        var t2 = Api.GetCategoriasGastoAsync();
+        var t3 = Api.GetMetodosPagoAsync();
         await Task.WhenAll(t1, t2, t3);
+        _egresos        = t1.Result ?? [];
+        _categoriasGasto = t2.Result ?? [];
+        _metodosPago    = t3.Result ?? [];
         _loading = false;
     }
 
-    private void AbrirModal() { _form = new() { Fecha = DateTime.Today }; _mostrarModal = true; _mensaje = null; }
+    private void AbrirModal() { _editandoId = 0; _form = new() { Fecha = DateTime.Today }; _mostrarModal = true; _mensaje = null; }
+
+    private void AbrirEditar(EgresoDto e)
+    {
+        _editandoId = e.Id;
+        _form = new()
+        {
+            Descripcion      = e.Description,
+            Monto            = e.Amount,
+            Fecha            = e.ExpenseDate,
+            CategoriaGastoId = e.ExpenseCategoryId,
+            MetodoPagoId     = e.PaymentMethodId ?? 0,
+            Notas            = e.Notes
+        };
+        _mostrarModal = true;
+        _mensaje = null;
+    }
+
+    private async Task AnularEgreso(int id)
+    {
+        var ok = await Api.AnularEgresoAsync(id);
+        _exito   = ok;
+        _mensaje = ok ? "Egreso anulado." : "No se pudo anular el egreso.";
+        if (ok) _egresos = await Api.GetEgresosAsync() ?? [];
+    }
 
     private async Task Guardar()
     {
         if (string.IsNullOrWhiteSpace(_form.Descripcion) || _form.Monto <= 0) return;
         _guardando = true;
-        var dto = new CreateEgresoDto(_form.CategoriaGastoId, _form.Descripcion, _form.Monto, _form.MetodoPagoId, _form.Fecha, null, _form.Notas);
-        var ok = await Api.CreateEgresoAsync(dto);
+        bool ok;
+        if (_editandoId > 0)
+        {
+            var dto = new UpdateEgresoDto(_form.Fecha, _form.Descripcion, _form.Monto, _form.Notas, _form.CategoriaGastoId, null, _form.MetodoPagoId == 0 ? null : _form.MetodoPagoId);
+            ok = await Api.UpdateEgresoAsync(_editandoId, dto);
+        }
+        else
+        {
+            var dto = new CreateEgresoDto(_form.Fecha, _form.Descripcion, _form.Monto, _form.Notas, _form.CategoriaGastoId, null, _form.MetodoPagoId == 0 ? null : _form.MetodoPagoId);
+            ok = await Api.CreateEgresoAsync(dto);
+        }
         _guardando = false;
-        _exito = ok;
-        _mensaje = ok ? "Egreso registrado." : "Error al registrar el egreso.";
+        _exito   = ok;
+        _mensaje = ok ? (_editandoId > 0 ? "Egreso actualizado." : "Egreso registrado.") : "Error al guardar el egreso.";
         if (ok)
         {
             _mostrarModal = false;

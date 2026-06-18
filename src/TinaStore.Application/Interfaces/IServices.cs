@@ -135,3 +135,9 @@ public interface IUserService
     Task<bool> ResetPasswordAsync(int id, ResetPasswordDto dto);
     Task<bool> DeleteAsync(int id);
 }
+
+public interface IStoreSettingsService
+{
+    Task<StoreSettingsDto> GetAsync();
+    Task<StoreSettingsDto> UpdateAsync(UpdateStoreSettingsDto dto);
+}

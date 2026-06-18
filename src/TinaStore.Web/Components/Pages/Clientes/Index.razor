@@ -44,8 +44,8 @@ else
                             <td>@c.DocumentNumber</td>
                             <td>@c.Phone</td>
                             <td>@c.Email</td>
-                            <td class="text-end @(c.SaldoPendiente > 0 ? "text-danger fw-semibold" : "")">
-                                @c.SaldoPendiente.ToString("C0")
+                            <td class="text-end @(c.PendingBalance > 0 ? "text-danger fw-semibold" : "")">
+                                @c.PendingBalance.ToString("C0")
                             </td>
                             <td>
                                 <span class="badge @(c.IsActive ? "bg-success" : "bg-secondary")">
@@ -88,6 +88,10 @@ else
                         <input class="form-control" @bind="_form.FullName" />
                     </div>
                     <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Tipo doc.</label>
+                        <input class="form-control" @bind="_form.DocumentType" placeholder="CC, NIT, CE…" />
+                    </div>
+                    <div class="col-md-6">
                         <label class="form-label small fw-semibold">Documento</label>
                         <input class="form-control" @bind="_form.DocumentNumber" />
                     </div>
@@ -102,6 +106,10 @@ else
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Dirección</label>
                         <input class="form-control" @bind="_form.Address" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Notas</label>
+                        <input class="form-control" @bind="_form.Notes" />
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -154,7 +162,7 @@ else
         _editandoId = c?.Id ?? 0;
         _form = c is null
             ? new()
-            : new() { FullName = c.FullName, DocumentNumber = c.DocumentNumber, Phone = c.Phone, Email = c.Email, Address = c.Address };
+            : new() { FullName = c.FullName, DocumentType = c.DocumentType, DocumentNumber = c.DocumentNumber, Phone = c.Phone, Email = c.Email, Address = c.Address, Notes = c.Notes };
         _mostrarModal = true;
         _mensaje = null;
     }
@@ -168,12 +176,12 @@ else
         bool ok;
         if (_editando)
         {
-            var dto = new UpdateClienteDto(_form.FullName, _form.DocumentNumber, _form.Phone, _form.Email, _form.Address, true);
+            var dto = new UpdateClienteDto(_form.FullName, _form.DocumentType, _form.DocumentNumber, _form.Phone, _form.Email, _form.Address, _form.Notes, true);
             ok = await Api.UpdateClienteAsync(_editandoId, dto);
         }
         else
         {
-            var dto = new CreateClienteDto(_form.FullName, _form.DocumentNumber, _form.Phone, _form.Email, _form.Address);
+            var dto = new CreateClienteDto(_form.FullName, _form.DocumentType, _form.DocumentNumber, _form.Phone, _form.Email, _form.Address, _form.Notes);
             ok = await Api.CreateClienteAsync(dto);
         }
         _guardando = false;
@@ -193,9 +201,11 @@ else
     private class ClienteForm
     {
         public string FullName { get; set; } = "";
+        public string? DocumentType { get; set; }
         public string? DocumentNumber { get; set; }
         public string? Phone { get; set; }
         public string? Email { get; set; }
         public string? Address { get; set; }
+        public string? Notes { get; set; }
     }
 }

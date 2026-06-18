@@ -8,39 +8,52 @@ public record TokenResponseDto(string AccessToken, string TokenType, int Expires
 public record UserInfoDto(int Id, string FullName, string Email, string Role, bool IsActive);
 
 public record DashboardDto(
-    decimal VentasHoy, decimal VentasMes, int FacturasHoy,
-    decimal TotalPorCobrar, int ClientesConDeuda,
-    decimal GastosMes, int ProductosBajoStock,
+    decimal VentasHoy,
+    int FacturasHoy,
+    decimal VentasSemana,
+    decimal VentasMes,
+    decimal TotalPorCobrar,
+    int ClientesConDeuda,
+    decimal GastosHoy,
+    decimal GastosMes,
+    int ProductosStockBajo,
+    int TotalProductosActivos,
     List<UltimaFacturaDto> UltimasFacturas,
     List<DeudorResumenDto> TopDeudores);
 
-public record UltimaFacturaDto(int Id, string Numero, string ClienteNombre, decimal Total, string Estado, DateTime Fecha);
-public record DeudorResumenDto(int ClienteId, string ClienteNombre, decimal SaldoPendiente);
+public record UltimaFacturaDto(int Id, string InvoiceNumber, DateTime InvoiceDate, string CustomerName, decimal Total, decimal Balance, string Status, string StatusName);
+public record DeudorResumenDto(int CustomerId, string CustomerName, string? Phone, decimal Saldo);
 
-public record ClienteDto(int Id, string FullName, string? DocumentNumber, string? Phone, string? Email, string? Address, decimal SaldoPendiente, bool IsActive);
-public record CreateClienteDto(string FullName, string? DocumentNumber, string? Phone, string? Email, string? Address);
-public record UpdateClienteDto(string FullName, string? DocumentNumber, string? Phone, string? Email, string? Address, bool IsActive);
+public record ClienteDto(int Id, string FullName, string? DocumentType, string? DocumentNumber, string? Phone, string? Email, string? Address, string? Notes, bool IsActive, decimal PendingBalance, DateTime CreatedAt);
+public record CreateClienteDto(string FullName, string? DocumentType, string? DocumentNumber, string? Phone, string? Email, string? Address, string? Notes);
+public record UpdateClienteDto(string FullName, string? DocumentType, string? DocumentNumber, string? Phone, string? Email, string? Address, string? Notes, bool IsActive);
 
-public record CategoriaDto(int Id, string Name, string? Description, int ProductCount);
+public record CategoriaDto(int Id, string Name, string? Description, bool IsActive, int ProductCount);
 public record CreateCategoriaDto(string Name, string? Description);
 
-public record ProveedorDto(int Id, string Name, string? ContactName, string? Phone, string? Email, string? Address, bool IsActive);
-public record CreateProveedorDto(string Name, string? ContactName, string? Phone, string? Email, string? Address);
+public record ProveedorDto(int Id, string Name, string? TaxId, string? ContactName, string? Phone, string? Email, string? Address, string? Notes, bool IsActive, int ProductCount, DateTime CreatedAt);
+public record CreateProveedorDto(string Name, string? TaxId, string? ContactName, string? Phone, string? Email, string? Address, string? Notes);
+public record UpdateProveedorDto(string Name, string? TaxId, string? ContactName, string? Phone, string? Email, string? Address, string? Notes, bool IsActive);
 
 public record MetodoPagoDto(int Id, string Name, string? Description, bool IsActive);
 
-public record ProductoDto(int Id, string Name, string? SKU, string? Description, decimal SalePrice, decimal PurchasePrice, int Stock, int MinStock, bool IsActive, string? CategoryName, string? SupplierName, int CategoryId, int? SupplierId);
-public record CreateProductoDto(string Name, string? SKU, string? Description, decimal SalePrice, decimal PurchasePrice, int Stock, int MinStock, int CategoryId, int? SupplierId);
-public record UpdateProductoDto(string Name, string? SKU, string? Description, decimal SalePrice, decimal PurchasePrice, int MinStock, bool IsActive, int CategoryId, int? SupplierId);
+public record ProductoDto(int Id, string InternalCode, string? Sku, string Name, string? Description, string? Unit, decimal SalePrice, decimal PurchasePrice, int CurrentStock, int MinimumStock, bool IsActive, bool IsLowStock, int CategoryId, string CategoryName, int? SupplierId, string? SupplierName);
+public record CreateProductoDto(string InternalCode, string? Sku, string Name, string? Description, string? Unit, decimal PurchasePrice, decimal SalePrice, int CurrentStock, int MinimumStock, int CategoryId, int? SupplierId);
+public record UpdateProductoDto(string? Sku, string Name, string? Description, string? Unit, decimal PurchasePrice, decimal SalePrice, int MinimumStock, bool IsActive, int CategoryId, int? SupplierId);
 
-public record FacturaDto(int Id, string Numero, string ClienteNombre, decimal Subtotal, decimal Tax, decimal Total, decimal TotalPagado, string Estado, DateTime FechaEmision);
-public record CreateFacturaDto(int ClienteId, int MetodoPagoId, List<CreateDetalleFacturaDto> Detalles, decimal? PagoInicial, string? Notas);
-public record CreateDetalleFacturaDto(int ProductoId, int Cantidad, decimal PrecioUnitario);
+public record FacturaDto(int Id, string InvoiceNumber, DateTime InvoiceDate, string CustomerName, decimal Subtotal, decimal DiscountAmount, decimal TaxAmount, decimal Total, decimal AmountPaid, decimal Balance, int Status, string StatusName, string? Notes);
+public record CreateFacturaDto(int CustomerId, decimal DiscountAmount, decimal TaxAmount, string? Notes, List<CreateDetalleFacturaDto> Details, CreatePagoInicialDto? PagoInicial);
+public record CreateDetalleFacturaDto(int ProductId, int Quantity, decimal UnitPrice, decimal DiscountAmount = 0);
+public record CreatePagoInicialDto(int PaymentMethodId, decimal Amount, string? Reference, string? Notes);
 
-public record EgresoDto(int Id, string Descripcion, decimal Monto, string Categoria, string Estado, DateTime Fecha);
-public record CreateEgresoDto(int CategoriaGastoId, string Descripcion, decimal Monto, int MetodoPagoId, DateTime Fecha, string? Comprobante, string? Notas);
+public record EgresoDto(int Id, DateTime ExpenseDate, string Description, decimal Amount, string? Notes, int Status, string StatusName, int ExpenseCategoryId, string ExpenseCategoryName, int? PaymentMethodId, string? PaymentMethodName);
+public record CreateEgresoDto(DateTime ExpenseDate, string Description, decimal Amount, string? Notes, int ExpenseCategoryId, int? SupplierId, int? PaymentMethodId);
 
-public record CategoriaGastoDto(int Id, string Name, string? Description, int ExpenseCount);
+public record CategoriaGastoDto(int Id, string Name, string? Description, bool IsActive, int ExpenseCount);
+
+public record UpdateEgresoDto(DateTime ExpenseDate, string Description, decimal Amount, string? Notes, int ExpenseCategoryId, int? SupplierId, int? PaymentMethodId);
+
+public record RegisterPagoDto(int PaymentMethodId, decimal Amount, string? Reference, string? Notes);
 
 public record ConfiguracionTiendaDto(
     int Id, string StoreName, string? LogoPath, string? Address,
@@ -53,9 +66,20 @@ public record UpdateConfiguracionDto(
     string? TaxId, string? InvoiceFooterMessage, string Currency,
     decimal TaxPercentage, bool AllowNegativeStock);
 
-public record ReporteVentasDto(DateTime Fecha, int CantidadFacturas, decimal TotalVentas, decimal TotalCobrado);
-public record ReporteGastosDto(string Categoria, int CantidadGastos, decimal TotalGastos);
-public record ReporteCuentasPorCobrarDto(string ClienteNombre, string? DocumentoCliente, decimal SaldoPendiente, int FacturasPendientes, DateTime? UltimaFacturaFecha);
+public record UsuarioDto(int Id, string FullName, string Email, string Role, bool IsActive, DateTime? LastLoginAt);
+public record CreateUsuarioDto(string FullName, string Email, string Password, string Role);
+public record UpdateUsuarioDto(string FullName, string Email, string Role, bool IsActive);
+public record ResetPasswordDto(string NewPassword, string ConfirmNewPassword);
+
+public record VentasPorPeriodoDto(DateTime Fecha, int CantidadFacturas, decimal TotalVentas, decimal TotalCobrado, decimal TotalPendiente);
+public record TopProductoDto(int ProductId, string ProductName, string? Sku, int TotalVendido, decimal TotalIngresos);
+public record ReporteVentasDto(DateTime Desde, DateTime Hasta, decimal TotalVentas, decimal TotalCobrado, decimal TotalPendiente, int TotalFacturas, List<VentasPorPeriodoDto> VentasPorDia, List<TopProductoDto> TopProductos);
+
+public record ResumenGastosPorCategoriaDto(int CategoryId, string CategoryName, int TotalEgresos, decimal TotalMonto);
+public record ReporteGastosDto(DateTime Desde, DateTime Hasta, decimal TotalGastos, int TotalEgresos, List<ResumenGastosPorCategoriaDto> PorCategoria);
+
+public record DeudorCXCDto(int CustomerId, string CustomerName, string? DocumentNumber, string? Phone, decimal SaldoPendiente, int FacturasPendientes, DateTime? UltimaFacturaFecha);
+public record ReporteCuentasPorCobrarDto(decimal TotalPorCobrar, int TotalClientes, List<DeudorCXCDto> Deudores);
 
 /// <summary>
 /// Wrapper centralizado de HttpClient para consumir la API de TinaStore.
@@ -165,6 +189,13 @@ public class TinaStoreApiClient
         return r.IsSuccessStatusCode;
     }
 
+    public async Task<bool> UpdateProveedorAsync(int id, UpdateProveedorDto dto)
+    {
+        SetAuthHeader();
+        var r = await _http.PutAsJsonAsync($"/api/suppliers/{id}", dto);
+        return r.IsSuccessStatusCode;
+    }
+
     public async Task<bool> DeleteProveedorAsync(int id)
     {
         SetAuthHeader();
@@ -215,17 +246,24 @@ public class TinaStoreApiClient
         return r.IsSuccessStatusCode;
     }
 
-    public async Task<bool> AnularFacturaAsync(int id)
+    public async Task<bool> RegisterPagoAsync(int facturaId, RegisterPagoDto dto)
     {
         SetAuthHeader();
-        var r = await _http.PostAsync($"/api/invoices/{id}/cancel", null);
+        var r = await _http.PostAsJsonAsync($"/api/invoices/{facturaId}/pagos", dto);
+        return r.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> AnularFacturaAsync(int id, string razon = "Anulada por el usuario")
+    {
+        SetAuthHeader();
+        var r = await _http.PostAsJsonAsync($"/api/invoices/{id}/anular", new { Reason = razon });
         return r.IsSuccessStatusCode;
     }
 
     public async Task<byte[]?> DescargarPdfFacturaAsync(int id)
     {
         SetAuthHeader();
-        var r = await _http.GetAsync($"/api/documents/invoice/{id}/pdf");
+        var r = await _http.GetAsync($"/api/documents/facturas/{id}/pdf");
         return r.IsSuccessStatusCode ? await r.Content.ReadAsByteArrayAsync() : null;
     }
 
@@ -243,6 +281,20 @@ public class TinaStoreApiClient
         return r.IsSuccessStatusCode;
     }
 
+    public async Task<bool> UpdateEgresoAsync(int id, UpdateEgresoDto dto)
+    {
+        SetAuthHeader();
+        var r = await _http.PutAsJsonAsync($"/api/expenses/{id}", dto);
+        return r.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> AnularEgresoAsync(int id)
+    {
+        SetAuthHeader();
+        var r = await _http.PostAsync($"/api/expenses/{id}/anular", null);
+        return r.IsSuccessStatusCode;
+    }
+
     // ── Configuración de tienda ───────────────────────────────────────────────
     public Task<ConfiguracionTiendaDto?> GetConfiguracionAsync() =>
         GetSafeAsync<ConfiguracionTiendaDto>("/api/settings");
@@ -255,21 +307,53 @@ public class TinaStoreApiClient
     }
 
     // ── Reportes ──────────────────────────────────────────────────────────────
-    public Task<List<ReporteVentasDto>?> GetReporteVentasAsync(DateTime desde, DateTime hasta) =>
-        GetSafeAsync<List<ReporteVentasDto>>(
-            $"/api/reports/sales?from={desde:yyyy-MM-dd}&to={hasta:yyyy-MM-dd}");
+    public Task<ReporteVentasDto?> GetReporteVentasAsync(DateTime desde, DateTime hasta) =>
+        GetSafeAsync<ReporteVentasDto>(
+            $"/api/reports/ventas?from={desde:yyyy-MM-dd}&to={hasta:yyyy-MM-dd}");
 
-    public Task<List<ReporteGastosDto>?> GetReporteGastosAsync(DateTime desde, DateTime hasta) =>
-        GetSafeAsync<List<ReporteGastosDto>>(
-            $"/api/reports/expenses?from={desde:yyyy-MM-dd}&to={hasta:yyyy-MM-dd}");
+    public Task<ReporteGastosDto?> GetReporteGastosAsync(DateTime desde, DateTime hasta) =>
+        GetSafeAsync<ReporteGastosDto>(
+            $"/api/reports/gastos?from={desde:yyyy-MM-dd}&to={hasta:yyyy-MM-dd}");
 
-    public Task<List<ReporteCuentasPorCobrarDto>?> GetReporteCuentasPorCobrarAsync() =>
-        GetSafeAsync<List<ReporteCuentasPorCobrarDto>>("/api/reports/accounts-receivable");
+    public Task<ReporteCuentasPorCobrarDto?> GetReporteCuentasPorCobrarAsync() =>
+        GetSafeAsync<ReporteCuentasPorCobrarDto>("/api/reports/cuentas-por-cobrar");
 
     public async Task<byte[]?> ExportarProductosExcelAsync()
     {
         SetAuthHeader();
-        var r = await _http.GetAsync("/api/documents/products/export");
+        var r = await _http.GetAsync("/api/documents/productos/excel");
         return r.IsSuccessStatusCode ? await r.Content.ReadAsByteArrayAsync() : null;
+    }
+
+    // ── Usuarios ─────────────────────────────────────────────────────────────
+    public Task<List<UsuarioDto>?> GetUsuariosAsync() =>
+        GetSafeAsync<List<UsuarioDto>>("/api/users");
+
+    public async Task<bool> CreateUsuarioAsync(CreateUsuarioDto dto)
+    {
+        SetAuthHeader();
+        var r = await _http.PostAsJsonAsync("/api/users", dto);
+        return r.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> UpdateUsuarioAsync(int id, UpdateUsuarioDto dto)
+    {
+        SetAuthHeader();
+        var r = await _http.PutAsJsonAsync($"/api/users/{id}", dto);
+        return r.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> DeleteUsuarioAsync(int id)
+    {
+        SetAuthHeader();
+        var r = await _http.DeleteAsync($"/api/users/{id}");
+        return r.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> ResetPasswordUsuarioAsync(int id, ResetPasswordDto dto)
+    {
+        SetAuthHeader();
+        var r = await _http.PostAsJsonAsync($"/api/users/{id}/reset-password", dto);
+        return r.IsSuccessStatusCode;
     }
 }

@@ -61,7 +61,7 @@ else if (_data is not null)
                     <div class="kpi-icon bg-danger bg-opacity-10 text-danger"><i class="bi bi-exclamation-triangle"></i></div>
                     <div>
                         <div class="text-muted small">Stock bajo</div>
-                        <div class="fw-bold fs-5">@_data.ProductosBajoStock productos</div>
+                        <div class="fw-bold fs-5">@_data.ProductosStockBajo productos</div>
                     </div>
                 </div>
             </div>
@@ -87,11 +87,11 @@ else if (_data is not null)
                             @foreach (var f in _data.UltimasFacturas)
                             {
                                 <tr>
-                                    <td><span class="badge bg-secondary">@f.Numero</span></td>
-                                    <td>@f.ClienteNombre</td>
-                                    <td class="fw-semibold">@f.Total.ToString("C0")</td>
-                                    <td><span class="badge badge-estado-@f.Estado.ToLower()">@f.Estado</span></td>
-                                    <td class="text-muted small">@f.Fecha.ToString("dd/MM/yy")</td>
+                                    <td><span class="badge bg-secondary">@f.InvoiceNumber</span></td>
+                                            <td>@f.CustomerName</td>
+                                            <td class="fw-semibold">@f.Total.ToString("C0")</td>
+                                            <td><span class="badge badge-estado-@f.StatusName.ToLower()">@f.StatusName</span></td>
+                                            <td class="text-muted small">@f.InvoiceDate.ToString("dd/MM/yy")</td>
                                 </tr>
                             }
                         </tbody>
@@ -110,8 +110,8 @@ else if (_data is not null)
                     @foreach (var d in _data.TopDeudores)
                     {
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span>@d.ClienteNombre</span>
-                            <span class="badge bg-danger rounded-pill">@d.SaldoPendiente.ToString("C0")</span>
+                            <span>@d.CustomerName</span>
+                             <span class="badge bg-danger rounded-pill">@d.Saldo.ToString("C0")</span>
                         </li>
                     }
                     @if (!_data.TopDeudores.Any())

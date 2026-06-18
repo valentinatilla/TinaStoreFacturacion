@@ -45,7 +45,18 @@ public record ReporteGastosDto(
 public record ReporteCuentasPorCobrarDto(
     decimal TotalPorCobrar,
     int TotalClientes,
-    List<DeudorResumenDto> Deudores
+    List<DeudorCXCDto> Deudores
+);
+
+/// <summary>Detalle de un deudor en el reporte de cuentas por cobrar.</summary>
+public record DeudorCXCDto(
+    int CustomerId,
+    string CustomerName,
+    string? DocumentNumber,
+    string? Phone,
+    decimal SaldoPendiente,
+    int FacturasPendientes,
+    DateTime? UltimaFacturaFecha
 );
 
 public record ExcelImportResultDto(

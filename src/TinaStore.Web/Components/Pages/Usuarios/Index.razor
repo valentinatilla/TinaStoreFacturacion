@@ -1,0 +1,359 @@
+@page "/usuarios"
+@attribute [Authorize]
+@inject TinaStoreApiClient Api
+@inject SessionStateService Session
+@inject NavigationManager Nav
+
+<PageTitle>Usuarios — Tina Store</PageTitle>
+
+@* Solo Admin puede acceder *@
+@if (Session.UserRole != "Admin")
+{
+    <div class="alert alert-danger">
+        <i class="bi bi-shield-lock me-2"></i>No tienes permisos para acceder a esta sección.
+    </div>
+    return;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0"><i class="bi bi-people-fill me-2 text-purple"></i>Gestión de Usuarios</h4>
+    <button class="btn bg-purple text-white" @onclick="AbrirNuevo">
+        <i class="bi bi-plus-lg me-1"></i>Nuevo usuario
+    </button>
+</div>
+
+@if (!string.IsNullOrEmpty(_mensaje))
+{
+    <div class="alert @(_exito ? "alert-success" : "alert-danger") py-2 d-flex align-items-center">
+        <i class="bi bi-@(_exito ? "check-circle" : "exclamation-triangle") me-2"></i>@_mensaje
+        <button class="btn-close ms-auto btn-sm" @onclick="() => _mensaje = null"></button>
+    </div>
+}
+
+@if (_loading)
+{
+    <div class="text-center py-5"><div class="spinner-border text-purple"></div></div>
+}
+else
+{
+    <div class="card ts-table border-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                        <th>Último acceso</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in _usuarios)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@u.FullName</td>
+                            <td class="text-muted">@u.Email</td>
+                            <td>
+                                <span class="badge @RolBadge(u.Role)">@RolTexto(u.Role)</span>
+                            </td>
+                            <td>
+                                <span class="badge @(u.IsActive ? "bg-success" : "bg-secondary")">
+                                    @(u.IsActive ? "Activo" : "Inactivo")
+                                </span>
+                            </td>
+                            <td class="text-muted small">
+                                @(u.LastLoginAt.HasValue ? u.LastLoginAt.Value.ToString("dd/MM/yyyy HH:mm") : "—")
+                            </td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-secondary me-1" title="Editar"
+                                        @onclick="() => AbrirEditar(u)">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning me-1" title="Resetear contraseña"
+                                        @onclick="() => AbrirReset(u)">
+                                    <i class="bi bi-key"></i>
+                                </button>
+                                @if (u.Email != Session.UserEmail)
+                                {
+                                    <button class="btn btn-sm btn-outline-danger" title="Desactivar"
+                                            @onclick="() => Desactivar(u.Id)">
+                                        <i class="bi bi-person-dash"></i>
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    @if (!_usuarios.Any())
+                    {
+                        <tr><td colspan="6" class="text-center text-muted py-4">Sin usuarios registrados</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<!-- Modal crear / editar usuario -->
+@if (_mostrarModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-person-fill me-2 text-purple"></i>
+                        @(_editandoId > 0 ? "Editar" : "Nuevo") usuario
+                    </h5>
+                    <button class="btn-close" @onclick="CerrarModal"></button>
+                </div>
+                <div class="modal-body row g-3">
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Nombre completo *</label>
+                        <input class="form-control" @bind="_form.FullName" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Correo electrónico *</label>
+                        <input type="email" class="form-control" @bind="_form.Email" />
+                    </div>
+                    @if (_editandoId == 0)
+                    {
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Contraseña *</label>
+                            <input type="password" class="form-control" @bind="_form.Password"
+                                   placeholder="Mínimo 6 caracteres" />
+                        </div>
+                    }
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Rol *</label>
+                        <select class="form-select" @bind="_form.Role">
+                            <option value="Admin">Administrador</option>
+                            <option value="Seller">Vendedor</option>
+                            <option value="ReadOnly">Solo lectura</option>
+                        </select>
+                    </div>
+                    @if (_editandoId > 0)
+                    {
+                        <div class="col-md-6 d-flex align-items-end">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="activo" @bind="_form.IsActive" />
+                                <label class="form-check-label small" for="activo">Usuario activo</label>
+                            </div>
+                        </div>
+                    }
+                    @if (_errorModal is not null)
+                    {
+                        <div class="col-12">
+                            <div class="text-danger small">@_errorModal</div>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary btn-sm" @onclick="CerrarModal">Cancelar</button>
+                    <button class="btn bg-purple text-white btn-sm" @onclick="Guardar" disabled="@_guardando">
+                        @if (_guardando) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                        <i class="bi bi-check-lg me-1"></i>Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal resetear contraseña -->
+@if (_mostrarReset)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-key text-warning me-2"></i>Restablecer contraseña
+                    </h5>
+                    <button class="btn-close" @onclick="() => _mostrarReset = false"></button>
+                </div>
+                <div class="modal-body row g-3">
+                    <p class="text-muted small col-12">
+                        Restableciendo contraseña de <strong>@_resetNombre</strong>
+                    </p>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Nueva contraseña *</label>
+                        <input type="password" class="form-control" @bind="_resetPass" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Confirmar contraseña *</label>
+                        <input type="password" class="form-control" @bind="_resetConfirm" />
+                    </div>
+                    @if (_errorReset is not null)
+                    {
+                        <div class="col-12"><div class="text-danger small">@_errorReset</div></div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary btn-sm" @onclick="() => _mostrarReset = false">Cancelar</button>
+                    <button class="btn btn-warning btn-sm" @onclick="ConfirmarReset" disabled="@_reseteando">
+                        @if (_reseteando) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                        <i class="bi bi-check-lg me-1"></i>Restablecer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<UsuarioDto> _usuarios = [];
+    private bool _loading = true;
+    private bool _mostrarModal;
+    private bool _guardando;
+    private int _editandoId;
+    private string? _mensaje;
+    private bool _exito;
+    private string? _errorModal;
+    private UsuarioForm _form = new();
+
+    private bool _mostrarReset;
+    private int _resetId;
+    private string _resetNombre = "";
+    private string _resetPass = "";
+    private string _resetConfirm = "";
+    private bool _reseteando;
+    private string? _errorReset;
+
+    protected override async Task OnInitializedAsync() => await Cargar();
+
+    private async Task Cargar()
+    {
+        _loading = true;
+        _usuarios = await Api.GetUsuariosAsync() ?? [];
+        _loading = false;
+    }
+
+    private void AbrirNuevo()
+    {
+        _editandoId = 0;
+        _form = new() { Role = "Seller", IsActive = true };
+        _errorModal = null;
+        _mostrarModal = true;
+        _mensaje = null;
+    }
+
+    private void AbrirEditar(UsuarioDto u)
+    {
+        _editandoId = u.Id;
+        _form = new() { FullName = u.FullName, Email = u.Email, Role = u.Role, IsActive = u.IsActive };
+        _errorModal = null;
+        _mostrarModal = true;
+        _mensaje = null;
+    }
+
+    private void AbrirReset(UsuarioDto u)
+    {
+        _resetId = u.Id;
+        _resetNombre = u.FullName;
+        _resetPass = "";
+        _resetConfirm = "";
+        _errorReset = null;
+        _mostrarReset = true;
+    }
+
+    private void CerrarModal() { _mostrarModal = false; _errorModal = null; }
+
+    private async Task Guardar()
+    {
+        if (string.IsNullOrWhiteSpace(_form.FullName) || string.IsNullOrWhiteSpace(_form.Email))
+        {
+            _errorModal = "Nombre y correo son obligatorios.";
+            return;
+        }
+        if (_editandoId == 0 && string.IsNullOrWhiteSpace(_form.Password))
+        {
+            _errorModal = "La contraseña es obligatoria para nuevos usuarios.";
+            return;
+        }
+
+        _guardando = true;
+        _errorModal = null;
+        try
+        {
+            bool ok;
+            if (_editandoId > 0)
+            {
+                var dto = new UpdateUsuarioDto(_form.FullName, _form.Email, _form.Role, _form.IsActive);
+                ok = await Api.UpdateUsuarioAsync(_editandoId, dto);
+            }
+            else
+            {
+                var dto = new CreateUsuarioDto(_form.FullName, _form.Email, _form.Password!, _form.Role);
+                ok = await Api.CreateUsuarioAsync(dto);
+            }
+            _exito   = ok;
+            _mensaje = ok
+                ? (_editandoId > 0 ? "Usuario actualizado correctamente." : "Usuario creado correctamente.")
+                : "Error al guardar el usuario.";
+            if (ok) { CerrarModal(); await Cargar(); }
+        }
+        catch { _errorModal = "Error al comunicarse con la API."; }
+        finally { _guardando = false; }
+    }
+
+    private async Task ConfirmarReset()
+    {
+        if (string.IsNullOrWhiteSpace(_resetPass) || _resetPass.Length < 6)
+        {
+            _errorReset = "La contraseña debe tener al menos 6 caracteres.";
+            return;
+        }
+        if (_resetPass != _resetConfirm)
+        {
+            _errorReset = "Las contraseñas no coinciden.";
+            return;
+        }
+
+        _reseteando = true;
+        _errorReset = null;
+        try
+        {
+            var ok = await Api.ResetPasswordUsuarioAsync(_resetId, new ResetPasswordDto(_resetPass, _resetConfirm));
+            _mostrarReset = false;
+            _exito   = ok;
+            _mensaje = ok ? "Contraseña restablecida correctamente." : "Error al restablecer la contraseña.";
+        }
+        catch { _errorReset = "Error al comunicarse con la API."; }
+        finally { _reseteando = false; }
+    }
+
+    private async Task Desactivar(int id)
+    {
+        var ok = await Api.DeleteUsuarioAsync(id);
+        _exito   = ok;
+        _mensaje = ok ? "Usuario desactivado correctamente." : "No se pudo desactivar el usuario.";
+        if (ok) await Cargar();
+    }
+
+    private static string RolBadge(string role) => role switch
+    {
+        "Admin"    => "bg-purple",
+        "Seller"   => "bg-primary",
+        "ReadOnly" => "bg-secondary",
+        _          => "bg-secondary"
+    };
+
+    private static string RolTexto(string role) => role switch
+    {
+        "Admin"    => "Administrador",
+        "Seller"   => "Vendedor",
+        "ReadOnly" => "Solo lectura",
+        _          => role
+    };
+
+    private class UsuarioForm
+    {
+        public string  FullName { get; set; } = "";
+        public string  Email    { get; set; } = "";
+        public string? Password { get; set; }
+        public string  Role     { get; set; } = "Seller";
+        public bool    IsActive { get; set; } = true;
+    }
+}
