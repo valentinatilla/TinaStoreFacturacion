@@ -39,6 +39,7 @@ public static class DependencyInjection
         services.AddScoped<IDashboardRepository, DashboardRepository>();
         services.AddScoped<IReportRepository, ReportRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IReminderRepository, ReminderRepository>();
 
         // Hash de contraseñas (sin Identity completo)
         services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();

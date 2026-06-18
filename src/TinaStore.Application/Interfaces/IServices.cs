@@ -106,6 +106,8 @@ public interface IExcelService
     Task<byte[]> ExportProductsAsync();
     Task<ExcelImportResultDto> ImportProductsAsync(Stream excelStream);
     Task<byte[]> GetProductTemplateAsync();
+    Task<List<ImportPreviewRowDto>> PreviewImportAsync(Stream excelStream);
+    Task<ExcelImportResultDto> ImportFromPreviewAsync(List<ImportPreviewRowDto> filas);
 }
 
 public interface IAuthService
@@ -140,6 +142,12 @@ public interface IUserService
     Task<UserInfoDto?> UpdateAsync(int id, UpdateUserDto dto);
     Task<bool> ResetPasswordAsync(int id, ResetPasswordDto dto);
     Task<bool> DeleteAsync(int id);
+}
+
+public interface IReminderService
+{
+    Task<ReminderHistoryDto> RegistrarRecordatorioWhatsAppAsync(RegistrarRecordatorioWhatsAppDto dto);
+    Task<IEnumerable<ReminderHistoryDto>> GetHistorialAsync(int customerId);
 }
 
 public interface IStoreSettingsService

@@ -1,6 +1,7 @@
 using TinaStore.Application.DTOs;
 using TinaStore.Application.Interfaces;
 using TinaStore.Domain.Entities;
+using TinaStore.Domain.Enums;
 using TinaStore.Domain.Interfaces;
 
 namespace TinaStore.Application.Services;
@@ -16,14 +17,14 @@ public sealed class CustomerService : ICustomerService
 
     public async Task<IEnumerable<CustomerDto>> GetAllAsync(bool soloActivos = false)
     {
-        var lista = await _customers.GetAllAsync();
+        var lista = await _customers.GetAllWithInvoicesAsync();
         var resultado = soloActivos ? lista.Where(c => c.IsActive) : lista;
         return resultado.Select(ToDto);
     }
 
     public async Task<CustomerDto?> GetByIdAsync(int id)
     {
-        var entity = await _customers.GetByIdAsync(id);
+        var entity = await _customers.GetWithInvoicesAsync(id);
         return entity is null ? null : ToDto(entity);
     }
 
@@ -48,7 +49,7 @@ public sealed class CustomerService : ICustomerService
 
     public async Task<CustomerDto?> UpdateAsync(int id, UpdateCustomerDto dto)
     {
-        var entity = await _customers.GetByIdAsync(id);
+        var entity = await _customers.GetWithInvoicesAsync(id);
         if (entity is null) return null;
 
         entity.FullName = dto.FullName;
@@ -81,6 +82,33 @@ public sealed class CustomerService : ICustomerService
         return lista.Select(ToDto);
     }
 
+    /// <summary>
+    /// Calcula la fecha de última compra (última factura no anulada).
+    /// </summary>
+    private static DateTime? GetLastPurchaseDate(Customer c)
+    {
+        if (c.Invoices is null || !c.Invoices.Any()) return null;
+        var ultima = c.Invoices
+            .Where(i => i.Status != InvoiceStatus.Cancelled && !i.IsDeleted)
+            .OrderByDescending(i => i.InvoiceDate)
+            .FirstOrDefault();
+        return ultima?.InvoiceDate;
+    }
+
+    /// <summary>
+    /// Estado comercial automático:
+    /// "Activo" si compró en los últimos 6 meses.
+    /// "Inactivo" si no ha comprado o la última compra fue hace más de 6 meses.
+    /// </summary>
+    private static string GetCommercialStatus(Customer c)
+    {
+        var ultimaCompra = GetLastPurchaseDate(c);
+        if (ultimaCompra is null) return "Sin compras";
+        return ultimaCompra.Value >= DateTime.UtcNow.AddMonths(-6)
+            ? "Activo"
+            : "Inactivo";
+    }
+
     private static CustomerDto ToDto(Customer c) => new(
         c.Id,
         c.FullName,
@@ -92,6 +120,8 @@ public sealed class CustomerService : ICustomerService
         c.Notes,
         c.IsActive,
         c.AccountReceivable?.Balance ?? 0,
-        c.CreatedAt
+        c.CreatedAt,
+        GetLastPurchaseDate(c),
+        GetCommercialStatus(c)
     );
 }

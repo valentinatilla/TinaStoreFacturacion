@@ -34,7 +34,7 @@ else
                 <thead>
                     <tr>
                         <th>Nombre</th><th>Documento</th><th>Teléfono</th><th>Email</th>
-                        <th class="text-end">Saldo</th><th>Estado</th><th></th>
+                        <th class="text-end">Saldo</th><th>Estado</th><th>Últ. compra</th><th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -49,9 +49,21 @@ else
                                 @c.PendingBalance.ToString("C0")
                             </td>
                             <td>
-                                <span class="badge @(c.IsActive ? "bg-success" : "bg-secondary")">
-                                    @(c.IsActive ? "Activo" : "Inactivo")
-                                </span>
+                                @if (!c.IsActive)
+                                {
+                                    <span class="badge badge-estado-inactivo">Inactivo</span>
+                                }
+                                else
+                                {
+                                    <span class="badge @(c.CommercialStatus == "Activo" ? "badge-estado-activo" : c.CommercialStatus == "Sin compras" ? "badge-estado-inactivo" : "badge-bajo-stock")">
+                                        @(c.CommercialStatus == "Sin compras" ? "Sin compras" : c.CommercialStatus)
+                                    </span>
+                                }
+                            </td>
+                            <td class="text-muted small">
+                                @(c.LastPurchaseDate.HasValue
+                                    ? c.LastPurchaseDate.Value.ToLocalTime().ToString("dd/MM/yyyy")
+                                    : "—")
                             </td>
                             <td class="text-end">
                                 @if (!string.IsNullOrWhiteSpace(c.Phone))
@@ -72,7 +84,7 @@ else
                     }
                     @if (!_filtrados.Any())
                     {
-                        <tr><td colspan="7" class="text-center text-muted py-4">Sin resultados</td></tr>
+                        <tr><td colspan="8" class="text-center text-muted py-4">Sin resultados</td></tr>
                     }
                 </tbody>
             </table>
@@ -140,6 +152,40 @@ else
     </div>
 }
 
+<!-- Modal de recordatorio WhatsApp -->
+@if (_mostrarModalWhatsApp)
+{
+    <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-whatsapp text-success me-2"></i>Recordatorio por WhatsApp</h5>
+                    <button class="btn-close" @onclick="() => _mostrarModalWhatsApp = false"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-2">
+                        Enviando recordatorio a <strong>@_waCliente?.FullName</strong>
+                        — Teléfono: <strong>@_waCliente?.Phone</strong>
+                    </p>
+                    <label class="form-label small fw-semibold">Mensaje (puedes editarlo antes de enviar)</label>
+                    <textarea class="form-control" rows="6" @bind="_waMensaje"></textarea>
+                    <div class="alert alert-info py-2 mt-3 small">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Al hacer clic en <strong>Abrir WhatsApp</strong>, se abrirá WhatsApp Web o la app con el mensaje prellenado.
+                        El envío lo confirmas tú desde WhatsApp.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => _mostrarModalWhatsApp = false">Cancelar</button>
+                    <button class="btn btn-success" @onclick="ConfirmarWhatsApp">
+                        <i class="bi bi-whatsapp me-1"></i>Abrir WhatsApp
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<ClienteDto> _clientes = [];
     private List<ClienteDto> _filtrados = [];
@@ -152,6 +198,11 @@ else
     private bool _exito;
     private ClienteForm _form = new();
     private string? _reminderMessage;
+
+    // WhatsApp modal
+    private bool _mostrarModalWhatsApp;
+    private ClienteDto? _waCliente;
+    private string _waMensaje = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -222,16 +273,28 @@ else
         if (ok) await Cargar();
     }
 
-    private async Task EnviarWhatsApp(ClienteDto c)
+    private void EnviarWhatsApp(ClienteDto c)
     {
-        var telefono = c.Phone?.Replace(" ", "").Replace("-", "").Replace("+", "") ?? "";
-        var mensajePlantilla = _reminderMessage
-            ?? "Hola {nombre}, te recordamos que tienes un saldo pendiente de {saldo}. Gracias 🌸";
-        var mensaje = mensajePlantilla
+        _waCliente = c;
+        var plantilla = _reminderMessage
+            ?? "Hola {nombre}, te recordamos amablemente que tienes un saldo pendiente de {saldo} en Tina Store. Agradecemos tu apoyo realizando el pago cuando sea posible. Si ya realizaste el pago, por favor ignora este mensaje. ¡Gracias! 🌸";
+        _waMensaje = plantilla
             .Replace("{nombre}", c.FullName)
             .Replace("{saldo}", c.PendingBalance.ToString("C0"));
-        var url = $"https://wa.me/{telefono}?text={Uri.EscapeDataString(mensaje)}";
+        _mostrarModalWhatsApp = true;
+    }
+
+    private async Task ConfirmarWhatsApp()
+    {
+        if (_waCliente is null) return;
+        // Normalizar teléfono Colombia: quitar espacios, guiones, +; agregar 57 si empieza por 3
+        var tel = (_waCliente.Phone ?? "").Replace(" ", "").Replace("-", "").Replace("+", "");
+        if (tel.StartsWith("3") && tel.Length == 10) tel = "57" + tel;
+        var url = $"https://wa.me/{tel}?text={Uri.EscapeDataString(_waMensaje)}";
+        _mostrarModalWhatsApp = false;
         await JS.InvokeVoidAsync("open", url, "_blank");
+        // Registrar en BD que se generó el recordatorio
+        await Api.RegistrarRecordatorioWhatsAppAsync(_waCliente.Id, _waMensaje);
     }
 
     private class ClienteForm

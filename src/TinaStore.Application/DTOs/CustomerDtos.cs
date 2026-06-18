@@ -12,7 +12,9 @@ public record CustomerDto(
     string? Notes,
     bool IsActive,
     decimal PendingBalance,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    DateTime? LastPurchaseDate,
+    string CommercialStatus
 );
 
 /// <summary>DTO para crear un nuevo cliente.</summary>

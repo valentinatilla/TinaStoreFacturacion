@@ -63,6 +63,9 @@ builder.Services.AddScoped<AuthenticationStateProvider, TinaStoreAuthStateProvid
 // Expone si el login con Google está disponible para que los componentes puedan consultarlo.
 builder.Services.AddSingleton(new GoogleAuthConfig(googleEnabled));
 
+// Servicio singleton para propagar cambios de logo entre componentes sin recargar la app.
+builder.Services.AddSingleton<LogoStateService>();
+
 // ─── HttpClient apuntando a la API ───────────────────────────────────────────
 var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5172";
 builder.Services.AddScoped(sp =>

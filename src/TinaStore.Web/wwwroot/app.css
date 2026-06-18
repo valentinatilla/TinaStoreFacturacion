@@ -96,6 +96,14 @@ body {
     line-height: 1;
 }
 
+.ts-brand-logo {
+    height: 36px;
+    width: auto;
+    max-width: 80px;
+    object-fit: contain;
+    border-radius: 6px;
+}
+
 /* ── Nav lateral ───────────────────────────────────────────────────── */
 .ts-nav {
     list-style: none;
@@ -698,6 +706,50 @@ a:hover {
 .bg-pink         { background-color: var(--ts-primary) !important; }
 .bg-pink-light   { background-color: var(--ts-primary-light) !important; }
 
+/* ── Utilidades purple (color principal de botones de acción y títulos) ─── */
+.text-purple     { color: #7C3AED !important; }
+.bg-purple       { background-color: #7C3AED !important; }
+
+/* Botón de acción principal: .btn.bg-purple.text-white */
+.btn.bg-purple,
+a.btn.bg-purple {
+    background-color: #7C3AED !important;
+    border-color: #7C3AED !important;
+    color: #fff !important;
+    border-radius: 999px;
+    font-weight: 700;
+    transition: background .2s, transform .1s, box-shadow .2s;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.30);
+}
+
+.btn.bg-purple:hover,
+a.btn.bg-purple:hover,
+.btn.bg-purple:focus,
+a.btn.bg-purple:focus {
+    background-color: #6D28D9 !important;
+    border-color: #6D28D9 !important;
+    color: #fff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(109, 40, 217, 0.40);
+}
+
+.btn.bg-purple:active {
+    transform: translateY(0);
+}
+
+.btn.bg-purple:disabled,
+.btn.bg-purple[disabled] {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Badge con fondo purple (ej. totales en reportes) */
+.badge.bg-purple {
+    background-color: #7C3AED !important;
+    color: #fff !important;
+}
+
 /* ── Validación de formularios ──────────────────────────────────────── */
 .valid.modified:not([type=checkbox]) {
     outline: 1.5px solid #4ADE80;
@@ -883,4 +935,25 @@ h1:focus {
     .ts-table {
         font-size: .82rem;
     }
-}}
+}
+
+/* ── Refuerzo: botones de acción principal sobre fondos blancos ──────────── */
+/* Garantiza que btn.bg-purple siempre sea visible independientemente del contexto */
+.card .btn.bg-purple,
+.modal-footer .btn.bg-purple,
+.modal-content .btn.bg-purple {
+    background-color: #7C3AED !important;
+    border-color: #7C3AED !important;
+    color: #fff !important;
+}
+
+/* Estado loading del botón principal */
+.btn.bg-purple .spinner-border-sm {
+    color: #fff;
+}
+
+/* Badge de porcentaje de ganancia negativo */
+.text-danger.profit {
+    color: #E11D48 !important;
+    font-weight: 700;
+}

@@ -5,7 +5,36 @@ Los issues marcados ✅ ya están resueltos. Los marcados 🔴/🟡/🟢 están 
 
 ---
 
-## ✅ RESUELTOS
+## ✅ RESUELTOS EN v1.1.0 (2025-06-18 — Fase A1)
+
+### BUG-06 — Botones de acción invisibles → resuelto en v1.1.0
+### BUG-07 — Estado de factura sin estilo → resuelto en v1.1.0
+### BUG-08 — Abono siempre $0 en listado → resuelto en v1.1.0
+### BUG-09 — Congelamiento al subir imagen → resuelto en v1.1.0
+### BUG-10 — Dashboard no conecta API → resuelto en v1.1.0
+
+---
+
+## 🔴 PENDIENTES (alta prioridad — Fase A2)
+
+### BUG-A2-01 — Productos con stock 0 aparecen como "Activo"
+- **Módulo**: Productos
+- **Descripción**: El badge de estado solo evalúa `IsActive`. No distingue Agotado, Bajo stock, Inactivo.
+- **Planificado para**: Fase A2
+
+### BUG-A2-02 — Categoría vacía en detalle de producto
+- **Módulo**: Productos
+- **Descripción**: `GetByIdAsync` del repositorio base no hace `Include` de Category. Al abrir el modal de edición, `CategoryName` aparece vacío.
+- **Planificado para**: Fase A2
+
+### BUG-A2-03 — Conteo de productos por categoría siempre 0
+- **Módulo**: Categorías
+- **Descripción**: `ProductCount` devuelve 0 aunque existan productos asociados.
+- **Planificado para**: Fase A2
+
+---
+
+## ✅ RESUELTOS EN versiones anteriores
 
 ### BUG-01 — 401 Unauthorized en todas las peticiones autenticadas
 - **Versión corregida**: 0.2.0
@@ -63,6 +92,37 @@ Los issues marcados ✅ ya están resueltos. Los marcados 🔴/🟡/🟢 están 
 - **Módulo**: Usuarios / Autenticación
 - **Descripción**: Existe un módulo completo de usuarios con roles Admin/Seller/Viewer que no se usa en la práctica actual.
 - **Planificado para**: Simplificar en Fase 4, sin eliminar el código para poder escalar.
+
+---
+
+## ✅ RESUELTOS EN v1.2.0 (2026-06-18 — Fases A2 + B1 + B3)
+
+### BUG-09b — Estado de inventario siempre "Activo" → resuelto en v1.2.0
+### BUG-10 — Conteo de productos por categoría siempre 0 → resuelto en v1.2.0
+### BUG-11 — Fórmula de porcentaje de ganancia incorrecta → resuelto en v1.2.0
+### BUG-12 — Bloque @media sin cerrar en CSS → resuelto en v1.2.0
+### BUG-13 — Columna Estado en Proveedores (oculta, no eliminada) → resuelto en v1.2.0
+
+---
+
+## 🟡 PENDIENTES (media prioridad — Fases B2+)
+
+### ~~ISSUE-A2-04 — Importación masiva de productos con vista previa~~ ✅ Resuelto en v1.3.0
+### ~~ISSUE-B3-01 — Historial de recordatorios WhatsApp no registrado~~ ✅ Resuelto en v1.3.0
+### ~~ISSUE-B1-02 — Logo en sidebar no se actualiza sin recargar la app~~ ✅ Resuelto en v1.3.0
+
+---
+
+## ✅ RESUELTOS EN v1.3.0 (Fase B — Pendientes)
+
+### ISSUE-A2-04 — Importación masiva con vista previa editable → resuelto en v1.3.0
+- **Solución**: Página `Productos/Importar.razor` con flujo 3 pasos: subir Excel → tabla editable por fila con validación → confirmar e importar. Endpoint `POST /api/documents/productos/previsualizar` (sin guardar) y `POST /api/documents/productos/importar-confirmado` (persistir). `PreviewImportAsync` e `ImportFromPreviewAsync` en `ExcelService`.
+
+### ISSUE-B3-01 — Historial de recordatorios WhatsApp → resuelto en v1.3.0
+- **Solución**: `IReminderRepository` + `ReminderRepository` con `AddHistoryAsync`. `IReminderService` + `ReminderService` calculan y persisten `Reminder` y `ReminderHistory`. `RemindersController` expone `POST /api/reminders/whatsapp`. `ConfirmarWhatsApp()` en `Clientes/Index.razor` llama al API tras abrir el enlace de WhatsApp.
+
+### ISSUE-B1-02 — Logo en sidebar sin refresco en tiempo real → resuelto en v1.3.0
+- **Solución**: `LogoStateService` (singleton Blazor) con propiedad `LogoUrl` y evento `OnChange`. `MainLayout.razor` suscribe `OnChange` e implementa `IDisposable`. `StoreSettings.razor` llama `LogoState.SetLogo()` tras subir logo exitosamente.
 
 ---
 

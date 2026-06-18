@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TinaStore.Application.DTOs;
 using TinaStore.Application.Interfaces;
 
 namespace TinaStore.Api.Controllers;
@@ -64,8 +65,41 @@ public sealed class DocumentsController : ControllerBase
         if (ext != ".xlsx" && ext != ".xls")
             return BadRequest(new { mensaje = "El archivo debe ser .xlsx o .xls." });
 
-        await using var stream = file.OpenReadStream();
-        var resultado = await _excel.ImportProductsAsync(stream);
+        using var ms = new MemoryStream();
+        await using var raw = file.OpenReadStream();
+        await raw.CopyToAsync(ms);
+        ms.Position = 0;
+        var resultado = await _excel.ImportProductsAsync(ms);
+        return Ok(resultado);
+    }
+
+    /// <summary>Previsualiza filas de un Excel sin guardar nada en BD.</summary>
+    [HttpPost("productos/previsualizar")]
+    public async Task<IActionResult> PreviewImport(IFormFile file)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(new { mensaje = "Debes enviar un archivo Excel." });
+
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (ext != ".xlsx" && ext != ".xls")
+            return BadRequest(new { mensaje = "El archivo debe ser .xlsx o .xls." });
+
+        using var ms = new MemoryStream();
+        await using var raw = file.OpenReadStream();
+        await raw.CopyToAsync(ms);
+        ms.Position = 0;
+        var preview = await _excel.PreviewImportAsync(ms);
+        return Ok(preview);
+    }
+
+    /// <summary>Confirma e importa las filas válidas de una vista previa editada.</summary>
+    [HttpPost("productos/importar-confirmado")]
+    public async Task<IActionResult> ImportFromPreview([FromBody] List<ImportPreviewRowDto> filas)
+    {
+        if (filas is null || filas.Count == 0)
+            return BadRequest(new { mensaje = "No hay filas para importar." });
+
+        var resultado = await _excel.ImportFromPreviewAsync(filas);
         return Ok(resultado);
     }
 }
