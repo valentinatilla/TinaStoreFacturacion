@@ -1,0 +1,45 @@
+# ════════════════════════════════════════════════════════════════
+#  TinaStore Web — Dockerfile
+#  Imagen de Docker para el Frontend Blazor de Tina Store (.NET 10)
+#
+#  Cómo construir:
+#    docker build -f Dockerfile.web -t tinastore-web .
+#
+#  Cómo ejecutar:
+#    docker run -p 8081:8080 \
+#      -e ASPNETCORE_ENVIRONMENT=Production \
+#      -e ApiBaseUrl="https://api.tinastore.app" \
+#      tinastore-web
+# ════════════════════════════════════════════════════════════════
+
+# ── Etapa 1: Build ───────────────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /source
+
+# Copiar archivos de proyecto
+COPY src/TinaStore.Web/TinaStore.Web.csproj src/TinaStore.Web/
+
+# Restaurar paquetes NuGet
+RUN dotnet restore src/TinaStore.Web/TinaStore.Web.csproj
+
+# Copiar el código fuente del Web
+COPY src/TinaStore.Web/ src/TinaStore.Web/
+
+# Compilar y publicar en modo Release
+RUN dotnet publish src/TinaStore.Web/TinaStore.Web.csproj \
+	-c Release \
+	-o /app/publish \
+	--no-restore
+
+# ── Etapa 2: Runtime ─────────────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+
+ENV ASPNETCORE_ENVIRONMENT=Production
+ENV ASPNETCORE_HTTP_PORTS=8080
+
+COPY --from=build /app/publish .
+
+EXPOSE 8080
+
+ENTRYPOINT ["dotnet", "TinaStore.Web.dll"]

@@ -361,10 +361,60 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-# SQLite database
+# ═══════════════════════════════════════════════════════════════════
+#  TINA STORE — Reglas de seguridad específicas del proyecto
+# ═══════════════════════════════════════════════════════════════════
+
+# Base de datos SQLite (NUNCA subir — contiene datos reales de la tienda)
 *.db
 *.db-shm
 *.db-wal
+*.sqlite
+*.sqlite3
 
-# Logs
+# Archivos de log (pueden contener información sensible de usuarios)
 logs/
+src/TinaStore.Api/logs/
+*.log
+
+# Archivos de configuración de producción y staging con secretos reales
+# Estos archivos se configuran directamente en el servidor con variables de entorno
+appsettings.Production.json
+appsettings.Staging.json
+
+# Variables de entorno con contraseñas (NUNCA subir)
+.env
+.env.local
+.env.production
+.env.staging
+.env.development.local
+
+# Secretos de usuario de .NET (dotnet user-secrets)
+**/secrets.json
+
+# Archivos generados por la aplicación en tiempo de ejecución
+**/wwwroot/uploads/
+**/wwwroot/exports/
+**/wwwroot/pdfs/
+**/generated-pdfs/
+**/excel-exports/
+**/temp/
+
+# Certificados y llaves privadas
+*.pfx
+*.cer
+*.key
+*.pem
+*.p12
+
+# Backups locales (los backups reales van en un sistema separado)
+backups/
+*.bak
+*.backup
+
+# Docker overrides locales (pueden contener credenciales)
+docker-compose.override.yml
+.dockerenv
+
+# Carpeta de publicación (se genera con dotnet publish)
+publish/

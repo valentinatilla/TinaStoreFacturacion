@@ -7,10 +7,10 @@
     {
         <!-- Sidebar -->
         <nav class="ts-sidebar" id="sidebar">
-            <div class="ts-brand">
-                <i class="bi bi-bag-heart-fill me-2"></i>
+            <a href="/" class="ts-brand">
+                <span class="ts-brand-emoji">🛍️</span>
                 <span>Tina Store</span>
-            </div>
+            </a>
             <NavMenu />
         </nav>
 
@@ -22,10 +22,12 @@
                     <i class="bi bi-list"></i>
                 </button>
                 <div class="ms-auto d-flex align-items-center gap-3">
-                    <span class="text-muted small"><i class="bi bi-person-circle me-1"></i>@Session.UserName</span>
-                    <button class="btn btn-sm btn-outline-danger" @onclick="Logout">
-                        <i class="bi bi-box-arrow-right me-1"></i>Salir
-                    </button>
+                    <span style="color: var(--ts-text-soft); font-size: .875rem; font-weight: 600;">
+                            <i class="bi bi-person-circle me-1" style="color: var(--ts-primary);"></i>@Session.UserName
+                        </span>
+                        <button class="btn btn-sm btn-outline-danger" style="border-radius: 999px; font-weight: 700;" @onclick="Logout">
+                            <i class="bi bi-box-arrow-right me-1"></i>Salir
+                        </button>
                 </div>
             </header>
 

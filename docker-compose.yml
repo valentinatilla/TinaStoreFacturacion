@@ -1,0 +1,100 @@
+# ════════════════════════════════════════════════════════════════
+#  TinaStore — docker-compose.yml
+#  Para ejecutar el sistema completo en local con Docker
+#
+#  Cómo usar:
+#    docker-compose up --build    → Construir y arrancar
+#    docker-compose up -d         → Arrancar en segundo plano
+#    docker-compose down          → Detener y eliminar contenedores
+#    docker-compose logs -f       → Ver logs en tiempo real
+#
+#  Acceso:
+#    API:      http://localhost:5172
+#    Frontend: http://localhost:5173
+#    pgAdmin:  http://localhost:5050
+# ════════════════════════════════════════════════════════════════
+
+services:
+
+  # ── Base de datos PostgreSQL ──────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: tinastore-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tinastore_dev
+      POSTGRES_USER: tinastore
+      # ⚠️ Cambiar esta contraseña en producción
+      POSTGRES_PASSWORD: tinastore_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      # Los datos de la BD persisten aquí (no se pierden al reiniciar)
+      - tinastore-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tinastore -d tinastore_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── API de Tina Store ─────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: tinastore-api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      # Cadena de conexión apuntando al servicio 'db' de este compose
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=tinastore_dev;Username=tinastore;Password=tinastore_dev_password"
+      # ⚠️ Cambiar esta clave por una segura de 32+ caracteres
+      Jwt__Key: "TinaStore-Docker-Dev-Key-Minimo-32-Caracteres-2025!"
+      Jwt__Issuer: "TinaStore"
+      Jwt__Audience: "TinaStoreClients"
+      Jwt__ExpiresInMinutes: "1440"
+    ports:
+      - "5172:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Los logs se guardan fuera del contenedor
+      - tinastore-logs:/app/logs
+
+  # ── Frontend Blazor ──────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: tinastore-web
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      # URL de la API dentro del compose
+      ApiBaseUrl: "http://api:8080"
+    ports:
+      - "5173:8080"
+    depends_on:
+      - api
+
+  # ── pgAdmin (interfaz visual para la BD) ─────────────────────
+  # Opcional: herramienta para ver y gestionar la base de datos
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: tinastore-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@tinastore.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+
+# ── Volúmenes persistentes ────────────────────────────────────
+volumes:
+  tinastore-db-data:
+    driver: local
+  tinastore-logs:
+    driver: local

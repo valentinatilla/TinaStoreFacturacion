@@ -1,0 +1,56 @@
+# ════════════════════════════════════════════════════════════════
+#  TinaStore API — Dockerfile
+#  Imagen de Docker para la API de Tina Store (.NET 10)
+#
+#  Cómo construir:
+#    docker build -f Dockerfile.api -t tinastore-api .
+#
+#  Cómo ejecutar (con variables de entorno):
+#    docker run -p 8080:8080 \
+#      -e ASPNETCORE_ENVIRONMENT=Production \
+#      -e ConnectionStrings__DefaultConnection="..." \
+#      -e Jwt__Key="..." \
+#      tinastore-api
+# ════════════════════════════════════════════════════════════════
+
+# ── Etapa 1: Build ───────────────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /source
+
+# Copiar archivos de proyecto primero (para aprovechar el cache de Docker)
+COPY src/TinaStore.Domain/TinaStore.Domain.csproj               src/TinaStore.Domain/
+COPY src/TinaStore.Application/TinaStore.Application.csproj     src/TinaStore.Application/
+COPY src/TinaStore.Infrastructure/TinaStore.Infrastructure.csproj src/TinaStore.Infrastructure/
+COPY src/TinaStore.Api/TinaStore.Api.csproj                     src/TinaStore.Api/
+
+# Restaurar paquetes NuGet
+RUN dotnet restore src/TinaStore.Api/TinaStore.Api.csproj
+
+# Copiar el resto del código fuente
+COPY src/ src/
+
+# Compilar y publicar en modo Release
+RUN dotnet publish src/TinaStore.Api/TinaStore.Api.csproj \
+	-c Release \
+	-o /app/publish \
+	--no-restore
+
+# ── Etapa 2: Runtime ─────────────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+
+# Variables de entorno por defecto (se sobreescriben en el servidor)
+ENV ASPNETCORE_ENVIRONMENT=Production
+ENV ASPNETCORE_HTTP_PORTS=8080
+
+# Copiar la aplicación publicada
+COPY --from=build /app/publish .
+
+# Crear carpeta de logs
+RUN mkdir -p /app/logs
+
+# Exponer el puerto
+EXPOSE 8080
+
+# Comando de inicio
+ENTRYPOINT ["dotnet", "TinaStore.Api.dll"]
