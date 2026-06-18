@@ -52,7 +52,7 @@ public sealed class ExcelService : IExcelService
             ws.Cell(row, 2).Value = p.Name;
             ws.Cell(row, 3).Value = p.Description ?? string.Empty;
             ws.Cell(row, 4).Value = p.Sku ?? string.Empty;
-            ws.Cell(row, 5).Value = p.InternalCode ?? string.Empty;
+            ws.Cell(row, 5).Value = p.InternalCode;
             ws.Cell(row, 6).Value = (double)p.PurchasePrice;
             ws.Cell(row, 7).Value = (double)p.SalePrice;
             ws.Cell(row, 8).Value = p.CurrentStock;
@@ -163,7 +163,7 @@ public sealed class ExcelService : IExcelService
                     Name = nombre,
                     Description = ws.Cell(row, 2).GetValue<string>().Trim().NullIfEmpty(),
                     Sku = ws.Cell(row, 3).GetValue<string>().Trim().NullIfEmpty(),
-                    InternalCode = ws.Cell(row, 4).GetValue<string>().Trim().NullIfEmpty(),
+                    InternalCode = ws.Cell(row, 4).GetValue<string>().Trim().NullIfEmpty() ?? string.Empty,
                     PurchasePrice = costPrice,
                     SalePrice = salePrice,
                     CurrentStock = stock,
