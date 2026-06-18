@@ -30,6 +30,7 @@ public interface IProductService
     Task<ProductDto> CreateAsync(CreateProductDto dto);
     Task<ProductDto?> UpdateAsync(int id, UpdateProductDto dto);
     Task<bool> DeleteAsync(int id);
+    Task<ProductDto?> UpdateImagePathAsync(int id, string? imagePath);
 }
 
 public interface ISupplierService
@@ -110,6 +111,11 @@ public interface IExcelService
 public interface IAuthService
 {
     Task<TokenResponseDto?> LoginAsync(LoginDto dto);
+    /// <summary>
+    /// Busca o crea el usuario a partir de datos ya validados de Google y emite un JWT de TinaStore.
+    /// La validación del id_token ocurre en la capa API antes de llamar a este método.
+    /// </summary>
+    Task<TokenResponseDto?> LoginWithGoogleAsync(GoogleUserInfoDto googleUser);
     Task<UserInfoDto?> GetProfileAsync(int userId);
     Task<bool> ChangePasswordAsync(int userId, ChangePasswordDto dto);
 }

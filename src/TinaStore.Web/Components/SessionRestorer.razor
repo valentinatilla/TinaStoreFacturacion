@@ -1,0 +1,20 @@
+@inject SessionStateService Session
+@inject IJSRuntime JS
+@inject TinaStoreApiClient Api
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || Session.IsAuthenticated) return;
+
+        // Lee el JWT almacenado en la cookie HTTP-only (vía endpoint server-side)
+        var token = await JS.InvokeAsync<string>("tinaSession.get");
+        if (string.IsNullOrWhiteSpace(token)) return;
+
+        // Valida el token llamando al perfil de la API para obtener los datos del usuario
+        var profile = await Api.GetPerfilAsync(token);
+        if (profile is null) return;
+
+        Session.RestoreSession(token, profile.FullName, profile.Email, profile.Role);
+    }
+}

@@ -63,7 +63,6 @@ public sealed class ProductService : IProductService
 
         var entity = new Product
         {
-            InternalCode = dto.InternalCode,
             Sku = dto.Sku,
             Name = dto.Name,
             Description = dto.Description,
@@ -119,20 +118,31 @@ public sealed class ProductService : IProductService
         return true;
     }
 
+    public async Task<ProductDto?> UpdateImagePathAsync(int id, string? imagePath)
+    {
+        var entity = await _products.GetByIdAsync(id);
+        if (entity is null) return null;
+
+        entity.ImagePath = imagePath;
+        await _products.UpdateAsync(entity);
+        await _products.SaveChangesAsync();
+        return ToDto(entity);
+    }
+
     private static ProductSummaryDto ToSummaryDto(Product p) => new(
         p.Id,
-        p.InternalCode,
+        p.Sku,
         p.Name,
         p.SalePrice,
         p.CurrentStock,
         p.IsLowStock,
         p.IsActive,
-        p.Category?.Name ?? string.Empty
+        p.Category?.Name ?? string.Empty,
+        p.ImagePath
     );
 
     private static ProductDto ToDto(Product p) => new(
         p.Id,
-        p.InternalCode,
         p.Sku,
         p.Name,
         p.Description,
@@ -148,6 +158,7 @@ public sealed class ProductService : IProductService
         p.Category?.Name ?? string.Empty,
         p.SupplierId,
         p.Supplier?.Name,
-        p.CreatedAt
+        p.CreatedAt,
+        p.ImagePath
     );
 }

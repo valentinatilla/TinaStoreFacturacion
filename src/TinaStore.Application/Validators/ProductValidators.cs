@@ -7,9 +7,9 @@ public sealed class CreateProductValidator : AbstractValidator<CreateProductDto>
 {
     public CreateProductValidator()
     {
-        RuleFor(x => x.InternalCode)
-            .NotEmpty().WithMessage("El código interno es obligatorio.")
-            .MaximumLength(50).WithMessage("El código interno no puede superar 50 caracteres.");
+        RuleFor(x => x.Sku)
+            .MaximumLength(100).WithMessage("El SKU no puede superar 100 caracteres.")
+            .When(x => x.Sku is not null);
 
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("El nombre del producto es obligatorio.")

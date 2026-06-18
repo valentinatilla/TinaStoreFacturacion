@@ -36,6 +36,7 @@ else
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
+                        <th></th>
                         <th>SKU</th><th>Producto</th><th>Categoría</th>
                         <th class="text-end">Precio venta</th>
                         <th class="text-center">Stock</th><th>Estado</th><th></th>
@@ -45,6 +46,16 @@ else
                     @foreach (var p in _filtrados)
                     {
                         <tr>
+                            <td class="ts-thumb-cell">
+                                @if (!string.IsNullOrEmpty(p.ImagePath))
+                                {
+                                    <img src="@(_apiBase + p.ImagePath)" alt="@p.Name" class="ts-product-thumb" />
+                                }
+                                else
+                                {
+                                    <span class="ts-thumb-placeholder"><i class="bi bi-image"></i></span>
+                                }
+                            </td>
                             <td class="text-muted small">@p.Sku</td>
                             <td class="fw-semibold">@p.Name</td>
                             <td>@p.CategoryName</td>
@@ -88,12 +99,8 @@ else
                         <input class="form-control" @bind="_form.Name" />
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label small fw-semibold">Cód. interno *</label>
-                        <input class="form-control" @bind="_form.InternalCode" />
-                    </div>
-                    <div class="col-md-3">
                         <label class="form-label small fw-semibold">SKU</label>
-                        <input class="form-control" @bind="_form.Sku" />
+                        <input class="form-control" @bind="_form.Sku" placeholder="Ej: SKU-001" />
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Descripción</label>
@@ -139,6 +146,41 @@ else
                             }
                         </select>
                     </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Imagen del producto</label>
+                        <div class="ts-image-upload-area">
+                            @if (!string.IsNullOrEmpty(_form.ImagePathActual))
+                            {
+                                <div class="ts-image-preview-wrap">
+                                    <img src="@(_apiBase + _form.ImagePathActual)" alt="Imagen actual" class="ts-image-preview" />
+                                    <button type="button" class="btn btn-sm btn-outline-danger ts-image-remove-btn" @onclick="QuitarImagenModal">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+                            }
+                            else if (_form.ImagenPreviewUrl is not null)
+                            {
+                                <div class="ts-image-preview-wrap">
+                                    <img src="@_form.ImagenPreviewUrl" alt="Nueva imagen" class="ts-image-preview" />
+                                    <button type="button" class="btn btn-sm btn-outline-danger ts-image-remove-btn" @onclick="QuitarImagenSeleccionada">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <label class="ts-image-placeholder">
+                                    <i class="bi bi-cloud-arrow-up fs-3 d-block mb-1"></i>
+                                    <span class="small">Clic para seleccionar imagen</span>
+                                    <InputFile OnChange="SeleccionarImagen" accept=".jpg,.jpeg,.png,.webp" class="d-none" />
+                                </label>
+                            }
+                        </div>
+                        @if (_form.ImagePathActual is null && _form.ImagenPreviewUrl is null)
+                        {
+                            <p class="text-muted small mt-1">JPG, PNG o WEBP · Máximo 2 MB</p>
+                        }
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" @onclick="CerrarModal">Cancelar</button>
@@ -153,6 +195,8 @@ else
 }
 
 @code {
+    private string _apiBase = string.Empty;
+
     private List<ProductoDto> _productos = [];
     private List<ProductoDto> _filtrados = [];
     private List<CategoriaDto> _categorias = [];
@@ -165,9 +209,13 @@ else
     private string? _mensaje;
     private bool _exito;
     private ProductoForm _form = new();
+    private IBrowserFile? _imagenSeleccionada;
+
+    [Inject] private IConfiguration Config { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
+        _apiBase = Config["ApiBaseUrl"] ?? string.Empty;
         await Task.WhenAll(Cargar(), CargarCatalogos());
     }
 
@@ -193,38 +241,106 @@ else
             : _productos.Where(p => p.Name.ToLower().Contains(q) || (p.Sku?.ToLower().Contains(q) ?? false)).ToList();
     }
 
-    private void AbrirModal(ProductoDto? p = null)
+    private async Task AbrirModal(ProductoDto? p = null)
     {
         _editando = p is not null;
         _editandoId = p?.Id ?? 0;
-        _form = p is null
-            ? new()
-            : new() { Name = p.Name, InternalCode = p.InternalCode, Sku = p.Sku, Description = p.Description, Unit = p.Unit, SalePrice = p.SalePrice, PurchasePrice = p.PurchasePrice, CurrentStock = p.CurrentStock, MinimumStock = p.MinimumStock, CategoryId = p.CategoryId, SupplierId = p.SupplierId };
-        _mostrarModal = true;
         _mensaje = null;
-    }
+        _imagenSeleccionada = null;
 
-    private void CerrarModal() => _mostrarModal = false;
-
-    private async Task Guardar()
-    {
-        if (string.IsNullOrWhiteSpace(_form.Name) || string.IsNullOrWhiteSpace(_form.InternalCode) || _form.CategoryId == 0) return;
-        _guardando = true;
-        bool ok;
-        if (_editando)
+        if (p is null)
         {
-            var dto = new UpdateProductoDto(_form.Sku, _form.Name, _form.Description, _form.Unit, _form.PurchasePrice, _form.SalePrice, _form.MinimumStock, true, _form.CategoryId, _form.SupplierId);
-            ok = await Api.UpdateProductoAsync(_editandoId, dto);
+            _form = new();
         }
         else
         {
-            var dto = new CreateProductoDto(_form.InternalCode, _form.Sku, _form.Name, _form.Description, _form.Unit, _form.PurchasePrice, _form.SalePrice, _form.CurrentStock, _form.MinimumStock, _form.CategoryId, _form.SupplierId);
-            ok = await Api.CreateProductoAsync(dto);
+            var completo = await Api.GetProductoAsync(p.Id);
+            _form = completo is null
+                ? new() { Name = p.Name, Sku = p.Sku }
+                : new()
+                {
+                    Name             = completo.Name,
+                    Sku              = completo.Sku,
+                    Description      = completo.Description,
+                    Unit             = completo.Unit,
+                    SalePrice        = completo.SalePrice,
+                    PurchasePrice    = completo.PurchasePrice,
+                    CurrentStock     = completo.CurrentStock,
+                    MinimumStock     = completo.MinimumStock,
+                    CategoryId       = completo.CategoryId,
+                    SupplierId       = completo.SupplierId,
+                    ImagePathActual  = completo.ImagePath
+                };
         }
+
+        _mostrarModal = true;
+    }
+
+    private void CerrarModal()
+    {
+        _mostrarModal = false;
+        _imagenSeleccionada = null;
+    }
+
+    private async Task SeleccionarImagen(InputFileChangeEventArgs e)
+    {
+        _imagenSeleccionada = e.File;
+        // Generar preview en base64 para mostrar antes de guardar
+        var buffer = new byte[_imagenSeleccionada.Size];
+        await _imagenSeleccionada.OpenReadStream(2 * 1024 * 1024).ReadAsync(buffer);
+        var base64 = Convert.ToBase64String(buffer);
+        _form.ImagenPreviewUrl = $"data:{_imagenSeleccionada.ContentType};base64,{base64}";
+    }
+
+    private void QuitarImagenSeleccionada()
+    {
+        _imagenSeleccionada = null;
+        _form.ImagenPreviewUrl = null;
+    }
+
+    private void QuitarImagenModal()
+    {
+        _form.ImagePathActual = null;
+        _form.ImagenEliminada = true;
+    }
+
+    private async Task Guardar()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Name) || _form.CategoryId == 0) return;
+        _guardando = true;
+        int idProducto;
+
+        if (_editando)
+        {
+            var dto = new UpdateProductoDto(_form.Sku, _form.Name, _form.Description, _form.Unit, _form.PurchasePrice, _form.SalePrice, _form.MinimumStock, true, _form.CategoryId, _form.SupplierId);
+            var ok = await Api.UpdateProductoAsync(_editandoId, dto);
+            if (!ok) { _guardando = false; _exito = false; _mensaje = "Error al guardar el producto."; return; }
+            idProducto = _editandoId;
+        }
+        else
+        {
+            var dto = new CreateProductoDto(_form.Sku, _form.Name, _form.Description, _form.Unit, _form.PurchasePrice, _form.SalePrice, _form.CurrentStock, _form.MinimumStock, _form.CategoryId, _form.SupplierId);
+            var creado = await Api.CreateProductoAsync(dto);
+            if (creado is null) { _guardando = false; _exito = false; _mensaje = "Error al crear el producto."; return; }
+            idProducto = creado.Id;
+        }
+
+        // Gestión de imagen
+        if (_imagenSeleccionada is not null)
+        {
+            var stream = _imagenSeleccionada.OpenReadStream(2 * 1024 * 1024);
+            await Api.SubirImagenProductoAsync(idProducto, stream, _imagenSeleccionada.Name);
+        }
+        else if (_form.ImagenEliminada)
+        {
+            await Api.EliminarImagenProductoAsync(idProducto);
+        }
+
         _guardando = false;
-        _exito = ok;
-        _mensaje = ok ? "Producto guardado." : "Error al guardar el producto.";
-        if (ok) { CerrarModal(); await Cargar(); }
+        _exito = true;
+        _mensaje = "Producto guardado.";
+        CerrarModal();
+        await Cargar();
     }
 
     private async Task Eliminar(int id)
@@ -252,7 +368,6 @@ else
     private class ProductoForm
     {
         public string Name { get; set; } = "";
-        public string InternalCode { get; set; } = "";
         public string? Sku { get; set; }
         public string? Description { get; set; }
         public string? Unit { get; set; }
@@ -262,5 +377,8 @@ else
         public int MinimumStock { get; set; } = 5;
         public int CategoryId { get; set; }
         public int? SupplierId { get; set; }
+        public string? ImagePathActual { get; set; }
+        public string? ImagenPreviewUrl { get; set; }
+        public bool ImagenEliminada { get; set; }
     }
 }
