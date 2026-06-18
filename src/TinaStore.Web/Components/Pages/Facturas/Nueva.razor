@@ -72,8 +72,8 @@
                     {
                         <button class="list-group-item list-group-item-action d-flex justify-content-between py-2"
                                 @onclick="() => AgregarProducto(p)">
-                            <span>@p.Name <small class="text-muted">(@p.SKU)</small></span>
-                            <span class="text-purple fw-semibold">@p.SalePrice.ToString("C0") — Stock: @p.Stock</span>
+                            <span>@p.Name <small class="text-muted">(@p.Sku)</small></span>
+                            <span class="text-purple fw-semibold">@p.SalePrice.ToString("C0") — Stock: @p.CurrentStock</span>
                         </button>
                     }
                 </div>
@@ -104,8 +104,33 @@
                             </tr>
                         }
                     </tbody>
-                    <tfoot>
+                    <tfoot class="table-light">
                         <tr>
+                            <td colspan="3" class="text-end text-muted small">Subtotal:</td>
+                            <td class="text-end text-muted small">@_subtotal.ToString("C0")</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" class="text-end text-muted small">Descuento:</td>
+                            <td class="text-end text-muted small">
+                                <input type="number" class="form-control form-control-sm text-end"
+                                       style="width:100px;display:inline-block"
+                                       min="0" step="0.01"
+                                       @bind="_descuento" @bind:after="RecalcularTotales" />
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" class="text-end text-muted small">Impuesto (%):</td>
+                            <td class="text-end text-muted small">
+                                <input type="number" class="form-control form-control-sm text-end"
+                                       style="width:80px;display:inline-block"
+                                       min="0" max="100" step="0.01"
+                                       @bind="_impuestoPct" @bind:after="RecalcularTotales" />
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr class="fw-bold border-top">
                             <td colspan="3" class="text-end fw-bold">Total:</td>
                             <td class="text-end fw-bold fs-5 text-purple">@_total.ToString("C0")</td>
                             <td></td>
@@ -122,7 +147,7 @@
 
             <div class="d-flex justify-content-end">
                 <button class="btn bg-purple text-white px-4" @onclick="CrearFactura"
-                        disabled="@(!_detalles.Any() || _clienteId == 0 || _metodoPagoId == 0 || _creando)">
+                        disabled="@(!_detalles.Any() || _clienteId == 0 || _creando)">
                     @if (_creando) { <span class="spinner-border spinner-border-sm me-2"></span> }
                     <i class="bi bi-check-lg me-1"></i>Emitir Factura
                 </button>
@@ -143,17 +168,22 @@
     private decimal? _pagoInicial;
     private string? _notas;
     private string _busquedaProducto = "";
+    private decimal _subtotal;
+    private decimal _descuento;
+    private decimal _impuestoPct;
     private decimal _total;
     private bool _creando;
     private string? _error;
 
     protected override async Task OnInitializedAsync()
     {
-        var tasks = Task.WhenAll(
-            Api.GetClientesAsync().ContinueWith(t => _clientes = t.Result ?? []),
-            Api.GetMetodosPagoAsync().ContinueWith(t => _metodosPago = t.Result ?? []),
-            Api.GetProductosAsync().ContinueWith(t => _productos = t.Result ?? []));
-        await tasks;
+        var t1 = Api.GetClientesAsync();
+        var t2 = Api.GetMetodosPagoAsync();
+        var t3 = Api.GetProductosAsync();
+        await Task.WhenAll(t1, t2, t3);
+        _clientes     = t1.Result ?? [];
+        _metodosPago  = t2.Result ?? [];
+        _productos    = t3.Result ?? [];
     }
 
     private void FiltrarProductos(ChangeEventArgs e)
@@ -162,7 +192,7 @@
         if (string.IsNullOrWhiteSpace(_busquedaProducto)) { _productosFiltrados = []; return; }
         var q = _busquedaProducto.ToLower();
         _productosFiltrados = _productos
-            .Where(p => p.IsActive && (p.Name.ToLower().Contains(q) || (p.SKU?.ToLower().Contains(q) ?? false)))
+            .Where(p => p.IsActive && (p.Name.ToLower().Contains(q) || (p.Sku?.ToLower().Contains(q) ?? false)))
             .ToList();
     }
 
@@ -178,7 +208,13 @@
 
     private void QuitarProducto(DetalleLinea d) { _detalles.Remove(d); RecalcularTotales(); }
 
-    private void RecalcularTotales() => _total = _detalles.Sum(d => d.Cantidad * d.PrecioUnitario);
+    private void RecalcularTotales()
+    {
+        _subtotal = _detalles.Sum(d => d.Cantidad * d.PrecioUnitario);
+        var baseImponible = Math.Max(0, _subtotal - _descuento);
+        var impuesto = Math.Round(baseImponible * (_impuestoPct / 100m), 2);
+        _total = baseImponible + impuesto;
+    }
 
     private async Task CrearFactura()
     {
@@ -186,10 +222,20 @@
         _error = null;
         try
         {
+            CreatePagoInicialDto? pagoInicial = null;
+            if (_metodoPagoId > 0 && _pagoInicial.HasValue && _pagoInicial.Value > 0)
+                pagoInicial = new CreatePagoInicialDto(_metodoPagoId, _pagoInicial.Value, null, null);
+
+            var baseImponible = Math.Max(0, _subtotal - _descuento);
+            var taxAmount     = Math.Round(baseImponible * (_impuestoPct / 100m), 2);
+
             var dto = new CreateFacturaDto(
-                _clienteId, _metodoPagoId,
-                _detalles.Select(d => new CreateDetalleFacturaDto(d.ProductoId, d.Cantidad, d.PrecioUnitario)).ToList(),
-                _pagoInicial, _notas);
+                CustomerId:     _clienteId,
+                DiscountAmount: _descuento,
+                TaxAmount:      taxAmount,
+                Notes:          _notas,
+                Details:        _detalles.Select(d => new CreateDetalleFacturaDto(d.ProductoId, d.Cantidad, d.PrecioUnitario)).ToList(),
+                PagoInicial:    pagoInicial);
 
             var ok = await Api.CreateFacturaAsync(dto);
             if (ok) Nav.NavigateTo("/facturas");

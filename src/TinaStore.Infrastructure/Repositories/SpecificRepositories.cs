@@ -230,6 +230,7 @@ public class ReportRepository(AppDbContext context) : IReportRepository
     public async Task<IReadOnlyList<AccountReceivable>> GetAllReceivablesAsync(CancellationToken ct = default)
         => await _db.AccountsReceivable
             .Include(a => a.Customer)
+                .ThenInclude(c => c.Invoices)
             .Where(a => a.TotalDebt > a.TotalPaid)
             .OrderByDescending(a => a.TotalDebt - a.TotalPaid)
             .ToListAsync(ct);

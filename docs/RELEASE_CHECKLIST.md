@@ -23,7 +23,7 @@ Cada punto debe estar verificado antes de continuar.
 ## 🧪 Calidad del código
 
 - [ ] El proyecto compila sin errores: `dotnet build -c Release`
-- [ ] Todos los tests unitarios pasan: `dotnet test tests/TinaStore.Tests.Unit`
+- [ ] Todos los tests unitarios pasan (30 tests): `dotnet test tests/TinaStore.Tests.Unit`
 - [ ] Todos los tests de integración pasan: `dotnet test tests/TinaStore.Tests.Integration`
 - [ ] No hay warnings de seguridad en los paquetes NuGet
 - [ ] No hay código comentado innecesario ni TODOs críticos
@@ -68,6 +68,7 @@ Cada punto debe estar verificado antes de continuar.
 - [ ] El login funciona con un usuario real
 - [ ] Las páginas principales cargan sin errores (Dashboard, Clientes, Productos, Facturas)
 - [ ] Se puede crear una factura de prueba
+- [ ] El módulo de Usuarios es accesible solo para el rol `Admin`
 - [ ] Los logs del servidor no muestran errores críticos
 - [ ] HTTPS está activo (el candado verde aparece en el navegador)
 - [ ] La aplicación responde en menos de 3 segundos

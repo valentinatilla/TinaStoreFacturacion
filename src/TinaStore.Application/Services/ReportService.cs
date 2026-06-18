@@ -1,5 +1,6 @@
 using TinaStore.Application.DTOs;
 using TinaStore.Application.Interfaces;
+using TinaStore.Domain.Enums;
 using TinaStore.Domain.Interfaces;
 
 namespace TinaStore.Application.Services;
@@ -70,13 +71,27 @@ public sealed class ReportService : IReportService
     public async Task<ReporteCuentasPorCobrarDto> GetReceivablesReportAsync()
     {
         var cuentas = await _repo.GetAllReceivablesAsync();
-        var total = cuentas.Sum(a => a.Balance);
+        var total   = cuentas.Sum(a => a.Balance);
+
         var deudores = cuentas
-            .Select(a => new DeudorResumenDto(
-                a.CustomerId,
-                a.Customer?.FullName ?? string.Empty,
-                a.Customer?.Phone,
-                a.Balance))
+            .Select(a =>
+            {
+                var facturasPendientes = a.Customer?.Invoices?
+                    .Count(i => i.Balance > 0 && i.Status != InvoiceStatus.Cancelled) ?? 0;
+                var ultimaFecha = a.Customer?.Invoices?
+                    .Where(i => i.Balance > 0 && i.Status != InvoiceStatus.Cancelled)
+                    .OrderByDescending(i => i.InvoiceDate)
+                    .FirstOrDefault()?.InvoiceDate;
+
+                return new DeudorCXCDto(
+                    a.CustomerId,
+                    a.Customer?.FullName    ?? string.Empty,
+                    a.Customer?.DocumentNumber,
+                    a.Customer?.Phone,
+                    a.Balance,
+                    facturasPendientes,
+                    ultimaFecha);
+            })
             .ToList();
 
         return new ReporteCuentasPorCobrarDto(total, cuentas.Count, deudores);

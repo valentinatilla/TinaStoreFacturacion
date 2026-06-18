@@ -23,6 +23,7 @@ Tina Store es una aplicación web desarrollada en **.NET 10** con **Blazor** que
 | 📊 **Reportes** | Ventas, ingresos, egresos, deudas. |
 | 📥 **Importación Excel** | Carga masiva de productos y clientes. |
 | 🔐 **Autenticación** | Login con JWT, usuarios y roles. |
+| 👤 **Usuarios** | Administración de usuarios del sistema, asignación de roles y reset de contraseña. |
 | ⚙️ **Configuración** | Datos de la tienda, métodos de pago. |
 
 ---
@@ -42,7 +43,7 @@ Tina Store es una aplicación web desarrollada en **.NET 10** con **Blazor** que
 | Estilos | Bootstrap 5 + CSS personalizado (tema kawaii rosado 🌸) |
 | Tipografía | Nunito (Google Fonts) |
 | Iconos | Bootstrap Icons |
-| Tests | xUnit + NUnit |
+| Tests | xUnit + Moq + FluentAssertions |
 
 ---
 
@@ -165,11 +166,35 @@ Ver [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md)
 
 | Versión | Estado | Descripción |
 |---|---|---|
-| `v0.1.0` | ✅ En progreso | Base técnica: estructura, login, layout kawaii |
-| `v0.2.0` | ⏳ Pendiente | Clientes e inventario completo |
-| `v0.3.0` | ⏳ Pendiente | Facturación + PDF |
-| `v0.4.0` | ⏳ Pendiente | Cuentas por cobrar |
-| `v1.0.0` | 🎯 Meta | Primera versión estable para la tienda |
+| `v0.1.0` | ✅ Completada | Base técnica: estructura, login, layout kawaii |
+| `v0.2.0` | ✅ Completada | Clientes e inventario completo |
+| `v0.3.0` | ✅ Completada | Facturación + PDF + pagos |
+| `v0.4.0` | ✅ Completada | Cuentas por cobrar |
+| `v0.5.0` | ✅ Completada | Egresos + proveedores + reportes |
+| `v0.6.0` | ✅ Completada | Exportación Excel + importación |
+| `v0.7.0` | ✅ Completada | Configuración de tienda + administración de usuarios |
+| `v0.8.0` | ✅ Completada | Cobertura de tests unitarios (30 tests — CustomerService, ExpenseService, InvoiceService) |
+| `v1.0.0` | 🔄 En progreso | Primera versión estable para la tienda |
+
+---
+
+## 🗓️ Historial de cambios recientes
+
+### v0.8.0 — Tests unitarios
+- Cobertura unitaria real con **xUnit + Moq + FluentAssertions** (30 tests, 0 fallos).
+- `CustomerServiceTests`: GetAll, filtro activos, GetById, Create, Update, Delete, Search.
+- `ExpenseServiceTests`: ordenamiento, GetById, Create con/sin categoría, Update activo/anulado, Cancel.
+- `InvoiceServiceTests`: CreateAsync (con pago, sin pago, stock insuficiente, descuentos), RegisterPaymentAsync (pago excedente, factura anulada), CancelAsync (reversión de stock y CXC).
+
+### v0.7.0 — Administración de usuarios
+- Nueva pantalla `/usuarios` protegida con rol `Admin`.
+- CRUD completo: crear, editar, desactivar usuario.
+- Reset de contraseña desde la UI.
+- Enlace **Admin → Usuarios** visible en `NavMenu` solo para administradores.
+- `TinaStoreApiClient` ampliado con `GetUsuariosAsync`, `CreateUsuarioAsync`, `UpdateUsuarioAsync`, `DeleteUsuarioAsync`, `ResetPasswordUsuarioAsync`.
+
+### v0.1.0 – v0.6.0 — Núcleo funcional
+- Facturación, inventario, clientes, proveedores, CXC, egresos, reportes, exportación Excel, importación masiva, configuración de tienda y autenticación JWT.
 
 ---
 

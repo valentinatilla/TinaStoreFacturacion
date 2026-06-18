@@ -45,12 +45,12 @@ else
                     @foreach (var p in _filtrados)
                     {
                         <tr>
-                            <td class="text-muted small">@p.SKU</td>
+                            <td class="text-muted small">@p.Sku</td>
                             <td class="fw-semibold">@p.Name</td>
                             <td>@p.CategoryName</td>
                             <td class="text-end">@p.SalePrice.ToString("C0")</td>
                             <td class="text-center">
-                                <span class="badge @(p.Stock <= p.MinStock ? "bg-danger" : "bg-success")">@p.Stock</span>
+                                <span class="badge @(p.IsLowStock ? "bg-danger" : "bg-success")">@p.CurrentStock</span>
                             </td>
                             <td>
                                 <span class="badge @(p.IsActive ? "bg-success" : "bg-secondary")">
@@ -83,13 +83,17 @@ else
                     <button class="btn-close" @onclick="CerrarModal"></button>
                 </div>
                 <div class="modal-body row g-3">
-                    <div class="col-md-8">
+                    <div class="col-md-5">
                         <label class="form-label small fw-semibold">Nombre *</label>
                         <input class="form-control" @bind="_form.Name" />
                     </div>
                     <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Cód. interno *</label>
+                        <input class="form-control" @bind="_form.InternalCode" />
+                    </div>
+                    <div class="col-md-3">
                         <label class="form-label small fw-semibold">SKU</label>
-                        <input class="form-control" @bind="_form.SKU" />
+                        <input class="form-control" @bind="_form.Sku" />
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Descripción</label>
@@ -105,11 +109,15 @@ else
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">Stock inicial</label>
-                        <input type="number" class="form-control" @bind="_form.Stock" min="0" />
+                        <input type="number" class="form-control" @bind="_form.CurrentStock" min="0" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">Stock mínimo</label>
-                        <input type="number" class="form-control" @bind="_form.MinStock" min="0" />
+                        <input type="number" class="form-control" @bind="_form.MinimumStock" min="0" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Unidad</label>
+                        <input class="form-control" @bind="_form.Unit" placeholder="Ej: unidad, kg…" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">Categoría *</label>
@@ -182,7 +190,7 @@ else
         var q = e.Value?.ToString()?.ToLower() ?? "";
         _filtrados = string.IsNullOrWhiteSpace(q)
             ? _productos
-            : _productos.Where(p => p.Name.ToLower().Contains(q) || (p.SKU?.ToLower().Contains(q) ?? false)).ToList();
+            : _productos.Where(p => p.Name.ToLower().Contains(q) || (p.Sku?.ToLower().Contains(q) ?? false)).ToList();
     }
 
     private void AbrirModal(ProductoDto? p = null)
@@ -191,7 +199,7 @@ else
         _editandoId = p?.Id ?? 0;
         _form = p is null
             ? new()
-            : new() { Name = p.Name, SKU = p.SKU, Description = p.Description, SalePrice = p.SalePrice, PurchasePrice = p.PurchasePrice, Stock = p.Stock, MinStock = p.MinStock, CategoryId = p.CategoryId, SupplierId = p.SupplierId };
+            : new() { Name = p.Name, InternalCode = p.InternalCode, Sku = p.Sku, Description = p.Description, Unit = p.Unit, SalePrice = p.SalePrice, PurchasePrice = p.PurchasePrice, CurrentStock = p.CurrentStock, MinimumStock = p.MinimumStock, CategoryId = p.CategoryId, SupplierId = p.SupplierId };
         _mostrarModal = true;
         _mensaje = null;
     }
@@ -200,17 +208,17 @@ else
 
     private async Task Guardar()
     {
-        if (string.IsNullOrWhiteSpace(_form.Name) || _form.CategoryId == 0) return;
+        if (string.IsNullOrWhiteSpace(_form.Name) || string.IsNullOrWhiteSpace(_form.InternalCode) || _form.CategoryId == 0) return;
         _guardando = true;
         bool ok;
         if (_editando)
         {
-            var dto = new UpdateProductoDto(_form.Name, _form.SKU, _form.Description, _form.SalePrice, _form.PurchasePrice, _form.MinStock, true, _form.CategoryId, _form.SupplierId);
+            var dto = new UpdateProductoDto(_form.Sku, _form.Name, _form.Description, _form.Unit, _form.PurchasePrice, _form.SalePrice, _form.MinimumStock, true, _form.CategoryId, _form.SupplierId);
             ok = await Api.UpdateProductoAsync(_editandoId, dto);
         }
         else
         {
-            var dto = new CreateProductoDto(_form.Name, _form.SKU, _form.Description, _form.SalePrice, _form.PurchasePrice, _form.Stock, _form.MinStock, _form.CategoryId, _form.SupplierId);
+            var dto = new CreateProductoDto(_form.InternalCode, _form.Sku, _form.Name, _form.Description, _form.Unit, _form.PurchasePrice, _form.SalePrice, _form.CurrentStock, _form.MinimumStock, _form.CategoryId, _form.SupplierId);
             ok = await Api.CreateProductoAsync(dto);
         }
         _guardando = false;
@@ -244,12 +252,14 @@ else
     private class ProductoForm
     {
         public string Name { get; set; } = "";
-        public string? SKU { get; set; }
+        public string InternalCode { get; set; } = "";
+        public string? Sku { get; set; }
         public string? Description { get; set; }
+        public string? Unit { get; set; }
         public decimal SalePrice { get; set; }
         public decimal PurchasePrice { get; set; }
-        public int Stock { get; set; }
-        public int MinStock { get; set; } = 5;
+        public int CurrentStock { get; set; }
+        public int MinimumStock { get; set; } = 5;
         public int CategoryId { get; set; }
         public int? SupplierId { get; set; }
     }

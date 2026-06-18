@@ -50,23 +50,30 @@ else
                     @foreach (var f in _filtradas)
                     {
                         <tr>
-                            <td><span class="badge bg-dark">@f.Numero</span></td>
-                            <td>@f.ClienteNombre</td>
+                            <td><span class="badge bg-dark">@f.InvoiceNumber</span></td>
+                            <td>@f.CustomerName</td>
                             <td class="text-end fw-semibold">@f.Total.ToString("C0")</td>
-                            <td class="text-end @(f.TotalPagado < f.Total ? "text-danger" : "text-success")">
-                                @f.TotalPagado.ToString("C0")
+                            <td class="text-end @(f.AmountPaid < f.Total ? "text-danger" : "text-success")">
+                                @f.AmountPaid.ToString("C0")
                             </td>
                             <td>
-                                <span class="badge badge-estado-@f.Estado.ToLower()">@f.Estado</span>
+                                <span class="badge badge-estado-@f.StatusName.ToLower()">@f.StatusName</span>
                             </td>
-                            <td class="text-muted small">@f.FechaEmision.ToString("dd/MM/yyyy")</td>
+                            <td class="text-muted small">@f.InvoiceDate.ToString("dd/MM/yyyy")</td>
                             <td class="text-end">
                                 <button class="btn btn-sm btn-outline-secondary me-1" title="Descargar PDF"
                                         @onclick="() => DescargarPdf(f.Id)">
                                     <i class="bi bi-file-earmark-pdf"></i>
                                 </button>
-                                @if (f.Estado != "Anulada")
+                                 @if (f.StatusName != "Anulada")
                                 {
+                                    @if (f.Balance > 0)
+                                    {
+                                        <button class="btn btn-sm btn-outline-success me-1" title="Registrar pago"
+                                                @onclick="() => AbrirPago(f)">
+                                            <i class="bi bi-cash-coin"></i>
+                                        </button>
+                                    }
                                     <button class="btn btn-sm btn-outline-danger" title="Anular"
                                             @onclick="() => Anular(f.Id)">
                                         <i class="bi bi-x-circle"></i>
@@ -85,6 +92,95 @@ else
     </div>
 }
 
+<!-- Modal de motivo de anulación -->
+@if (_mostrarModalAnular)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-x-circle text-danger me-2"></i>Anular factura</h5>
+                    <button class="btn-close" @onclick="CerrarModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">Esta acción revertirá el stock y las cuentas por cobrar asociadas.</p>
+                    <label class="form-label fw-semibold">Motivo de anulación <span class="text-danger">*</span></label>
+                    <textarea class="form-control" rows="3" placeholder="Indique el motivo..."
+                              @bind="_motivoAnulacion" maxlength="300"></textarea>
+                    @if (_errorModal is not null)
+                    {
+                        <div class="text-danger small mt-1">@_errorModal</div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary btn-sm" @onclick="CerrarModal">Cancelar</button>
+                    <button class="btn btn-danger btn-sm" @onclick="ConfirmarAnulacion" disabled="@_anulando">
+                        @if (_anulando) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                        <i class="bi bi-check-lg me-1"></i>Confirmar anulación
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal de registrar pago -->
+@if (_mostrarModalPago)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-cash-coin text-success me-2"></i>Registrar pago</h5>
+                    <button class="btn-close" @onclick="CerrarModalPago"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">
+                        Factura <strong>@_pagoFacturaNumero</strong> &mdash;
+                        Saldo pendiente: <strong class="text-danger">@_pagoSaldo.ToString("C0")</strong>
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold small">Método de pago *</label>
+                            <select class="form-select" @bind="_pagoForm.MetodoPagoId">
+                                <option value="0">Seleccione...</option>
+                                @foreach (var mp in _metodosPago)
+                                {
+                                    <option value="@mp.Id">@mp.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Monto *</label>
+                            <input type="number" class="form-control" @bind="_pagoForm.Monto"
+                                   min="0.01" step="0.01" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Referencia</label>
+                            <input class="form-control" @bind="_pagoForm.Referencia" placeholder="N° cheque, transf..." />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold small">Notas</label>
+                            <input class="form-control" @bind="_pagoForm.Notas" />
+                        </div>
+                    </div>
+                    @if (_errorPago is not null)
+                    {
+                        <div class="text-danger small mt-2">@_errorPago</div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary btn-sm" @onclick="CerrarModalPago">Cancelar</button>
+                    <button class="btn btn-success btn-sm" @onclick="ConfirmarPago" disabled="@_registrandoPago">
+                        @if (_registrandoPago) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                        <i class="bi bi-check-lg me-1"></i>Confirmar pago
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<FacturaDto> _facturas = [];
     private List<FacturaDto> _filtradas = [];
@@ -94,7 +190,39 @@ else
     private string _busqueda = "";
     private string _estadoFiltro = "";
 
-    protected override async Task OnInitializedAsync() => await Cargar();
+    private bool   _mostrarModalAnular;
+    private int    _idFacturaAnular;
+    private string _motivoAnulacion = "";
+    private bool   _anulando;
+    private string? _errorModal;
+
+    private bool   _mostrarModalPago;
+    private int    _idFacturaPago;
+    private string _pagoFacturaNumero = "";
+    private decimal _pagoSaldo;
+    private bool   _registrandoPago;
+    private string? _errorPago;
+    private List<MetodoPagoDto> _metodosPago = [];
+    private PagoForm _pagoForm = new();
+
+    private class PagoForm
+    {
+        public int     MetodoPagoId { get; set; }
+        public decimal Monto        { get; set; }
+        public string? Referencia   { get; set; }
+        public string? Notas        { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var t1 = Api.GetFacturasAsync();
+        var t2 = Api.GetMetodosPagoAsync();
+        await Task.WhenAll(t1, t2);
+        _facturas    = t1.Result ?? [];
+        _metodosPago = t2.Result ?? [];
+        AplicarFiltros();
+        _loading = false;
+    }
 
     private async Task Cargar()
     {
@@ -119,17 +247,81 @@ else
     private void AplicarFiltros()
     {
         _filtradas = _facturas
-            .Where(f => (string.IsNullOrEmpty(_busqueda) || f.Numero.Contains(_busqueda, StringComparison.OrdinalIgnoreCase) || f.ClienteNombre.Contains(_busqueda, StringComparison.OrdinalIgnoreCase))
-                     && (string.IsNullOrEmpty(_estadoFiltro) || f.Estado == _estadoFiltro))
+            .Where(f => (string.IsNullOrEmpty(_busqueda) || f.InvoiceNumber.Contains(_busqueda, StringComparison.OrdinalIgnoreCase) || f.CustomerName.Contains(_busqueda, StringComparison.OrdinalIgnoreCase))
+                     && (string.IsNullOrEmpty(_estadoFiltro) || f.StatusName == _estadoFiltro))
             .ToList();
     }
 
-    private async Task Anular(int id)
+    private void AbrirPago(FacturaDto f)
     {
-        var ok = await Api.AnularFacturaAsync(id);
-        _exito = ok;
-        _mensaje = ok ? "Factura anulada." : "No se pudo anular la factura.";
-        if (ok) await Cargar();
+        _idFacturaPago      = f.Id;
+        _pagoFacturaNumero  = f.InvoiceNumber;
+        _pagoSaldo          = f.Balance;
+        _pagoForm           = new() { Monto = f.Balance };
+        _errorPago          = null;
+        _mostrarModalPago   = true;
+    }
+
+    private void CerrarModalPago()
+    {
+        _mostrarModalPago = false;
+        _errorPago = null;
+    }
+
+    private async Task ConfirmarPago()
+    {
+        if (_pagoForm.MetodoPagoId == 0) { _errorPago = "Seleccione un método de pago."; return; }
+        if (_pagoForm.Monto <= 0)        { _errorPago = "El monto debe ser mayor a cero."; return; }
+
+        _registrandoPago = true;
+        _errorPago = null;
+        try
+        {
+            var dto = new RegisterPagoDto(_pagoForm.MetodoPagoId, _pagoForm.Monto, _pagoForm.Referencia, _pagoForm.Notas);
+            var ok  = await Api.RegisterPagoAsync(_idFacturaPago, dto);
+            _mostrarModalPago = false;
+            _exito   = ok;
+            _mensaje = ok ? "Pago registrado correctamente." : "Error al registrar el pago.";
+            if (ok) await Cargar();
+        }
+        catch { _errorPago = "Error al comunicarse con la API."; }
+        finally { _registrandoPago = false; }
+    }
+
+    private void Anular(int id)
+    {
+        _idFacturaAnular  = id;
+        _motivoAnulacion  = "";
+        _errorModal       = null;
+        _mostrarModalAnular = true;
+    }
+
+    private void CerrarModal()
+    {
+        _mostrarModalAnular = false;
+        _errorModal = null;
+    }
+
+    private async Task ConfirmarAnulacion()
+    {
+        if (string.IsNullOrWhiteSpace(_motivoAnulacion))
+        {
+            _errorModal = "El motivo de anulación es obligatorio.";
+            return;
+        }
+
+        _anulando = true;
+        _errorModal = null;
+        try
+        {
+            var ok = await Api.AnularFacturaAsync(_idFacturaAnular, _motivoAnulacion.Trim());
+            _mostrarModalAnular = false;
+            _exito   = ok;
+            _mensaje = ok ? "Factura anulada correctamente." : "No se pudo anular la factura.";
+            if (ok) await Cargar();
+        }
+        catch { _errorModal = "Error al comunicarse con la API."; }
+        finally { _anulando = false; }
     }
 
     private async Task DescargarPdf(int id)

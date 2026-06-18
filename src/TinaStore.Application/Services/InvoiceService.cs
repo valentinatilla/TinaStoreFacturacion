@@ -263,7 +263,8 @@ public sealed class InvoiceService : IInvoiceService
             var cxc = await _receivables.GetByCustomerAsync(invoice.CustomerId);
             if (cxc is not null)
             {
-                cxc.TotalDebt = Math.Max(0, cxc.TotalDebt - invoice.Balance);
+                // Restar sólo el balance pendiente; nunca dejar TotalDebt por debajo de TotalPaid
+                cxc.TotalDebt = Math.Max(cxc.TotalPaid, cxc.TotalDebt - invoice.Balance);
                 await _receivables.UpdateAsync(cxc);
             }
         }
