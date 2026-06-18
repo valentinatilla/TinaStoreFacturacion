@@ -10,6 +10,7 @@ public record StoreSettingsDto(
     string? Email,
     string? TaxId,
     string? InvoiceFooterMessage,
+    string? ReminderMessage,
     string Currency,
     decimal TaxPercentage,
     int InvoiceConsecutive,
@@ -24,6 +25,7 @@ public record UpdateStoreSettingsDto(
     string? Email,
     string? TaxId,
     string? InvoiceFooterMessage,
+    string? ReminderMessage,
     string Currency,
     decimal TaxPercentage,
     bool AllowNegativeStock

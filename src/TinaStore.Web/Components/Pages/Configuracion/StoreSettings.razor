@@ -1,6 +1,7 @@
 @page "/configuracion"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
+@inject IJSRuntime JS
 
 <PageTitle>Configuración — Tina Store</PageTitle>
 
@@ -22,6 +23,34 @@ else if (_cargado)
     }
 
     <div class="card border-0 shadow-sm p-4" style="max-width: 700px;">
+
+        <!-- ── Logo ─────────────────────────────── -->
+        <h6 class="fw-bold mb-3 text-purple"><i class="bi bi-image me-2"></i>Logo de la tienda</h6>
+        <div class="d-flex align-items-center gap-3 mb-4">
+            @if (!string.IsNullOrEmpty(_logoUrl))
+            {
+                <img src="@_logoUrl" alt="Logo" class="rounded border"
+                     style="height:72px;width:auto;object-fit:contain;" />
+            }
+            else
+            {
+                <div class="rounded border d-flex align-items-center justify-content-center bg-light"
+                     style="height:72px;width:72px;">
+                    <i class="bi bi-image text-muted fs-3"></i>
+                </div>
+            }
+            <div>
+                <InputFile id="logoInput" OnChange="SubirLogo" accept="image/png,image/jpeg,image/webp"
+                           class="form-control form-control-sm" style="max-width:260px;" />
+                @if (_subiendoLogo)
+                {
+                    <small class="text-muted"><span class="spinner-border spinner-border-sm me-1"></span>Subiendo...</small>
+                }
+                <div class="text-muted small mt-1">PNG, JPG o WebP. Recomendado: 200×60 px.</div>
+            </div>
+        </div>
+
+        <!-- ── Información general ───────────────── -->
         <h6 class="fw-bold mb-3 text-purple">Información general</h6>
         <div class="row g-3 mb-4">
             <div class="col-md-8">
@@ -56,6 +85,14 @@ else if (_cargado)
                 <label class="form-label small fw-semibold">Mensaje pie de factura</label>
                 <textarea class="form-control" rows="2" @bind="_modelo.InvoiceFooterMessage"></textarea>
             </div>
+            <div class="col-12">
+                <label class="form-label small fw-semibold">
+                    <i class="bi bi-whatsapp text-success me-1"></i>Mensaje de recordatorio (WhatsApp)
+                </label>
+                <textarea class="form-control" rows="3" @bind="_modelo.ReminderMessage"
+                          placeholder="Hola {nombre}, te recordamos que tienes un saldo pendiente de {saldo}. Por favor comunícate con nosotros. Gracias 🌸"></textarea>
+                <div class="text-muted small mt-1">Usa <code>{nombre}</code> y <code>{saldo}</code> como variables.</div>
+            </div>
             <div class="col-md-6">
                 <div class="form-check form-switch mt-2">
                     <input class="form-check-input" type="checkbox" @bind="_modelo.AllowNegativeStock" id="negStock" />
@@ -65,10 +102,7 @@ else if (_cargado)
         </div>
 
         <button class="btn bg-purple text-white px-4" @onclick="Guardar" disabled="@_guardando">
-            @if (_guardando)
-            {
-                <span class="spinner-border spinner-border-sm me-2"></span>
-            }
+            @if (_guardando) { <span class="spinner-border spinner-border-sm me-2"></span> }
             <i class="bi bi-floppy me-1"></i>Guardar cambios
         </button>
     </div>
@@ -79,6 +113,8 @@ else if (_cargado)
     private bool _cargado;
     private bool _loading = true;
     private bool _guardando;
+    private bool _subiendoLogo;
+    private string? _logoUrl;
     private string? _mensaje;
     private bool _exito;
 
@@ -89,19 +125,47 @@ else if (_cargado)
             var cfg = await Api.GetConfiguracionAsync();
             if (cfg is not null)
             {
-                _modelo.StoreName           = cfg.StoreName;
-                _modelo.Address             = cfg.Address;
-                _modelo.Phone               = cfg.Phone;
-                _modelo.Email               = cfg.Email;
-                _modelo.TaxId               = cfg.TaxId;
+                _modelo.StoreName            = cfg.StoreName;
+                _modelo.Address              = cfg.Address;
+                _modelo.Phone                = cfg.Phone;
+                _modelo.Email                = cfg.Email;
+                _modelo.TaxId                = cfg.TaxId;
                 _modelo.InvoiceFooterMessage = cfg.InvoiceFooterMessage;
-                _modelo.Currency            = cfg.Currency;
-                _modelo.TaxPercentage       = cfg.TaxPercentage;
-                _modelo.AllowNegativeStock  = cfg.AllowNegativeStock;
+                _modelo.ReminderMessage      = cfg.ReminderMessage;
+                _modelo.Currency             = cfg.Currency;
+                _modelo.TaxPercentage        = cfg.TaxPercentage;
+                _modelo.AllowNegativeStock   = cfg.AllowNegativeStock;
+                _logoUrl = string.IsNullOrEmpty(cfg.LogoPath)
+                    ? null
+                    : $"{Api.BaseUrl.TrimEnd('/')}{cfg.LogoPath}";
                 _cargado = true;
             }
         }
         finally { _loading = false; }
+    }
+
+    private async Task SubirLogo(InputFileChangeEventArgs e)
+    {
+        var archivo = e.File;
+        if (archivo is null) return;
+        _subiendoLogo = true;
+        _mensaje = null;
+        try
+        {
+            await using var stream = archivo.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+            var cfg = await Api.UploadLogoAsync(stream, archivo.Name);
+            if (cfg is not null)
+            {
+                _logoUrl = string.IsNullOrEmpty(cfg.LogoPath)
+                    ? null
+                    : $"{Api.BaseUrl.TrimEnd('/')}{cfg.LogoPath}";
+                _exito = true;
+                _mensaje = "Logo actualizado correctamente.";
+            }
+            else { _exito = false; _mensaje = "Error al subir el logo."; }
+        }
+        catch { _exito = false; _mensaje = "Error al subir el logo. Verifica que sea una imagen válida menor a 5 MB."; }
+        finally { _subiendoLogo = false; }
     }
 
     private async Task Guardar()
@@ -112,8 +176,8 @@ else if (_cargado)
         {
             var dto = new UpdateConfiguracionDto(
                 _modelo.StoreName, _modelo.Address, _modelo.Phone, _modelo.Email,
-                _modelo.TaxId, _modelo.InvoiceFooterMessage, _modelo.Currency,
-                _modelo.TaxPercentage, _modelo.AllowNegativeStock);
+                _modelo.TaxId, _modelo.InvoiceFooterMessage, _modelo.ReminderMessage,
+                _modelo.Currency, _modelo.TaxPercentage, _modelo.AllowNegativeStock);
 
             _exito = await Api.UpdateConfiguracionAsync(dto);
             _mensaje = _exito ? "Configuración guardada correctamente." : "Error al guardar la configuración.";
@@ -130,6 +194,7 @@ else if (_cargado)
         public string? Email                { get; set; }
         public string? TaxId               { get; set; }
         public string? InvoiceFooterMessage { get; set; }
+        public string? ReminderMessage      { get; set; }
         public string  Currency             { get; set; } = "COP";
         public decimal TaxPercentage        { get; set; }
         public bool    AllowNegativeStock   { get; set; }

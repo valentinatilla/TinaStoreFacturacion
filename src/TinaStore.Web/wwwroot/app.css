@@ -302,6 +302,58 @@ body {
     color: #fff;
 }
 
+.btn-success:hover {
+    background-color: #16A34A;
+    border-color: #16A34A;
+}
+
+.btn-outline-success {
+    color: #16A34A;
+    border-color: #4ADE80;
+    border-radius: 999px;
+    font-weight: 700;
+    transition: all .2s;
+}
+
+.btn-outline-success:hover {
+    background-color: #4ADE80;
+    border-color: #4ADE80;
+    color: #fff;
+}
+
+.btn-outline-danger {
+    color: #E11D48;
+    border-color: #FB7185;
+    border-radius: 999px;
+    font-weight: 700;
+    transition: all .2s;
+}
+
+.btn-outline-danger:hover {
+    background-color: #FB7185;
+    border-color: #FB7185;
+    color: #fff;
+}
+
+.btn-outline-secondary {
+    color: #6B21A8;
+    border-color: #C084FC;
+    border-radius: 999px;
+    font-weight: 700;
+    transition: all .2s;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #E9D5FF;
+    border-color: #C084FC;
+    color: #6B21A8;
+}
+
+.btn-sm {
+    padding: .25rem .75rem;
+    font-size: .82rem;
+}
+
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus,
 .form-control:focus, .form-check-input:focus {
     box-shadow: 0 0 0 0.15rem rgba(244, 114, 182, 0.35);
@@ -517,7 +569,7 @@ body {
     }
 }
 
-/* ── Badges de estado
+/* ── Badges de estado ────────────────────────────────────────────── */
 .badge-estado-pagada,
 .badge-estado-pagado {
     background-color: #D1FAE5;

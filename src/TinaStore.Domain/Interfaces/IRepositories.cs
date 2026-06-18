@@ -16,6 +16,7 @@ public interface IProductRepository : IRepository<Product>
     Task<IReadOnlyList<Product>> SearchAsync(string term, CancellationToken ct = default);
     Task<IReadOnlyList<Product>> GetLowStockAsync(CancellationToken ct = default);
     Task<IReadOnlyList<Product>> GetActivesAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<Product>> GetAllWithNavigationAsync(CancellationToken ct = default);
 }
 
 public interface IInvoiceRepository : IRepository<Invoice>
@@ -24,6 +25,12 @@ public interface IInvoiceRepository : IRepository<Invoice>
     Task<IReadOnlyList<Invoice>> GetByCustomerAsync(int customerId, CancellationToken ct = default);
     Task<IReadOnlyList<Invoice>> GetByDateRangeAsync(DateTime from, DateTime to, CancellationToken ct = default);
     Task<string> GetNextInvoiceNumberAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<Invoice>> GetAllWithCustomerAsync(CancellationToken ct = default);
+}
+
+public interface ICategoryRepository : IRepository<Category>
+{
+    Task<IReadOnlyList<Category>> GetAllWithProductsAsync(CancellationToken ct = default);
 }
 
 public interface IAccountReceivableRepository : IRepository<AccountReceivable>

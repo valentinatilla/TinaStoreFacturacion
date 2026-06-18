@@ -107,4 +107,41 @@ public class AuthService : IAuthService
 
     private static UserInfoDto MapToInfo(User u) => new(
         u.Id, u.FullName, u.Email, u.Role.ToString(), u.IsActive, u.LastLoginAt);
+
+    public async Task<TokenResponseDto?> LoginWithGoogleAsync(GoogleUserInfoDto googleUser)
+    {
+        var email = googleUser.Email.Trim().ToLower();
+        var user = await _users.GetByEmailAsync(email);
+
+        if (user is null)
+        {
+            user = new User
+            {
+                FullName = googleUser.FullName,
+                Email = email,
+                Role = Domain.Enums.UserRole.Admin,
+                IsActive = true,
+                PasswordHash = _hasher.Hash(Guid.NewGuid().ToString())
+            };
+            await _users.AddAsync(user);
+            await _users.SaveChangesAsync();
+        }
+        else if (!user.IsActive)
+        {
+            return null;
+        }
+
+        user.LastLoginAt = DateTime.UtcNow;
+        await _users.UpdateAsync(user);
+        await _users.SaveChangesAsync();
+
+        var token = _tokenService.GenerateToken(
+            user.Id, user.Email, user.FullName, user.Role.ToString());
+
+        return new TokenResponseDto(
+            AccessToken: token,
+            TokenType: "Bearer",
+            ExpiresInMinutes: _tokenService.ExpiresInMinutes,
+            User: MapToInfo(user));
+    }
 }

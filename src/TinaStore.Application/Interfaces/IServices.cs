@@ -118,6 +118,7 @@ public interface IAuthService
     Task<TokenResponseDto?> LoginWithGoogleAsync(GoogleUserInfoDto googleUser);
     Task<UserInfoDto?> GetProfileAsync(int userId);
     Task<bool> ChangePasswordAsync(int userId, ChangePasswordDto dto);
+    Task<TokenResponseDto?> LoginWithGoogleAsync(GoogleUserInfoDto googleUser);
 }
 
 public interface ITokenService
@@ -146,4 +147,5 @@ public interface IStoreSettingsService
 {
     Task<StoreSettingsDto> GetAsync();
     Task<StoreSettingsDto> UpdateAsync(UpdateStoreSettingsDto dto);
+    Task<StoreSettingsDto> UploadLogoAsync(Stream fileStream, string fileName);
 }

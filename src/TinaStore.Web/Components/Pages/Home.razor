@@ -141,15 +141,13 @@ else
     private bool _loading = true;
     private string? _error;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!Session.IsAuthenticated) { _loading = false; return; }
+        if (!firstRender) return;
+        if (!Session.IsAuthenticated) { _loading = false; StateHasChanged(); return; }
         try { _data = await Api.GetDashboardAsync(); }
-        catch (HttpRequestException ex) when ((int?)ex.StatusCode == 401)
-        {
-            // Token expirado o inválido; AuthorizeRouteView redirigirá a /login
-        }
+        catch (HttpRequestException ex) when ((int?)ex.StatusCode == 401) { }
         catch (Exception ex) { _error = ex.Message; }
-        finally { _loading = false; }
+        finally { _loading = false; StateHasChanged(); }
     }
 }
