@@ -42,3 +42,9 @@ public record ChangePasswordDto(
 public record ResetPasswordDto(
     string NewPassword,
     string ConfirmNewPassword);
+
+/// <summary>Payload que la Web envía a la API para autenticar vía Google.</summary>
+public record GoogleLoginDto(string IdToken);
+
+/// <summary>Datos extraídos del id_token de Google después de validarlo en la capa API.</summary>
+public record GoogleUserInfoDto(string Email, string FullName);

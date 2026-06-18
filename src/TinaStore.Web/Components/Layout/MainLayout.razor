@@ -1,6 +1,7 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager Nav
 @inject SessionStateService Session
+@inject IJSRuntime JS
 
 <div class="ts-wrapper">
     @if (Session.IsAuthenticated)
@@ -43,8 +44,9 @@
 </div>
 
 @code {
-    private void Logout()
+    private async Task Logout()
     {
+        await SessionStateService.ClearPersistenceAsync(JS);
         Session.Clear();
         Nav.NavigateTo("/login", forceLoad: true);
     }

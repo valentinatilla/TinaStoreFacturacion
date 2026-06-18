@@ -29,7 +29,7 @@ public sealed class ExcelService : IExcelService
         // Encabezados
         var headers = new[]
         {
-            "ID", "Nombre", "Descripción", "SKU", "Código Interno",
+            "ID", "Nombre", "Descripción", "SKU",
             "Precio Costo", "Precio Venta", "Stock Actual", "Stock Mínimo",
             "Categoría", "Proveedor", "Activo"
         };
@@ -52,14 +52,13 @@ public sealed class ExcelService : IExcelService
             ws.Cell(row, 2).Value = p.Name;
             ws.Cell(row, 3).Value = p.Description ?? string.Empty;
             ws.Cell(row, 4).Value = p.Sku ?? string.Empty;
-            ws.Cell(row, 5).Value = p.InternalCode;
-            ws.Cell(row, 6).Value = (double)p.PurchasePrice;
-            ws.Cell(row, 7).Value = (double)p.SalePrice;
-            ws.Cell(row, 8).Value = p.CurrentStock;
-            ws.Cell(row, 9).Value = p.MinimumStock;
-            ws.Cell(row, 10).Value = p.Category?.Name ?? string.Empty;
-            ws.Cell(row, 11).Value = p.Supplier?.Name ?? string.Empty;
-            ws.Cell(row, 12).Value = p.IsActive ? "Sí" : "No";
+            ws.Cell(row, 5).Value = (double)p.PurchasePrice;
+            ws.Cell(row, 6).Value = (double)p.SalePrice;
+            ws.Cell(row, 7).Value = p.CurrentStock;
+            ws.Cell(row, 8).Value = p.MinimumStock;
+            ws.Cell(row, 9).Value = p.Category?.Name ?? string.Empty;
+            ws.Cell(row, 10).Value = p.Supplier?.Name ?? string.Empty;
+            ws.Cell(row, 11).Value = p.IsActive ? "Sí" : "No";
 
             if (i % 2 == 1)
                 ws.Row(row).Style.Fill.BackgroundColor = XLColor.FromHtml("#F3F4F6");
@@ -80,7 +79,7 @@ public sealed class ExcelService : IExcelService
 
         var headers = new[]
         {
-            "Nombre*", "Descripción", "SKU", "Código Interno",
+            "Nombre*", "Descripción", "SKU",
             "Precio Costo*", "Precio Venta*", "Stock Inicial*", "Stock Mínimo",
             "ID Categoría*", "ID Proveedor"
         };
@@ -98,13 +97,12 @@ public sealed class ExcelService : IExcelService
         ws.Cell(2, 1).Value = "Producto Ejemplo";
         ws.Cell(2, 2).Value = "Descripción opcional";
         ws.Cell(2, 3).Value = "SKU-001";
-        ws.Cell(2, 4).Value = "COD-001";
-        ws.Cell(2, 5).Value = 5000;
-        ws.Cell(2, 6).Value = 8000;
-        ws.Cell(2, 7).Value = 10;
-        ws.Cell(2, 8).Value = 2;
-        ws.Cell(2, 9).Value = 1;
-        ws.Cell(2, 10).Value = "";
+        ws.Cell(2, 4).Value = 5000;
+        ws.Cell(2, 5).Value = 8000;
+        ws.Cell(2, 6).Value = 10;
+        ws.Cell(2, 7).Value = 2;
+        ws.Cell(2, 8).Value = 1;
+        ws.Cell(2, 9).Value = "";
         ws.Row(2).Style.Fill.BackgroundColor = XLColor.FromHtml("#DBEAFE");
 
         ws.Columns().AdjustToContents();
@@ -131,11 +129,11 @@ public sealed class ExcelService : IExcelService
                 var nombre = ws.Cell(row, 1).GetValue<string>().Trim();
                 if (string.IsNullOrEmpty(nombre)) continue;
 
-                var costPrice = ws.Cell(row, 5).GetValue<decimal>();
-                var salePrice = ws.Cell(row, 6).GetValue<decimal>();
-                var stock = ws.Cell(row, 7).GetValue<int>();
-                var minStock = ws.Cell(row, 8).GetValue<int>();
-                var categoryId = ws.Cell(row, 9).GetValue<int>();
+                var costPrice = ws.Cell(row, 4).GetValue<decimal>();
+                var salePrice = ws.Cell(row, 5).GetValue<decimal>();
+                var stock = ws.Cell(row, 6).GetValue<int>();
+                var minStock = ws.Cell(row, 7).GetValue<int>();
+                var categoryId = ws.Cell(row, 8).GetValue<int>();
 
                 if (costPrice < 0 || salePrice <= 0 || categoryId <= 0)
                 {
@@ -151,7 +149,7 @@ public sealed class ExcelService : IExcelService
                 }
 
                 int? supplierId = null;
-                var supplierRaw = ws.Cell(row, 10).GetValue<string>().Trim();
+                var supplierRaw = ws.Cell(row, 9).GetValue<string>().Trim();
                 if (int.TryParse(supplierRaw, out var sid))
                 {
                     var supplierExiste = await _db.Suppliers.AnyAsync(s => s.Id == sid && !s.IsDeleted);
@@ -163,7 +161,6 @@ public sealed class ExcelService : IExcelService
                     Name = nombre,
                     Description = ws.Cell(row, 2).GetValue<string>().Trim().NullIfEmpty(),
                     Sku = ws.Cell(row, 3).GetValue<string>().Trim().NullIfEmpty(),
-                    InternalCode = ws.Cell(row, 4).GetValue<string>().Trim().NullIfEmpty() ?? string.Empty,
                     PurchasePrice = costPrice,
                     SalePrice = salePrice,
                     CurrentStock = stock,

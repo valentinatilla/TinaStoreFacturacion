@@ -3,7 +3,6 @@ namespace TinaStore.Domain.Entities;
 /// <summary>Producto del inventario con precios, stock y relación con categoría y proveedor.</summary>
 public class Product : BaseEntity
 {
-    public string InternalCode { get; set; } = string.Empty;
     public string? Sku { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
@@ -13,6 +12,7 @@ public class Product : BaseEntity
     public int CurrentStock { get; set; } = 0;
     public int MinimumStock { get; set; } = 0;
     public bool IsActive { get; set; } = true;
+    public string? ImagePath { get; set; }
 
     public int CategoryId { get; set; }
     public Category Category { get; set; } = null!;
