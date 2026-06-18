@@ -1,0 +1,30 @@
+name: ✅ CI — Build y Tests
+
+on:
+  pull_request:
+    branches: [master, develop]
+  push:
+    branches: [develop]
+
+jobs:
+  build-and-test:
+    name: Build y Tests (.NET 10)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: 📦 Restaurar dependencias
+        run: dotnet restore TinaStore.slnx
+
+      - name: 🔨 Build Release
+        run: dotnet build TinaStore.slnx -c Release --no-restore
+
+      - name: 🧪 Ejecutar Tests
+        run: dotnet test TinaStore.slnx --no-build -c Release --verbosity normal
