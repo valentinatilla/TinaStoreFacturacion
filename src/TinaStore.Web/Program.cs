@@ -15,18 +15,29 @@ builder.Services.AddRazorComponents()
 // ─── Autenticación ────────────────────────────────────────────────────────────
 // Cookie se usa solo como transporte temporal para el callback OAuth de Google.
 // La sesión real la gestiona SessionStateService con el JWT de TinaStore.
-builder.Services.AddAuthentication(options =>
+var googleClientId     = builder.Configuration["Google:ClientId"];
+var googleClientSecret = builder.Configuration["Google:ClientSecret"];
+var googleEnabled      = !string.IsNullOrWhiteSpace(googleClientId)
+                      && !string.IsNullOrWhiteSpace(googleClientSecret);
+
+var authBuilder = builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+        // Solo usa Google como challenge si las credenciales están configuradas.
+        options.DefaultChallengeScheme = googleEnabled
+            ? GoogleDefaults.AuthenticationScheme
+            : CookieAuthenticationDefaults.AuthenticationScheme;
     })
-    .AddCookie()
-    .AddGoogle(options =>
+    .AddCookie();
+
+if (googleEnabled)
+{
+    authBuilder.AddGoogle(options =>
     {
-        options.ClientId = builder.Configuration["Google:ClientId"] ?? "";
-        options.ClientSecret = builder.Configuration["Google:ClientSecret"] ?? "";
+        options.ClientId     = googleClientId!;
+        options.ClientSecret = googleClientSecret!;
         options.CallbackPath = "/auth/google-callback";
-        options.SaveTokens = true;
+        options.SaveTokens   = true;
         // El OAuthHandler base no guarda id_token automáticamente; hay que extraerlo manualmente.
         options.Events.OnCreatingTicket = ctx =>
         {
@@ -36,17 +47,21 @@ builder.Services.AddAuthentication(options =>
                 ctx.Properties.StoreTokens(ctx.Properties.GetTokens().Append(
                     new Microsoft.AspNetCore.Authentication.AuthenticationToken
                     {
-                        Name = "id_token",
+                        Name  = "id_token",
                         Value = idToken
                     }));
             return Task.CompletedTask;
         };
     });
+}
 
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<SessionStateService>();
 builder.Services.AddScoped<AuthenticationStateProvider, TinaStoreAuthStateProvider>();
+
+// Expone si el login con Google está disponible para que los componentes puedan consultarlo.
+builder.Services.AddSingleton(new GoogleAuthConfig(googleEnabled));
 
 // ─── HttpClient apuntando a la API ───────────────────────────────────────────
 var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5172";
@@ -85,12 +100,14 @@ app.Use(async (ctx, next) =>
 });
 
 // ─── Rutas OAuth de Google ────────────────────────────────────────────────────
-// Inicia el flujo OAuth redirigiendo a Google.
-// Inicia el flujo OAuth redirigiendo a Google.
-// El middleware maneja /auth/google-callback automáticamente (CallbackPath).
-// Después redirige a /auth/google-complete donde nosotros procesamos el resultado.
+// Solo se registran si Google está configurado con ClientId y ClientSecret.
 app.MapGet("/auth/google", async (HttpContext ctx) =>
 {
+    if (!googleEnabled)
+    {
+        ctx.Response.Redirect("/login?error=google_not_configured");
+        return;
+    }
     var props = new AuthenticationProperties
     {
         RedirectUri = "/auth/google-complete"

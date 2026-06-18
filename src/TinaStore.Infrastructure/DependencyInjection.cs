@@ -44,10 +44,11 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
         services.AddScoped<IAppPasswordHasher, AppPasswordHasher>();
 
-        // Servicios de infraestructura (PDF, Excel y JWT)
+        // Servicios de infraestructura (PDF, Excel, JWT y reloj de la app)
         services.AddScoped<IPdfService, PdfService>();
         services.AddScoped<IExcelService, ExcelService>();
         services.AddScoped<ITokenService, TokenService>();
+        services.AddSingleton<IAppClock, AppClock>();
 
         return services;
     }

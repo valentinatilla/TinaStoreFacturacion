@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
+  <PropertyGroup>
+    <UserSecretsId>tinastore-api-secrets</UserSecretsId>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\TinaStore.Application\TinaStore.Application.csproj" />
     <ProjectReference Include="..\TinaStore.Infrastructure\TinaStore.Infrastructure.csproj" />

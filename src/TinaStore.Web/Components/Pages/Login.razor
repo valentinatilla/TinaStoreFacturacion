@@ -79,9 +79,10 @@
 
         _error = ErrorParam switch
         {
-            "google_failed" => "No se pudo completar el inicio de sesión con Google. Intenta de nuevo.",
-            "no_id_token"   => "Google no devolvió un token válido. Intenta de nuevo.",
-            _               => null
+            "google_failed"           => "No se pudo completar el inicio de sesión con Google. Intenta de nuevo.",
+            "no_id_token"             => "Google no devolvió un token válido. Intenta de nuevo.",
+            "google_not_configured"   => "El inicio de sesión con Google no está disponible en este momento.",
+            _                         => null
         };
     }
 

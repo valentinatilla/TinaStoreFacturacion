@@ -58,13 +58,13 @@ public record RegisterPagoDto(int PaymentMethodId, decimal Amount, string? Refer
 public record ConfiguracionTiendaDto(
     int Id, string StoreName, string? LogoPath, string? Address,
     string? Phone, string? Email, string? TaxId,
-    string? InvoiceFooterMessage, string Currency,
+    string? InvoiceFooterMessage, string? ReminderMessage, string Currency,
     decimal TaxPercentage, int InvoiceConsecutive, bool AllowNegativeStock);
 
 public record UpdateConfiguracionDto(
     string StoreName, string? Address, string? Phone, string? Email,
-    string? TaxId, string? InvoiceFooterMessage, string Currency,
-    decimal TaxPercentage, bool AllowNegativeStock);
+    string? TaxId, string? InvoiceFooterMessage, string? ReminderMessage,
+    string Currency, decimal TaxPercentage, bool AllowNegativeStock);
 
 public record UsuarioDto(int Id, string FullName, string Email, string Role, bool IsActive, DateTime? LastLoginAt);
 public record CreateUsuarioDto(string FullName, string Email, string Password, string Role);
@@ -128,15 +128,24 @@ public class TinaStoreApiClient
         catch { return null; }
     }
 
-    public async Task<TokenResponseDto?> LoginConGoogleAsync(string idToken)
+    public async Task<(TokenResponseDto? Token, string? Error)> LoginConGoogleAsync(string idToken)
     {
         try
         {
             var response = await _http.PostAsJsonAsync("/api/auth/google", new { idToken });
-            if (!response.IsSuccessStatusCode) return null;
-            return await response.Content.ReadFromJsonAsync<TokenResponseDto>();
+            if (response.IsSuccessStatusCode)
+                return (await response.Content.ReadFromJsonAsync<TokenResponseDto>(), null);
+
+            // Intentar leer el mensaje de error de la API
+            try
+            {
+                var err = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+                var msg = err.TryGetProperty("message", out var m) ? m.GetString() : null;
+                return (null, msg ?? $"Error {(int)response.StatusCode}");
+            }
+            catch { return (null, $"Error {(int)response.StatusCode}"); }
         }
-        catch { return null; }
+        catch (Exception ex) { return (null, ex.Message); }
     }
 
     /// <summary>
@@ -345,6 +354,8 @@ public class TinaStoreApiClient
     }
 
     // ── Configuración de tienda ───────────────────────────────────────────────
+    public string BaseUrl => _http.BaseAddress?.ToString() ?? string.Empty;
+
     public Task<ConfiguracionTiendaDto?> GetConfiguracionAsync() =>
         GetSafeAsync<ConfiguracionTiendaDto>("/api/settings");
 
@@ -353,6 +364,17 @@ public class TinaStoreApiClient
         SetAuthHeader();
         var r = await _http.PutAsJsonAsync("/api/settings", dto);
         return r.IsSuccessStatusCode;
+    }
+
+    public async Task<ConfiguracionTiendaDto?> UploadLogoAsync(Stream fileStream, string fileName)
+    {
+        SetAuthHeader();
+        using var content = new MultipartFormDataContent();
+        content.Add(new StreamContent(fileStream), "file", fileName);
+        var r = await _http.PostAsync("/api/settings/logo", content);
+        return r.IsSuccessStatusCode
+            ? await r.Content.ReadFromJsonAsync<ConfiguracionTiendaDto>()
+            : null;
     }
 
     // ── Reportes ──────────────────────────────────────────────────────────────
