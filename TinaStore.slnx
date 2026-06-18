@@ -1,2 +1,13 @@
 <Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TinaStore.Api/TinaStore.Api.csproj" />
+    <Project Path="src/TinaStore.Application/TinaStore.Application.csproj" />
+    <Project Path="src/TinaStore.Domain/TinaStore.Domain.csproj" />
+    <Project Path="src/TinaStore.Infrastructure/TinaStore.Infrastructure.csproj" />
+    <Project Path="src/TinaStore.Web/TinaStore.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TinaStore.Tests.Integration/TinaStore.Tests.Integration.csproj" />
+    <Project Path="tests/TinaStore.Tests.Unit/TinaStore.Tests.Unit.csproj" />
+  </Folder>
 </Solution>
