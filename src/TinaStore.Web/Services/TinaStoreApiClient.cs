@@ -39,14 +39,14 @@ public record MetodoPagoDto(int Id, string Name, string? Description, bool IsAct
 
 public record ProductoDto(int Id, string? Sku, string Name, string? Description, string? Unit, decimal SalePrice, decimal PurchasePrice, int CurrentStock, int MinimumStock, bool IsActive, bool IsLowStock, decimal ProfitMargin, int CategoryId, string CategoryName, int? SupplierId, string? SupplierName, string? ImagePath);
 public record CreateProductoDto(string? Sku, string Name, string? Description, string? Unit, decimal PurchasePrice, decimal SalePrice, int CurrentStock, int MinimumStock, int CategoryId, int? SupplierId);
-public record UpdateProductoDto(string? Sku, string Name, string? Description, string? Unit, decimal PurchasePrice, decimal SalePrice, int MinimumStock, bool IsActive, int CategoryId, int? SupplierId);
+public record UpdateProductoDto(string? Sku, string Name, string? Description, string? Unit, decimal PurchasePrice, decimal SalePrice, int MinimumStock, bool IsActive, int CategoryId, int? SupplierId, int StockEntrada = 0);
 
 public record FacturaDto(int Id, string InvoiceNumber, DateTime InvoiceDate, string CustomerName, decimal Subtotal, decimal DiscountAmount, decimal TaxAmount, decimal Total, decimal AmountPaid, decimal Balance, int Status, string StatusName, string? Notes);
 public record CreateFacturaDto(int CustomerId, decimal DiscountAmount, decimal TaxAmount, string? Notes, List<CreateDetalleFacturaDto> Details, CreatePagoInicialDto? PagoInicial);
 public record CreateDetalleFacturaDto(int ProductId, int Quantity, decimal UnitPrice, decimal DiscountAmount = 0);
 public record CreatePagoInicialDto(int PaymentMethodId, decimal Amount, string? Reference, string? Notes);
 
-public record EgresoDto(int Id, DateTime ExpenseDate, string Description, decimal Amount, string? Notes, int Status, string StatusName, int ExpenseCategoryId, string ExpenseCategoryName, int? PaymentMethodId, string? PaymentMethodName);
+public record EgresoDto(int Id, DateTime ExpenseDate, string Description, decimal Amount, string? Notes, int Status, string StatusName, int ExpenseCategoryId, string ExpenseCategoryName, int? SupplierId, string? SupplierName, int? PaymentMethodId, string? PaymentMethodName);
 public record CreateEgresoDto(DateTime ExpenseDate, string Description, decimal Amount, string? Notes, int ExpenseCategoryId, int? SupplierId, int? PaymentMethodId);
 
 public record CategoriaGastoDto(int Id, string Name, string? Description, bool IsActive, int ExpenseCount);

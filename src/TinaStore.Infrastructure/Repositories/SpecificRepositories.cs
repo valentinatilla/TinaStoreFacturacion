@@ -151,6 +151,14 @@ public class AccountReceivableRepository(AppDbContext context) : Repository<Acco
 
 public class ExpenseRepository(AppDbContext context) : Repository<Expense>(context), IExpenseRepository
 {
+    public async Task<IReadOnlyList<Expense>> GetAllWithNavigationAsync(CancellationToken ct = default)
+        => await DbSet
+            .Include(e => e.ExpenseCategory)
+            .Include(e => e.Supplier)
+            .Include(e => e.PaymentMethod)
+            .OrderByDescending(e => e.ExpenseDate)
+            .ToListAsync(ct);
+
     public async Task<IReadOnlyList<Expense>> GetByDateRangeAsync(DateTime from, DateTime to, CancellationToken ct = default)
         => await DbSet
             .Include(e => e.ExpenseCategory)

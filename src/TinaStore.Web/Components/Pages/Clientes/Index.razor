@@ -24,8 +24,29 @@
 }
 else
 {
-    <div class="mb-3">
-        <input class="form-control" style="max-width:300px" placeholder="🔍 Buscar cliente..." @oninput="Filtrar" />
+    <div class="card border-0 shadow-sm mb-3 p-3">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold mb-1">Buscar cliente</label>
+                <input class="form-control form-control-sm" placeholder="Nombre, documento o teléfono..."
+                       @oninput="e => { _filtroTexto = e.Value?.ToString() ?? string.Empty; Filtrar(); }" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold mb-1">Compra desde</label>
+                <input type="date" class="form-control form-control-sm"
+                       @onchange="e => { _filtroDesde = e.Value is string s && !string.IsNullOrEmpty(s) ? DateOnly.Parse(s) : (DateOnly?)null; Filtrar(); }" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold mb-1">Compra hasta</label>
+                <input type="date" class="form-control form-control-sm"
+                       @onchange="e => { _filtroHasta = e.Value is string s && !string.IsNullOrEmpty(s) ? DateOnly.Parse(s) : (DateOnly?)null; Filtrar(); }" />
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-sm btn-outline-secondary w-100" @onclick="LimpiarFiltros">
+                    <i class="bi bi-x-circle me-1"></i>Limpiar
+                </button>
+            </div>
+        </div>
     </div>
     <div class="card ts-table border-0">
         <div class="table-responsive">
@@ -181,6 +202,11 @@ else
     private int _idAEliminar;
     private string _nombreAEliminar = "";
 
+    // ── Filtros ────────────────────────────────────────────────────────────────────
+    private string  _filtroTexto  = string.Empty;
+    private DateOnly? _filtroDesde;
+    private DateOnly? _filtroHasta;
+
     protected override async Task OnInitializedAsync()
     {
         await Cargar();
@@ -194,14 +220,31 @@ else
         _loading = false;
     }
 
-    private void Filtrar(ChangeEventArgs e)
+    private void Filtrar()
     {
-        var q = e.Value?.ToString()?.ToLower() ?? "";
-        _filtrados = string.IsNullOrWhiteSpace(q)
-            ? _clientes
-            : _clientes.Where(c => c.FullName.ToLower().Contains(q)
-                || (c.DocumentNumber?.ToLower().Contains(q) ?? false)
-                || (c.Phone?.Contains(q) ?? false)).ToList();
+        _filtrados = _clientes
+            .Where(c => string.IsNullOrWhiteSpace(_filtroTexto) ||
+                        c.FullName.Contains(_filtroTexto, StringComparison.OrdinalIgnoreCase) ||
+                        (c.DocumentNumber?.Contains(_filtroTexto, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        (c.Phone?.Contains(_filtroTexto) ?? false))
+            .Where(c =>
+            {
+                if (_filtroDesde is null && _filtroHasta is null) return true;
+                if (!c.LastPurchaseDate.HasValue) return false;
+                var fecha = DateOnly.FromDateTime(c.LastPurchaseDate.Value.ToLocalTime());
+                if (_filtroDesde.HasValue && fecha < _filtroDesde.Value) return false;
+                if (_filtroHasta.HasValue && fecha > _filtroHasta.Value) return false;
+                return true;
+            })
+            .ToList();
+    }
+
+    private void LimpiarFiltros()
+    {
+        _filtroTexto = string.Empty;
+        _filtroDesde = null;
+        _filtroHasta = null;
+        _filtrados   = _clientes;
     }
 
     private void AbrirModal(ClienteDto? c = null)

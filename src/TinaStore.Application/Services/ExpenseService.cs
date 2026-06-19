@@ -20,7 +20,7 @@ public sealed class ExpenseService : IExpenseService
 
     public async Task<IEnumerable<ExpenseDto>> GetAllAsync()
     {
-        var lista = await _expenses.GetAllAsync();
+        var lista = await _expenses.GetAllWithNavigationAsync();
         return lista.OrderByDescending(e => e.ExpenseDate).Select(ToDto);
     }
 

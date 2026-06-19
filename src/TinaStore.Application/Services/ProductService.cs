@@ -1,6 +1,7 @@
 using TinaStore.Application.DTOs;
 using TinaStore.Application.Interfaces;
 using TinaStore.Domain.Entities;
+using TinaStore.Domain.Enums;
 using TinaStore.Domain.Exceptions;
 using TinaStore.Domain.Interfaces;
 
@@ -8,18 +9,26 @@ namespace TinaStore.Application.Services;
 
 public sealed class ProductService : IProductService
 {
+    private const string CategoriaNombreCompras = "Compras a proveedor";
+
     private readonly IProductRepository _products;
     private readonly IRepository<Category> _categories;
     private readonly IRepository<Supplier> _suppliers;
+    private readonly IExpenseRepository _expenses;
+    private readonly IRepository<ExpenseCategory> _expenseCategories;
 
     public ProductService(
         IProductRepository products,
         IRepository<Category> categories,
-        IRepository<Supplier> suppliers)
+        IRepository<Supplier> suppliers,
+        IExpenseRepository expenses,
+        IRepository<ExpenseCategory> expenseCategories)
     {
         _products = products;
         _categories = categories;
         _suppliers = suppliers;
+        _expenses = expenses;
+        _expenseCategories = expenseCategories;
     }
 
     public async Task<IEnumerable<ProductSummaryDto>> GetAllAsync(bool soloActivos = false)
@@ -78,6 +87,10 @@ public sealed class ProductService : IProductService
 
         await _products.AddAsync(entity);
         await _products.SaveChangesAsync();
+
+        if (dto.PurchasePrice > 0 && dto.CurrentStock > 0)
+            await RegistrarEgresoCompraAsync(entity, dto.CurrentStock, dto.PurchasePrice);
+
         return ToDto(entity);
     }
 
@@ -101,8 +114,15 @@ public sealed class ProductService : IProductService
         entity.Category = categoria;
         entity.SupplierId = dto.SupplierId;
 
+        if (dto.StockEntrada > 0)
+            entity.CurrentStock += dto.StockEntrada;
+
         await _products.UpdateAsync(entity);
         await _products.SaveChangesAsync();
+
+        if (dto.StockEntrada > 0 && dto.PurchasePrice > 0)
+            await RegistrarEgresoCompraAsync(entity, dto.StockEntrada, dto.PurchasePrice);
+
         return ToDto(entity);
     }
 
@@ -125,6 +145,29 @@ public sealed class ProductService : IProductService
         await _products.UpdateAsync(entity);
         await _products.SaveChangesAsync();
         return ToDto(entity);
+    }
+
+    private async Task RegistrarEgresoCompraAsync(Product product, int cantidad, decimal precioUnitario)
+    {
+        // Busca la categoría por nombre directamente
+        var resultados = await _expenseCategories.FindAsync(c =>
+            c.Name == CategoriaNombreCompras && !c.IsDeleted);
+        var categoria = resultados.FirstOrDefault();
+        if (categoria is null) return;
+
+        var egreso = new Expense
+        {
+            ExpenseDate       = DateTime.UtcNow,
+            Description       = $"Compra de {cantidad} unidad(es) de '{product.Name}'",
+            Amount            = precioUnitario * cantidad,
+            Notes             = product.Sku is not null ? $"SKU: {product.Sku}" : null,
+            Status            = ExpenseStatus.Active,
+            ExpenseCategoryId = categoria.Id,
+            SupplierId        = product.SupplierId
+        };
+
+        await _expenses.AddAsync(egreso);
+        await _expenses.SaveChangesAsync();
     }
 
     private static ProductSummaryDto ToSummaryDto(Product p) => new(

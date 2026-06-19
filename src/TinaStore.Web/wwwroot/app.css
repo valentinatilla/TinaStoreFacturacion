@@ -710,6 +710,15 @@ a:hover {
 .text-purple     { color: #7C3AED !important; }
 .bg-purple       { background-color: #7C3AED !important; }
 
+/* Utilidades de color púrpura (independientes de .btn) */
+.bg-purple {
+    background-color: #7C3AED !important;
+}
+
+.text-purple {
+    color: #7C3AED !important;
+}
+
 /* Botón de acción principal: .btn.bg-purple.text-white */
 .btn.bg-purple,
 a.btn.bg-purple {

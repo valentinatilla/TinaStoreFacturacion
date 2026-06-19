@@ -62,5 +62,7 @@ public record UpdateProductDto(
     int MinimumStock,
     bool IsActive,
     int CategoryId,
-    int? SupplierId
+    int? SupplierId,
+    /// <summary>Unidades adicionales compradas en esta edición. Si > 0 se suma al stock y genera egreso automático.</summary>
+    int StockEntrada = 0
 );

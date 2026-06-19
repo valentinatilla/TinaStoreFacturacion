@@ -43,6 +43,7 @@ public interface IAccountReceivableRepository : IRepository<AccountReceivable>
 
 public interface IExpenseRepository : IRepository<Expense>
 {
+    Task<IReadOnlyList<Expense>> GetAllWithNavigationAsync(CancellationToken ct = default);
     Task<IReadOnlyList<Expense>> GetByDateRangeAsync(DateTime from, DateTime to, CancellationToken ct = default);
     Task<IReadOnlyList<Expense>> GetByCategoryAsync(int categoryId, CancellationToken ct = default);
     Task<decimal> GetTotalByDateRangeAsync(DateTime from, DateTime to, CancellationToken ct = default);
