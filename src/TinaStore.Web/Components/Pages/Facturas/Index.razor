@@ -24,15 +24,36 @@
 }
 else
 {
-    <div class="mb-3 d-flex gap-2">
-        <input class="form-control" style="max-width:280px" placeholder="🔍 N° o cliente..." @oninput="Filtrar" />
-        <select class="form-select" style="max-width:160px" @onchange="FiltrarEstado">
-            <option value="">Todos</option>
-            <option value="Pendiente">Pendiente</option>
-            <option value="Pagada">Pagada</option>
-            <option value="Parcial">Parcial</option>
-            <option value="Anulada">Anulada</option>
-        </select>
+    <div class="card border-0 shadow-sm mb-3 p-3">
+        <div class="row g-2 align-items-end">
+            <div class="col-sm-6 col-md-3">
+                <label class="form-label small fw-semibold mb-1">N° o cliente</label>
+                <input class="form-control form-control-sm" placeholder="🔍 Buscar..." @oninput="Filtrar" />
+            </div>
+            <div class="col-sm-6 col-md-2">
+                <label class="form-label small fw-semibold mb-1">Estado</label>
+                <select class="form-select form-select-sm" @onchange="FiltrarEstado">
+                    <option value="">Todos</option>
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Pagada">Pagada</option>
+                    <option value="Parcial">Parcial</option>
+                    <option value="Anulada">Anulada</option>
+                </select>
+            </div>
+            <div class="col-sm-6 col-md-2">
+                <label class="form-label small fw-semibold mb-1">Desde</label>
+                <input type="date" class="form-control form-control-sm" @onchange="FiltrarDesde" />
+            </div>
+            <div class="col-sm-6 col-md-2">
+                <label class="form-label small fw-semibold mb-1">Hasta</label>
+                <input type="date" class="form-control form-control-sm" @onchange="FiltrarHasta" />
+            </div>
+            <div class="col-sm-auto">
+                <button class="btn btn-sm btn-outline-secondary" @onclick="LimpiarFiltros">
+                    <i class="bi bi-x-circle me-1"></i>Limpiar
+                </button>
+            </div>
+        </div>
     </div>
 
     <div class="card ts-table border-0">
@@ -43,6 +64,7 @@ else
                         <th>N° Factura</th><th>Cliente</th>
                         <th class="text-end">Total</th>
                         <th class="text-end">Pagado</th>
+                        <th class="text-end">Saldo</th>
                         <th>Estado</th><th>Fecha</th><th></th>
                     </tr>
                 </thead>
@@ -55,6 +77,9 @@ else
                             <td class="text-end fw-semibold">@f.Total.ToString("C0")</td>
                             <td class="text-end @(f.AmountPaid < f.Total ? "text-danger" : "text-success")">
                                 @f.AmountPaid.ToString("C0")
+                            </td>
+                            <td class="text-end @(f.Balance > 0 ? "text-danger fw-semibold" : "text-muted")">
+                                @f.Balance.ToString("C0")
                             </td>
                             <td>
                                 <span class="badge badge-estado-@f.StatusName.ToLower()">@f.StatusName</span>
@@ -84,7 +109,7 @@ else
                     }
                     @if (!_filtradas.Any())
                     {
-                        <tr><td colspan="7" class="text-center text-muted py-4">Sin facturas</td></tr>
+                        <tr><td colspan="8" class="text-center text-muted py-4">Sin facturas</td></tr>
                     }
                 </tbody>
             </table>
@@ -189,6 +214,8 @@ else
     private bool _exito;
     private string _busqueda = "";
     private string _estadoFiltro = "";
+    private DateTime? _filtroDesde;
+    private DateTime? _filtroHasta;
 
     private bool   _mostrarModalAnular;
     private int    _idFacturaAnular;
@@ -244,11 +271,37 @@ else
         AplicarFiltros();
     }
 
+    private void FiltrarDesde(ChangeEventArgs e)
+    {
+        _filtroDesde = DateTime.TryParse(e.Value?.ToString(), out var d) ? d : null;
+        AplicarFiltros();
+    }
+
+    private void FiltrarHasta(ChangeEventArgs e)
+    {
+        _filtroHasta = DateTime.TryParse(e.Value?.ToString(), out var d) ? d.AddDays(1).AddSeconds(-1) : null;
+        AplicarFiltros();
+    }
+
+    private void LimpiarFiltros()
+    {
+        _busqueda = "";
+        _estadoFiltro = "";
+        _filtroDesde = null;
+        _filtroHasta = null;
+        _filtradas = _facturas;
+    }
+
     private void AplicarFiltros()
     {
         _filtradas = _facturas
-            .Where(f => (string.IsNullOrEmpty(_busqueda) || f.InvoiceNumber.Contains(_busqueda, StringComparison.OrdinalIgnoreCase) || f.CustomerName.Contains(_busqueda, StringComparison.OrdinalIgnoreCase))
-                     && (string.IsNullOrEmpty(_estadoFiltro) || f.StatusName == _estadoFiltro))
+            .Where(f =>
+                (string.IsNullOrEmpty(_busqueda) ||
+                 f.InvoiceNumber.Contains(_busqueda, StringComparison.OrdinalIgnoreCase) ||
+                 f.CustomerName.Contains(_busqueda, StringComparison.OrdinalIgnoreCase))
+             && (string.IsNullOrEmpty(_estadoFiltro) || f.StatusName == _estadoFiltro)
+             && (_filtroDesde is null || f.InvoiceDate >= _filtroDesde)
+             && (_filtroHasta is null || f.InvoiceDate <= _filtroHasta))
             .ToList();
     }
 

@@ -57,6 +57,8 @@ if (googleEnabled)
 
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<SessionRestoreGate>();
 builder.Services.AddScoped<SessionStateService>();
 builder.Services.AddScoped<AuthenticationStateProvider, TinaStoreAuthStateProvider>();
 

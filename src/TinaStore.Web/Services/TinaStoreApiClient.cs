@@ -21,7 +21,7 @@ public record DashboardDto(
     List<UltimaFacturaDto> UltimasFacturas,
     List<DeudorResumenDto> TopDeudores);
 
-public record UltimaFacturaDto(int Id, string InvoiceNumber, DateTime InvoiceDate, string CustomerName, decimal Total, decimal Balance, string Status, string StatusName);
+public record UltimaFacturaDto(int Id, string InvoiceNumber, DateTime InvoiceDate, string CustomerName, decimal Total, decimal Balance, int Status, string StatusName);
 public record DeudorResumenDto(int CustomerId, string CustomerName, string? Phone, decimal Saldo);
 
 public record ClienteDto(int Id, string FullName, string? DocumentType, string? DocumentNumber, string? Phone, string? Email, string? Address, string? Notes, bool IsActive, decimal PendingBalance, DateTime CreatedAt, DateTime? LastPurchaseDate, string CommercialStatus);

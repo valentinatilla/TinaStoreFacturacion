@@ -240,6 +240,7 @@ else
     private bool _exito;
     private ProductoForm _form = new();
     private IBrowserFile? _imagenSeleccionada;
+    private byte[]? _imagenBytes;
 
     [Inject] private IConfiguration Config { get; set; } = default!;
 
@@ -310,6 +311,7 @@ else
     {
         _mostrarModal = false;
         _imagenSeleccionada = null;
+        _imagenBytes = null;
     }
 
     private async Task SeleccionarImagen(InputFileChangeEventArgs e)
@@ -352,6 +354,7 @@ else
             var base64 = Convert.ToBase64String(bytes);
             _form.ImagenPreviewUrl = $"data:{contentType};base64,{base64}";
             _imagenSeleccionada = archivo;
+            _imagenBytes = bytes;
             _mensaje = null;
         }
         catch (Exception ex)
@@ -359,6 +362,7 @@ else
             _mensaje = $"Error al cargar la imagen: {ex.Message}";
             _exito = false;
             _imagenSeleccionada = null;
+            _imagenBytes = null;
             _form.ImagenPreviewUrl = null;
         }
     }
@@ -366,6 +370,7 @@ else
     private void QuitarImagenSeleccionada()
     {
         _imagenSeleccionada = null;
+        _imagenBytes = null;
         _form.ImagenPreviewUrl = null;
     }
 
@@ -397,20 +402,17 @@ else
         }
 
         // Gestión de imagen
-        if (_imagenSeleccionada is not null)
+        if (_imagenSeleccionada is not null && _imagenBytes is not null)
         {
             try
             {
-                // Abrir un nuevo stream para el upload (el stream del preview ya fue consumido)
-                const long maxBytes = 2 * 1024 * 1024;
-                using var ms = new MemoryStream();
-                await using var stream = _imagenSeleccionada.OpenReadStream(maxBytes);
-                await stream.CopyToAsync(ms);
-                ms.Position = 0;
+                // Usar los bytes ya leídos durante la selección (IBrowserFile no puede reabrirse)
+                using var ms = new MemoryStream(_imagenBytes);
                 await Api.SubirImagenProductoAsync(idProducto, ms, _imagenSeleccionada.Name);
             }
             catch
             {
+                _guardando = false;
                 _mensaje = "Producto guardado, pero no se pudo subir la imagen. Intente editarlo nuevamente.";
                 _exito = true;
                 CerrarModal();

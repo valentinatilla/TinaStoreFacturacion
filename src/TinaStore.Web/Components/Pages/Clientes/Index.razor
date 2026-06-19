@@ -1,7 +1,6 @@
 @page "/clientes"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
-@inject IJSRuntime JS
 
 <PageTitle>Clientes — Tina Store</PageTitle>
 
@@ -34,7 +33,7 @@ else
                 <thead>
                     <tr>
                         <th>Nombre</th><th>Documento</th><th>Teléfono</th><th>Email</th>
-                        <th class="text-end">Saldo</th><th>Estado</th><th>Últ. compra</th><th></th>
+                        <th>Estado</th><th>Últ. compra</th><th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -45,9 +44,6 @@ else
                             <td>@c.DocumentNumber</td>
                             <td>@c.Phone</td>
                             <td>@c.Email</td>
-                            <td class="text-end @(c.PendingBalance > 0 ? "text-danger fw-semibold" : "")">
-                                @c.PendingBalance.ToString("C0")
-                            </td>
                             <td>
                                 @if (!c.IsActive)
                                 {
@@ -66,17 +62,10 @@ else
                                     : "—")
                             </td>
                             <td class="text-end">
-                                @if (!string.IsNullOrWhiteSpace(c.Phone))
-                                {
-                                    <button class="btn btn-sm btn-outline-success me-1" title="Enviar recordatorio por WhatsApp"
-                                            @onclick="() => EnviarWhatsApp(c)">
-                                        <i class="bi bi-whatsapp"></i>
-                                    </button>
-                                }
                                 <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => AbrirModal(c)">
                                     <i class="bi bi-pencil"></i>
                                 </button>
-                                <button class="btn btn-sm btn-outline-danger" @onclick="() => Eliminar(c.Id)">
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmarEliminar(c)">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </td>
@@ -84,7 +73,7 @@ else
                     }
                     @if (!_filtrados.Any())
                     {
-                        <tr><td colspan="8" class="text-center text-muted py-4">Sin resultados</td></tr>
+                        <tr><td colspan="7" class="text-center text-muted py-4">Sin resultados</td></tr>
                     }
                 </tbody>
             </table>
@@ -152,33 +141,23 @@ else
     </div>
 }
 
-<!-- Modal de recordatorio WhatsApp -->
-@if (_mostrarModalWhatsApp)
+<!-- Modal de confirmación de eliminación -->
+@if (_mostrarModalEliminar)
 {
     <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-whatsapp text-success me-2"></i>Recordatorio por WhatsApp</h5>
-                    <button class="btn-close" @onclick="() => _mostrarModalWhatsApp = false"></button>
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Eliminar cliente</h5>
+                    <button class="btn-close" @onclick="() => _mostrarModalEliminar = false"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted small mb-2">
-                        Enviando recordatorio a <strong>@_waCliente?.FullName</strong>
-                        — Teléfono: <strong>@_waCliente?.Phone</strong>
-                    </p>
-                    <label class="form-label small fw-semibold">Mensaje (puedes editarlo antes de enviar)</label>
-                    <textarea class="form-control" rows="6" @bind="_waMensaje"></textarea>
-                    <div class="alert alert-info py-2 mt-3 small">
-                        <i class="bi bi-info-circle me-1"></i>
-                        Al hacer clic en <strong>Abrir WhatsApp</strong>, se abrirá WhatsApp Web o la app con el mensaje prellenado.
-                        El envío lo confirmas tú desde WhatsApp.
-                    </div>
+                    <p class="mb-0">¿Seguro que deseas eliminar a <strong>@_nombreAEliminar</strong>? Esta acción no se puede deshacer.</p>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="() => _mostrarModalWhatsApp = false">Cancelar</button>
-                    <button class="btn btn-success" @onclick="ConfirmarWhatsApp">
-                        <i class="bi bi-whatsapp me-1"></i>Abrir WhatsApp
+                    <button class="btn btn-secondary" @onclick="() => _mostrarModalEliminar = false">Cancelar</button>
+                    <button class="btn btn-danger" @onclick="EjecutarEliminar">
+                        <i class="bi bi-trash me-1"></i>Eliminar
                     </button>
                 </div>
             </div>
@@ -197,20 +176,14 @@ else
     private string? _mensaje;
     private bool _exito;
     private ClienteForm _form = new();
-    private string? _reminderMessage;
-
-    // WhatsApp modal
-    private bool _mostrarModalWhatsApp;
-    private ClienteDto? _waCliente;
-    private string _waMensaje = "";
+    // Confirmación de eliminación
+    private bool _mostrarModalEliminar;
+    private int _idAEliminar;
+    private string _nombreAEliminar = "";
 
     protected override async Task OnInitializedAsync()
     {
-        var t1 = Cargar();
-        var t2 = Api.GetConfiguracionAsync();
-        await t1;
-        var cfg = await t2;
-        _reminderMessage = cfg?.ReminderMessage;
+        await Cargar();
     }
 
     private async Task Cargar()
@@ -265,36 +238,20 @@ else
         if (ok) { CerrarModal(); await Cargar(); }
     }
 
-    private async Task Eliminar(int id)
+    private void ConfirmarEliminar(ClienteDto c)
     {
-        var ok = await Api.DeleteClienteAsync(id);
+        _idAEliminar = c.Id;
+        _nombreAEliminar = c.FullName;
+        _mostrarModalEliminar = true;
+    }
+
+    private async Task EjecutarEliminar()
+    {
+        _mostrarModalEliminar = false;
+        var ok = await Api.DeleteClienteAsync(_idAEliminar);
         _exito = ok;
         _mensaje = ok ? "Cliente eliminado." : "No se pudo eliminar el cliente.";
         if (ok) await Cargar();
-    }
-
-    private void EnviarWhatsApp(ClienteDto c)
-    {
-        _waCliente = c;
-        var plantilla = _reminderMessage
-            ?? "Hola {nombre}, te recordamos amablemente que tienes un saldo pendiente de {saldo} en Tina Store. Agradecemos tu apoyo realizando el pago cuando sea posible. Si ya realizaste el pago, por favor ignora este mensaje. ¡Gracias! 🌸";
-        _waMensaje = plantilla
-            .Replace("{nombre}", c.FullName)
-            .Replace("{saldo}", c.PendingBalance.ToString("C0"));
-        _mostrarModalWhatsApp = true;
-    }
-
-    private async Task ConfirmarWhatsApp()
-    {
-        if (_waCliente is null) return;
-        // Normalizar teléfono Colombia: quitar espacios, guiones, +; agregar 57 si empieza por 3
-        var tel = (_waCliente.Phone ?? "").Replace(" ", "").Replace("-", "").Replace("+", "");
-        if (tel.StartsWith("3") && tel.Length == 10) tel = "57" + tel;
-        var url = $"https://wa.me/{tel}?text={Uri.EscapeDataString(_waMensaje)}";
-        _mostrarModalWhatsApp = false;
-        await JS.InvokeVoidAsync("open", url, "_blank");
-        // Registrar en BD que se generó el recordatorio
-        await Api.RegistrarRecordatorioWhatsAppAsync(_waCliente.Id, _waMensaje);
     }
 
     private class ClienteForm
