@@ -27,7 +27,6 @@ public class SessionStateService
 
     /// <summary>
     /// Restaura la sesión desde un token ya validado (usado al arrancar desde cookie).
-    /// No dispara persistencia porque la cookie ya existe.
     /// </summary>
     public void RestoreSession(string token, string userName, string email, string role)
     {
@@ -35,7 +34,7 @@ public class SessionStateService
         UserName = userName;
         UserEmail = email;
         UserRole = role;
-        // No notifica para no provocar re-render en el arranque del circuito
+        NotifyStateChanged();
     }
 
     public void Clear()

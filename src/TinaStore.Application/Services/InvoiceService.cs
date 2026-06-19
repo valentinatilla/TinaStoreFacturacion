@@ -280,6 +280,14 @@ public sealed class InvoiceService : IInvoiceService
 
     // ── Mapeos ────────────────────────────────────────────────────────────────
 
+    private static string StatusEnEspanol(InvoiceStatus status) => status switch
+    {
+        InvoiceStatus.Paid      => "Pagada",
+        InvoiceStatus.Partial   => "Parcial",
+        InvoiceStatus.Cancelled => "Anulada",
+        _                       => "Pendiente"
+    };
+
     private static InvoiceSummaryDto ToSummaryDto(Invoice i) => new(
         i.Id,
         i.InvoiceNumber,
@@ -288,7 +296,8 @@ public sealed class InvoiceService : IInvoiceService
         i.Total,
         i.Balance,
         i.Status,
-        i.Status.ToString()
+        StatusEnEspanol(i.Status),
+        i.AmountPaid
     );
 
     private static InvoiceDto ToDto(Invoice i) => new(
@@ -304,7 +313,7 @@ public sealed class InvoiceService : IInvoiceService
         i.AmountPaid,
         i.Balance,
         i.Status,
-        i.Status.ToString(),
+        StatusEnEspanol(i.Status),
         i.Notes,
         i.Details.Select(d => new InvoiceDetailDto(
             d.Id, d.ProductId, d.ProductName,

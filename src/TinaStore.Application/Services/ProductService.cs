@@ -132,6 +132,8 @@ public sealed class ProductService : IProductService
         p.Sku,
         p.Name,
         p.SalePrice,
+        p.PurchasePrice,
+        p.ProfitMargin,
         p.CurrentStock,
         p.IsLowStock,
         p.IsActive,

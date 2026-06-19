@@ -127,12 +127,22 @@ else if (_data is not null)
 }
 else
 {
-    <div class="alert alert-warning">
-        <i class="bi bi-wifi-off me-2"></i>No se pudo conectar con la API en <strong>@Config["ApiBaseUrl"]</strong>.
-        @if (!string.IsNullOrEmpty(_error))
-        {
-            <div class="small mt-1 text-muted">@_error</div>
-        }
+    <div class="alert alert-warning d-flex align-items-start gap-3">
+        <i class="bi bi-wifi-off fs-4 mt-1 flex-shrink-0"></i>
+        <div class="flex-grow-1">
+            <div class="fw-bold">No se pudo cargar el Dashboard</div>
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <div class="small mt-1">@_error</div>
+            }
+            <div class="small text-muted mt-1">
+                URL de la API: <code>@Config["ApiBaseUrl"]</code>
+            </div>
+        </div>
+        <button class="btn btn-sm btn-outline-warning flex-shrink-0" @onclick="Recargar" disabled="@_loading">
+            @if (_loading) { <span class="spinner-border spinner-border-sm me-1"></span> }
+            <i class="bi bi-arrow-clockwise me-1"></i>Reintentar
+        </button>
     </div>
 }
 
@@ -144,8 +154,27 @@ else
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
+        await CargarDashboard();
+    }
+
+    private async Task Recargar()
+    {
+        _data = null;
+        _error = null;
+        await CargarDashboard();
+    }
+
+    private async Task CargarDashboard()
+    {
         if (!Session.IsAuthenticated) { _loading = false; StateHasChanged(); return; }
-        try { _data = await Api.GetDashboardAsync(); }
+        _loading = true;
+        StateHasChanged();
+        try
+        {
+            var (data, error) = await Api.GetDashboardConDiagnosticoAsync();
+            _data = data;
+            _error = error;
+        }
         catch (HttpRequestException ex) when ((int?)ex.StatusCode == 401) { }
         catch (Exception ex) { _error = ex.Message; }
         finally { _loading = false; StateHasChanged(); }

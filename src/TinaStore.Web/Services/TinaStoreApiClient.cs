@@ -21,10 +21,10 @@ public record DashboardDto(
     List<UltimaFacturaDto> UltimasFacturas,
     List<DeudorResumenDto> TopDeudores);
 
-public record UltimaFacturaDto(int Id, string InvoiceNumber, DateTime InvoiceDate, string CustomerName, decimal Total, decimal Balance, string Status, string StatusName);
+public record UltimaFacturaDto(int Id, string InvoiceNumber, DateTime InvoiceDate, string CustomerName, decimal Total, decimal Balance, int Status, string StatusName);
 public record DeudorResumenDto(int CustomerId, string CustomerName, string? Phone, decimal Saldo);
 
-public record ClienteDto(int Id, string FullName, string? DocumentType, string? DocumentNumber, string? Phone, string? Email, string? Address, string? Notes, bool IsActive, decimal PendingBalance, DateTime CreatedAt);
+public record ClienteDto(int Id, string FullName, string? DocumentType, string? DocumentNumber, string? Phone, string? Email, string? Address, string? Notes, bool IsActive, decimal PendingBalance, DateTime CreatedAt, DateTime? LastPurchaseDate, string CommercialStatus);
 public record CreateClienteDto(string FullName, string? DocumentType, string? DocumentNumber, string? Phone, string? Email, string? Address, string? Notes);
 public record UpdateClienteDto(string FullName, string? DocumentType, string? DocumentNumber, string? Phone, string? Email, string? Address, string? Notes, bool IsActive);
 
@@ -37,7 +37,7 @@ public record UpdateProveedorDto(string Name, string? TaxId, string? ContactName
 
 public record MetodoPagoDto(int Id, string Name, string? Description, bool IsActive);
 
-public record ProductoDto(int Id, string? Sku, string Name, string? Description, string? Unit, decimal SalePrice, decimal PurchasePrice, int CurrentStock, int MinimumStock, bool IsActive, bool IsLowStock, int CategoryId, string CategoryName, int? SupplierId, string? SupplierName, string? ImagePath);
+public record ProductoDto(int Id, string? Sku, string Name, string? Description, string? Unit, decimal SalePrice, decimal PurchasePrice, int CurrentStock, int MinimumStock, bool IsActive, bool IsLowStock, decimal ProfitMargin, int CategoryId, string CategoryName, int? SupplierId, string? SupplierName, string? ImagePath);
 public record CreateProductoDto(string? Sku, string Name, string? Description, string? Unit, decimal PurchasePrice, decimal SalePrice, int CurrentStock, int MinimumStock, int CategoryId, int? SupplierId);
 public record UpdateProductoDto(string? Sku, string Name, string? Description, string? Unit, decimal PurchasePrice, decimal SalePrice, int MinimumStock, bool IsActive, int CategoryId, int? SupplierId);
 
@@ -78,6 +78,27 @@ public record ReporteVentasDto(DateTime Desde, DateTime Hasta, decimal TotalVent
 public record ResumenGastosPorCategoriaDto(int CategoryId, string CategoryName, int TotalEgresos, decimal TotalMonto);
 public record ReporteGastosDto(DateTime Desde, DateTime Hasta, decimal TotalGastos, int TotalEgresos, List<ResumenGastosPorCategoriaDto> PorCategoria);
 
+public record RegistrarRecordatorioWhatsAppDto(int CustomerId, string Message);
+public record ReminderHistoryDto(int Id, int CustomerId, string CustomerName, string Channel, string Status, DateTime SentAt, string Message);
+
+public record ImportPreviewRowDto(
+    int Fila,
+    string? Nombre,
+    string? Sku,
+    string? Descripcion,
+    decimal PrecioCosto,
+    decimal PrecioVenta,
+    int StockInicial,
+    int StockMinimo,
+    int CategoriaId,
+    string? CategoriaNombre,
+    int? ProveedorId,
+    string? ProveedorNombre,
+    bool Valido,
+    string? MensajeError);
+
+public record ExcelImportResultDto(int TotalFilas, int Importados, int Errores, List<string> MensajesError);
+
 public record DeudorCXCDto(int CustomerId, string CustomerName, string? DocumentNumber, string? Phone, decimal SaldoPendiente, int FacturasPendientes, DateTime? UltimaFacturaFecha);
 public record ReporteCuentasPorCobrarDto(decimal TotalPorCobrar, int TotalClientes, List<DeudorCXCDto> Deudores);
 
@@ -114,6 +135,28 @@ public class TinaStoreApiClient
             return await response.Content.ReadFromJsonAsync<T>();
         }
         catch { return null; }
+    }
+
+    // Helper: GET que devuelve (resultado, mensaje de error) para diagnóstico
+    private async Task<(T? Data, string? Error)> GetWithErrorAsync<T>(string url) where T : class
+    {
+        SetAuthHeader();
+        try
+        {
+            var response = await _http.GetAsync(url);
+            if (!response.IsSuccessStatusCode)
+                return (null, $"La API respondió con error {(int)response.StatusCode}.");
+            var data = await response.Content.ReadFromJsonAsync<T>();
+            return (data, null);
+        }
+        catch (HttpRequestException ex)
+        {
+            return (null, $"No se pudo conectar con la API ({ex.Message}).");
+        }
+        catch (Exception ex)
+        {
+            return (null, $"Error inesperado: {ex.Message}");
+        }
     }
 
     // ── Auth ──────────────────────────────────────────────────────────────────
@@ -169,6 +212,9 @@ public class TinaStoreApiClient
     // ── Dashboard ─────────────────────────────────────────────────────────────
     public Task<DashboardDto?> GetDashboardAsync() =>
         GetSafeAsync<DashboardDto>("/api/dashboard");
+
+    public Task<(DashboardDto? Data, string? Error)> GetDashboardConDiagnosticoAsync() =>
+        GetWithErrorAsync<DashboardDto>("/api/dashboard");
 
     // ── Clientes ──────────────────────────────────────────────────────────────
     public Task<List<ClienteDto>?> GetClientesAsync() =>
@@ -377,6 +423,20 @@ public class TinaStoreApiClient
             : null;
     }
 
+    // ── Recordatorios ─────────────────────────────────────────────────────────
+    public async Task<ReminderHistoryDto?> RegistrarRecordatorioWhatsAppAsync(int customerId, string message)
+    {
+        SetAuthHeader();
+        var r = await _http.PostAsJsonAsync("/api/reminders/whatsapp",
+            new RegistrarRecordatorioWhatsAppDto(customerId, message));
+        return r.IsSuccessStatusCode
+            ? await r.Content.ReadFromJsonAsync<ReminderHistoryDto>()
+            : null;
+    }
+
+    public Task<List<ReminderHistoryDto>?> GetHistorialRecordatoriosAsync(int customerId) =>
+        GetSafeAsync<List<ReminderHistoryDto>>($"/api/reminders/historial/{customerId}");
+
     // ── Reportes ──────────────────────────────────────────────────────────────
     public Task<ReporteVentasDto?> GetReporteVentasAsync(DateTime desde, DateTime hasta) =>
         GetSafeAsync<ReporteVentasDto>(
@@ -394,6 +454,35 @@ public class TinaStoreApiClient
         SetAuthHeader();
         var r = await _http.GetAsync("/api/documents/productos/excel");
         return r.IsSuccessStatusCode ? await r.Content.ReadAsByteArrayAsync() : null;
+    }
+
+    public async Task<byte[]?> DescargarPlantillaExcelAsync()
+    {
+        SetAuthHeader();
+        var r = await _http.GetAsync("/api/documents/productos/plantilla");
+        return r.IsSuccessStatusCode ? await r.Content.ReadAsByteArrayAsync() : null;
+    }
+
+    public async Task<List<ImportPreviewRowDto>?> PrevisualizarImportacionAsync(Stream contenido, string nombreArchivo)
+    {
+        SetAuthHeader();
+        using var form = new MultipartFormDataContent();
+        using var sc   = new StreamContent(contenido);
+        sc.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        form.Add(sc, "file", nombreArchivo);
+        var r = await _http.PostAsync("/api/documents/productos/previsualizar", form);
+        return r.IsSuccessStatusCode
+            ? await r.Content.ReadFromJsonAsync<List<ImportPreviewRowDto>>()
+            : null;
+    }
+
+    public async Task<ExcelImportResultDto?> ImportarProductosAsync(List<ImportPreviewRowDto> filas)
+    {
+        SetAuthHeader();
+        var r = await _http.PostAsJsonAsync("/api/documents/productos/importar-confirmado", filas);
+        return r.IsSuccessStatusCode
+            ? await r.Content.ReadFromJsonAsync<ExcelImportResultDto>()
+            : null;
     }
 
     // ── Usuarios ─────────────────────────────────────────────────────────────

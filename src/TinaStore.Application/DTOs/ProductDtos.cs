@@ -28,6 +28,8 @@ public record ProductSummaryDto(
     string? Sku,
     string Name,
     decimal SalePrice,
+    decimal PurchasePrice,
+    decimal ProfitMargin,
     int CurrentStock,
     bool IsLowStock,
     bool IsActive,

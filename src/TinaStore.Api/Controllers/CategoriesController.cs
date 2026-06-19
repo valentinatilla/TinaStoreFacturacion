@@ -65,10 +65,15 @@ public sealed class CategoriesController : ControllerBase
         return actualizada is null ? NotFound(new { mensaje = $"Categoría {id} no encontrada." }) : Ok(actualizada);
     }
 
-    /// <summary>Elimina (baja lógica) una categoría.</summary>
+    /// <summary>Elimina (baja lógica) una categoría. No se permite si tiene productos activos asociados.</summary>
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
+        var categoria = await _service.GetByIdAsync(id);
+        if (categoria is null) return NotFound(new { mensaje = $"Categoría {id} no encontrada." });
+        if (categoria.ProductCount > 0)
+            return BadRequest(new { mensaje = "No se puede eliminar la categoría porque tiene productos activos asociados." });
+
         var eliminada = await _service.DeleteAsync(id);
         return eliminada ? NoContent() : NotFound(new { mensaje = $"Categoría {id} no encontrada." });
     }

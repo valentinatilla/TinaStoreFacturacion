@@ -118,6 +118,64 @@ Antes de publicar una nueva versión, ejecutar mínimo estas pruebas:
 
 ---
 
+## Pruebas manuales — Fases A2 + B1 + B3 (v1.2.0)
+
+### Productos — Estado de inventario
+
+| Caso | Acción | Resultado esperado |
+|---|---|---|
+| Producto activo, stock > mínimo | Ver listado | Badge verde "Activo" |
+| Producto activo, stock ≤ mínimo | Ver listado | Badge amarillo "Bajo stock" |
+| Producto activo, stock = 0 | Ver listado | Badge rojo "Agotado" |
+| Producto inactivo (cualquier stock) | Ver listado | Badge gris "Inactivo" |
+
+### Productos — Porcentaje de ganancia
+
+| Caso | Costo | Precio venta | Resultado esperado |
+|---|---|---|---|
+| Ganancia normal | $60.000 | $100.000 | 66,7 % |
+| Sin ganancia | $100.000 | $100.000 | 0,0 % |
+| Costo cero | $0 | $50.000 | "No calculable" |
+| Pérdida | $100.000 | $80.000 | -20,0 % |
+
+### Categorías — Conteo de productos
+
+| Caso | Resultado esperado |
+|---|---|
+| Categoría con 3 productos activos | Muestra 3 |
+| Categoría con 1 producto inactivo | Muestra 0 |
+| Categoría vacía | Muestra 0, botón Eliminar habilitado |
+| Intentar eliminar categoría con productos | Error visible, no elimina |
+
+### Clientes — Fecha última compra y estado comercial
+
+| Caso | Resultado esperado |
+|---|---|
+| Cliente sin facturas | "—" en columna, badge "Sin compras" |
+| Cliente con factura reciente (< 6 meses) | Fecha visible, badge "Activo" |
+| Cliente con última factura hace > 6 meses | Fecha visible, badge "Inactivo" (amarillo) |
+| Cliente inactivo administrativamente | Badge "Inactivo" gris, sin importar compras |
+
+### WhatsApp — Modal editable
+
+| Caso | Resultado esperado |
+|---|---|
+| Cliente con teléfono | Botón WhatsApp visible en fila |
+| Clic en botón WhatsApp | Modal abre con mensaje prellenado |
+| Editar mensaje en modal | Cambios se reflejan en el enlace |
+| Confirmar | Abre WhatsApp Web/app en nueva pestaña |
+| Cliente sin teléfono | Botón WhatsApp no aparece |
+
+### Logo en sidebar
+
+| Caso | Resultado esperado |
+|---|---|
+| Sin logo configurado | Muestra emoji 🛍️ |
+| Con logo configurado | Muestra la imagen del logo |
+| API no disponible al iniciar | Muestra emoji 🛍️ sin error visible |
+
+---
+
 ## Ambientes de prueba
 
 | Ambiente | URL Web | URL API | Base de datos |
