@@ -1,0 +1,359 @@
+@page "/productos/importar"
+@attribute [Authorize]
+@inject TinaStoreApiClient Api
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<PageTitle>Importar Productos — Tina Store</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0">
+        <i class="bi bi-file-earmark-spreadsheet me-2 text-purple"></i>Importación Masiva de Productos
+    </h4>
+    <a href="/productos" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Volver
+    </a>
+</div>
+
+@if (!string.IsNullOrEmpty(_mensaje))
+{
+    <div class="alert @(_exito ? "alert-success" : "alert-danger") py-2 mb-3">
+        <i class="bi bi-@(_exito ? "check-circle" : "exclamation-triangle") me-2"></i>@_mensaje
+    </div>
+}
+
+<!-- ── Paso 1: Subir archivo ──────────────────────────────────────────── -->
+@if (_paso == 1)
+{
+    <div class="card border-0 shadow-sm p-4" style="max-width: 600px;">
+        <h6 class="fw-bold mb-3 text-purple">
+            <i class="bi bi-upload me-2"></i>Paso 1 — Selecciona el archivo Excel
+        </h6>
+        <p class="text-muted small mb-3">
+            El archivo debe seguir la plantilla oficial.
+            <a href="#" @onclick="DescargarPlantilla" @onclick:preventDefault>
+                <i class="bi bi-download me-1"></i>Descargar plantilla
+            </a>
+        </p>
+
+        <InputFile id="excelInput" OnChange="SeleccionarArchivo" accept=".xlsx,.xls"
+                   class="form-control mb-3" />
+
+        <button class="btn bg-purple text-white px-4"
+                @onclick="Previsualizar"
+                disabled="@(_archivo is null || _cargando)">
+            @if (_cargando)
+            { <span class="spinner-border spinner-border-sm me-2"></span> }
+            <i class="bi bi-eye me-1"></i>Previsualizar
+        </button>
+    </div>
+}
+
+<!-- ── Paso 2: Tabla de previsualización ─────────────────────────────── -->
+@if (_paso == 2 && _preview is not null)
+{
+    <div class="card border-0 shadow-sm p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0 text-purple">
+                <i class="bi bi-table me-2"></i>Paso 2 — Revisa y edita las filas antes de importar
+            </h6>
+            <div class="d-flex gap-2">
+                <span class="badge bg-success">@_preview.Count(r => r.Valido) válidas</span>
+                <span class="badge bg-danger">@_preview.Count(r => !r.Valido) con error</span>
+            </div>
+        </div>
+
+        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+            <table class="table table-sm table-bordered align-middle ts-table">
+                <thead class="table-light sticky-top">
+                    <tr>
+                        <th style="width:50px;">#</th>
+                        <th>Nombre *</th>
+                        <th>SKU</th>
+                        <th style="width:110px;">Costo *</th>
+                        <th style="width:110px;">Venta *</th>
+                        <th style="width:80px;">Stock</th>
+                        <th style="width:80px;">Mín.</th>
+                        <th>Categoría</th>
+                        <th>Proveedor</th>
+                        <th style="width:40px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var fila in _preview)
+                    {
+                        <tr class="@(fila.Valido ? "" : "table-danger")">
+                            <td class="text-center align-top pt-2">
+                                @if (!fila.Valido)
+                                {
+                                    <i class="bi bi-exclamation-circle text-danger"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-check-circle text-success"></i>
+                                }
+                            </td>
+                            <td>
+                                <input class="form-control form-control-sm"
+                                       value="@fila.Nombre"
+                                       @onchange="e => ActualizarFila(fila, nameof(fila.Nombre), e.Value?.ToString())" />
+                                @if (!fila.Valido && !string.IsNullOrEmpty(fila.MensajeError))
+                                {
+                                    <div class="text-danger" style="font-size:.72rem;">@fila.MensajeError</div>
+                                }
+                            </td>
+                            <td>
+                                <input class="form-control form-control-sm"
+                                       value="@fila.Sku"
+                                       @onchange="e => ActualizarFila(fila, nameof(fila.Sku), e.Value?.ToString())" />
+                            </td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm"
+                                       value="@fila.PrecioCosto"
+                                       @onchange="e => ActualizarFilaDecimal(fila, nameof(fila.PrecioCosto), e.Value?.ToString())" />
+                            </td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm"
+                                       value="@fila.PrecioVenta"
+                                       @onchange="e => ActualizarFilaDecimal(fila, nameof(fila.PrecioVenta), e.Value?.ToString())" />
+                            </td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm"
+                                       value="@fila.StockInicial"
+                                       @onchange="e => ActualizarFilaInt(fila, nameof(fila.StockInicial), e.Value?.ToString())" />
+                            </td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm"
+                                       value="@fila.StockMinimo"
+                                       @onchange="e => ActualizarFilaInt(fila, nameof(fila.StockMinimo), e.Value?.ToString())" />
+                            </td>
+                            <td>
+                                <span class="small">@(fila.CategoriaNombre ?? $"ID {fila.CategoriaId}")</span>
+                            </td>
+                            <td>
+                                <span class="small text-muted">@(fila.ProveedorNombre ?? "-")</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger p-1"
+                                        title="Quitar fila"
+                                        @onclick="() => QuitarFila(fila)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-outline-secondary" @onclick="Reiniciar">
+                <i class="bi bi-arrow-counterclockwise me-1"></i>Cambiar archivo
+            </button>
+            <button class="btn bg-purple text-white px-4"
+                    @onclick="Confirmar"
+                    disabled="@(_guardando || !_preview.Any(r => r.Valido))">
+                @if (_guardando)
+                { <span class="spinner-border spinner-border-sm me-2"></span> }
+                <i class="bi bi-cloud-upload me-1"></i>Importar @_preview.Count(r => r.Valido) producto(s)
+            </button>
+        </div>
+    </div>
+}
+
+<!-- ── Paso 3: Resultado ──────────────────────────────────────────────── -->
+@if (_paso == 3 && _resultado is not null)
+{
+    <div class="card border-0 shadow-sm p-4" style="max-width: 500px;">
+        <h6 class="fw-bold mb-3 text-purple">
+            <i class="bi bi-clipboard-check me-2"></i>Resultado de la importación
+        </h6>
+        <ul class="list-group mb-4">
+            <li class="list-group-item d-flex justify-content-between">
+                <span>Total filas procesadas</span>
+                <strong>@_resultado.TotalFilas</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between text-success">
+                <span><i class="bi bi-check-circle me-1"></i>Importados correctamente</span>
+                <strong>@_resultado.Importados</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between text-danger">
+                <span><i class="bi bi-x-circle me-1"></i>Errores</span>
+                <strong>@_resultado.Errores</strong>
+            </li>
+        </ul>
+
+        @if (_resultado.MensajesError.Count > 0)
+        {
+            <div class="alert alert-warning py-2">
+                <strong>Detalle de errores:</strong>
+                <ul class="mb-0 mt-1">
+                    @foreach (var err in _resultado.MensajesError)
+                    {
+                        <li class="small">@err</li>
+                    }
+                </ul>
+            </div>
+        }
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary" @onclick="Reiniciar">
+                <i class="bi bi-arrow-counterclockwise me-1"></i>Nueva importación
+            </button>
+            <a href="/productos" class="btn bg-purple text-white">
+                <i class="bi bi-box-seam me-1"></i>Ver productos
+            </a>
+        </div>
+    </div>
+}
+
+@code {
+    private int _paso = 1;
+    private IBrowserFile? _archivo;
+    private List<ImportPreviewRowDto>? _preview;
+    private ExcelImportResultDto? _resultado;
+    private bool _cargando;
+    private bool _guardando;
+    private string? _mensaje;
+    private bool _exito;
+
+    // Copia mutable de las filas para edición en tabla
+    private List<FilaEditable> _filas = [];
+
+    private void SeleccionarArchivo(InputFileChangeEventArgs e)
+    {
+        _archivo = e.File;
+        _mensaje = null;
+    }
+
+    private async Task Previsualizar()
+    {
+        if (_archivo is null) return;
+        _cargando = true;
+        _mensaje  = null;
+        try
+        {
+            // El stream de IBrowserFile no es seekable en Blazor Server;
+            // hay que volcarlo a MemoryStream antes de enviarlo por HttpClient.
+            using var ms = new MemoryStream();
+            await using var browserStream = _archivo.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            await browserStream.CopyToAsync(ms);
+            ms.Position = 0;
+            var result = await Api.PrevisualizarImportacionAsync(ms, _archivo.Name);
+            if (result is null || result.Count == 0)
+            {
+                _exito   = false;
+                _mensaje = "No se encontraron filas en el archivo o el formato no es válido.";
+            }
+            else
+            {
+                _preview = result;
+                _paso    = 2;
+            }
+        }
+        catch (Exception ex)
+        {
+            _exito   = false;
+            _mensaje = $"Error al leer el archivo: {ex.Message}";
+        }
+        finally { _cargando = false; }
+    }
+
+    private async Task Confirmar()
+    {
+        if (_preview is null) return;
+        _guardando = true;
+        _mensaje   = null;
+        try
+        {
+            var filasValidas = _preview.Where(r => r.Valido).ToList();
+            var resultado    = await Api.ImportarProductosAsync(filasValidas);
+            if (resultado is not null)
+            {
+                _resultado = resultado;
+                _paso      = 3;
+                _exito     = resultado.Errores == 0;
+                _mensaje   = resultado.Errores == 0
+                    ? $"Se importaron {resultado.Importados} productos correctamente."
+                    : $"Se importaron {resultado.Importados} de {resultado.TotalFilas} productos. Revisa los errores.";
+            }
+            else
+            {
+                _exito   = false;
+                _mensaje = "Error al confirmar la importación.";
+            }
+        }
+        catch
+        {
+            _exito   = false;
+            _mensaje = "Error al comunicarse con la API.";
+        }
+        finally { _guardando = false; }
+    }
+
+    private void QuitarFila(ImportPreviewRowDto fila)
+    {
+        _preview?.Remove(fila);
+    }
+
+    private void ActualizarFila(ImportPreviewRowDto fila, string campo, string? valor)
+    {
+        if (_preview is null) return;
+        var idx = _preview.IndexOf(fila);
+        if (idx < 0) return;
+        _preview[idx] = campo switch
+        {
+            nameof(fila.Nombre) => fila with { Nombre = valor },
+            nameof(fila.Sku)    => fila with { Sku    = valor },
+            _                   => fila
+        };
+    }
+
+    private void ActualizarFilaDecimal(ImportPreviewRowDto fila, string campo, string? valor)
+    {
+        if (_preview is null || !decimal.TryParse(valor, out var v)) return;
+        var idx = _preview.IndexOf(fila);
+        if (idx < 0) return;
+        var f = _preview[idx];
+        _preview[idx] = campo switch
+        {
+            nameof(fila.PrecioCosto)  => f with { PrecioCosto = v,  Valido = v >= 0 && f.PrecioVenta > 0 && f.CategoriaId > 0, MensajeError = null },
+            nameof(fila.PrecioVenta)  => f with { PrecioVenta = v,  Valido = f.PrecioCosto >= 0 && v > 0 && f.CategoriaId > 0, MensajeError = null },
+            _                         => f
+        };
+    }
+
+    private void ActualizarFilaInt(ImportPreviewRowDto fila, string campo, string? valor)
+    {
+        if (_preview is null || !int.TryParse(valor, out var v)) return;
+        var idx = _preview.IndexOf(fila);
+        if (idx < 0) return;
+        var f = _preview[idx];
+        _preview[idx] = campo switch
+        {
+            nameof(fila.StockInicial) => f with { StockInicial = v },
+            nameof(fila.StockMinimo)  => f with { StockMinimo  = v },
+            _                         => f
+        };
+    }
+
+    private void Reiniciar()
+    {
+        _paso      = 1;
+        _archivo   = null;
+        _preview   = null;
+        _resultado = null;
+        _mensaje   = null;
+    }
+
+    private async Task DescargarPlantilla()
+    {
+        var bytes = await Api.DescargarPlantillaExcelAsync();
+        if (bytes is null) return;
+        var b64 = Convert.ToBase64String(bytes);
+        await JS.InvokeVoidAsync("downloadFileFromBase64", b64, "plantilla-productos.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    }
+
+    private class FilaEditable { }
+}

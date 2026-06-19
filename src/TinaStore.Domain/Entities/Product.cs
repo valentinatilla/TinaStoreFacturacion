@@ -24,8 +24,8 @@ public class Product : BaseEntity
     public ICollection<InventoryMovement> InventoryMovements { get; set; } = [];
 
     public decimal ProfitMargin =>
-        SalePrice > 0 && PurchasePrice > 0
-            ? Math.Round((SalePrice - PurchasePrice) / SalePrice * 100, 2)
+        PurchasePrice > 0
+            ? Math.Round((SalePrice - PurchasePrice) / PurchasePrice * 100, 2)
             : 0;
 
     public bool IsLowStock => CurrentStock <= MinimumStock;

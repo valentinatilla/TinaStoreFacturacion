@@ -1,7 +1,6 @@
 @page "/clientes"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
-@inject IJSRuntime JS
 
 <PageTitle>Clientes — Tina Store</PageTitle>
 
@@ -25,8 +24,29 @@
 }
 else
 {
-    <div class="mb-3">
-        <input class="form-control" style="max-width:300px" placeholder="🔍 Buscar cliente..." @oninput="Filtrar" />
+    <div class="card border-0 shadow-sm mb-3 p-3">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold mb-1">Buscar cliente</label>
+                <input class="form-control form-control-sm" placeholder="Nombre, documento o teléfono..."
+                       @oninput="e => { _filtroTexto = e.Value?.ToString() ?? string.Empty; Filtrar(); }" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold mb-1">Compra desde</label>
+                <input type="date" class="form-control form-control-sm"
+                       @onchange="e => { _filtroDesde = e.Value is string s && !string.IsNullOrEmpty(s) ? DateOnly.Parse(s) : (DateOnly?)null; Filtrar(); }" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold mb-1">Compra hasta</label>
+                <input type="date" class="form-control form-control-sm"
+                       @onchange="e => { _filtroHasta = e.Value is string s && !string.IsNullOrEmpty(s) ? DateOnly.Parse(s) : (DateOnly?)null; Filtrar(); }" />
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-sm btn-outline-secondary w-100" @onclick="LimpiarFiltros">
+                    <i class="bi bi-x-circle me-1"></i>Limpiar
+                </button>
+            </div>
+        </div>
     </div>
     <div class="card ts-table border-0">
         <div class="table-responsive">
@@ -34,7 +54,7 @@ else
                 <thead>
                     <tr>
                         <th>Nombre</th><th>Documento</th><th>Teléfono</th><th>Email</th>
-                        <th class="text-end">Saldo</th><th>Estado</th><th></th>
+                        <th>Estado</th><th>Últ. compra</th><th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -45,26 +65,28 @@ else
                             <td>@c.DocumentNumber</td>
                             <td>@c.Phone</td>
                             <td>@c.Email</td>
-                            <td class="text-end @(c.PendingBalance > 0 ? "text-danger fw-semibold" : "")">
-                                @c.PendingBalance.ToString("C0")
-                            </td>
                             <td>
-                                <span class="badge @(c.IsActive ? "bg-success" : "bg-secondary")">
-                                    @(c.IsActive ? "Activo" : "Inactivo")
-                                </span>
+                                @if (!c.IsActive)
+                                {
+                                    <span class="badge badge-estado-inactivo">Inactivo</span>
+                                }
+                                else
+                                {
+                                    <span class="badge @(c.CommercialStatus == "Activo" ? "badge-estado-activo" : c.CommercialStatus == "Sin compras" ? "badge-estado-inactivo" : "badge-bajo-stock")">
+                                        @(c.CommercialStatus == "Sin compras" ? "Sin compras" : c.CommercialStatus)
+                                    </span>
+                                }
+                            </td>
+                            <td class="text-muted small">
+                                @(c.LastPurchaseDate.HasValue
+                                    ? c.LastPurchaseDate.Value.ToLocalTime().ToString("dd/MM/yyyy")
+                                    : "—")
                             </td>
                             <td class="text-end">
-                                @if (!string.IsNullOrWhiteSpace(c.Phone))
-                                {
-                                    <button class="btn btn-sm btn-outline-success me-1" title="Enviar recordatorio por WhatsApp"
-                                            @onclick="() => EnviarWhatsApp(c)">
-                                        <i class="bi bi-whatsapp"></i>
-                                    </button>
-                                }
                                 <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => AbrirModal(c)">
                                     <i class="bi bi-pencil"></i>
                                 </button>
-                                <button class="btn btn-sm btn-outline-danger" @onclick="() => Eliminar(c.Id)">
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmarEliminar(c)">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </td>
@@ -140,6 +162,30 @@ else
     </div>
 }
 
+<!-- Modal de confirmación de eliminación -->
+@if (_mostrarModalEliminar)
+{
+    <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Eliminar cliente</h5>
+                    <button class="btn-close" @onclick="() => _mostrarModalEliminar = false"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">¿Seguro que deseas eliminar a <strong>@_nombreAEliminar</strong>? Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => _mostrarModalEliminar = false">Cancelar</button>
+                    <button class="btn btn-danger" @onclick="EjecutarEliminar">
+                        <i class="bi bi-trash me-1"></i>Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<ClienteDto> _clientes = [];
     private List<ClienteDto> _filtrados = [];
@@ -151,15 +197,19 @@ else
     private string? _mensaje;
     private bool _exito;
     private ClienteForm _form = new();
-    private string? _reminderMessage;
+    // Confirmación de eliminación
+    private bool _mostrarModalEliminar;
+    private int _idAEliminar;
+    private string _nombreAEliminar = "";
+
+    // ── Filtros ────────────────────────────────────────────────────────────────────
+    private string  _filtroTexto  = string.Empty;
+    private DateOnly? _filtroDesde;
+    private DateOnly? _filtroHasta;
 
     protected override async Task OnInitializedAsync()
     {
-        var t1 = Cargar();
-        var t2 = Api.GetConfiguracionAsync();
-        await t1;
-        var cfg = await t2;
-        _reminderMessage = cfg?.ReminderMessage;
+        await Cargar();
     }
 
     private async Task Cargar()
@@ -170,14 +220,31 @@ else
         _loading = false;
     }
 
-    private void Filtrar(ChangeEventArgs e)
+    private void Filtrar()
     {
-        var q = e.Value?.ToString()?.ToLower() ?? "";
-        _filtrados = string.IsNullOrWhiteSpace(q)
-            ? _clientes
-            : _clientes.Where(c => c.FullName.ToLower().Contains(q)
-                || (c.DocumentNumber?.ToLower().Contains(q) ?? false)
-                || (c.Phone?.Contains(q) ?? false)).ToList();
+        _filtrados = _clientes
+            .Where(c => string.IsNullOrWhiteSpace(_filtroTexto) ||
+                        c.FullName.Contains(_filtroTexto, StringComparison.OrdinalIgnoreCase) ||
+                        (c.DocumentNumber?.Contains(_filtroTexto, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        (c.Phone?.Contains(_filtroTexto) ?? false))
+            .Where(c =>
+            {
+                if (_filtroDesde is null && _filtroHasta is null) return true;
+                if (!c.LastPurchaseDate.HasValue) return false;
+                var fecha = DateOnly.FromDateTime(c.LastPurchaseDate.Value.ToLocalTime());
+                if (_filtroDesde.HasValue && fecha < _filtroDesde.Value) return false;
+                if (_filtroHasta.HasValue && fecha > _filtroHasta.Value) return false;
+                return true;
+            })
+            .ToList();
+    }
+
+    private void LimpiarFiltros()
+    {
+        _filtroTexto = string.Empty;
+        _filtroDesde = null;
+        _filtroHasta = null;
+        _filtrados   = _clientes;
     }
 
     private void AbrirModal(ClienteDto? c = null)
@@ -214,24 +281,20 @@ else
         if (ok) { CerrarModal(); await Cargar(); }
     }
 
-    private async Task Eliminar(int id)
+    private void ConfirmarEliminar(ClienteDto c)
     {
-        var ok = await Api.DeleteClienteAsync(id);
+        _idAEliminar = c.Id;
+        _nombreAEliminar = c.FullName;
+        _mostrarModalEliminar = true;
+    }
+
+    private async Task EjecutarEliminar()
+    {
+        _mostrarModalEliminar = false;
+        var ok = await Api.DeleteClienteAsync(_idAEliminar);
         _exito = ok;
         _mensaje = ok ? "Cliente eliminado." : "No se pudo eliminar el cliente.";
         if (ok) await Cargar();
-    }
-
-    private async Task EnviarWhatsApp(ClienteDto c)
-    {
-        var telefono = c.Phone?.Replace(" ", "").Replace("-", "").Replace("+", "") ?? "";
-        var mensajePlantilla = _reminderMessage
-            ?? "Hola {nombre}, te recordamos que tienes un saldo pendiente de {saldo}. Gracias 🌸";
-        var mensaje = mensajePlantilla
-            .Replace("{nombre}", c.FullName)
-            .Replace("{saldo}", c.PendingBalance.ToString("C0"));
-        var url = $"https://wa.me/{telefono}?text={Uri.EscapeDataString(mensaje)}";
-        await JS.InvokeVoidAsync("open", url, "_blank");
     }
 
     private class ClienteForm

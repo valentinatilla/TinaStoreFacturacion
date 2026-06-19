@@ -70,6 +70,6 @@ public sealed class CategoryService : ICategoryService
         c.Name,
         c.Description,
         c.IsActive,
-        c.Products?.Count(p => !p.IsDeleted) ?? 0
+        c.Products?.Count(p => !p.IsDeleted && p.IsActive) ?? 0
     );
 }

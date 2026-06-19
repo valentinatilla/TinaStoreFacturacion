@@ -1,5 +1,6 @@
 using TinaStore.Application.DTOs;
 using TinaStore.Application.Interfaces;
+using TinaStore.Domain.Enums;
 using TinaStore.Domain.Interfaces;
 
 namespace TinaStore.Application.Services;
@@ -14,6 +15,14 @@ public sealed class DashboardService : IDashboardService
         _repo = repo;
         _clock = clock;
     }
+
+    private static string StatusEnEspanol(InvoiceStatus status) => status switch
+    {
+        InvoiceStatus.Paid      => "Pagada",
+        InvoiceStatus.Partial   => "Parcial",
+        InvoiceStatus.Cancelled => "Anulada",
+        _                       => "Pendiente"
+    };
 
     public async Task<DashboardDto> GetSummaryAsync()
     {
@@ -38,7 +47,7 @@ public sealed class DashboardService : IDashboardService
             .Select(i => new InvoiceSummaryDto(
                 i.Id, i.InvoiceNumber, i.InvoiceDate,
                 i.Customer?.FullName ?? string.Empty,
-                i.Total, i.Balance, i.Status, i.Status.ToString()))
+                i.Total, i.Balance, i.Status, StatusEnEspanol(i.Status), i.AmountPaid))
             .ToList();
 
         var topDeudores = (await _repo.GetTopDebtorsAsync(5))

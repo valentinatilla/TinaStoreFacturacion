@@ -134,3 +134,54 @@ Registro de funcionalidades implementadas y planificadas del proyecto.
 - [ ] Pruebas unitarias completas.
 - [ ] Pruebas de integración.
 - [ ] Guía de despliegue en producción.
+
+---
+
+## Funcionalidades implementadas (v1.2.0 — Fases A2 + B1 + B3)
+
+### ✅ Productos — Estado diferenciado de inventario
+- Estado **Inactivo**: producto marcado como inactivo administrativamente.
+- Estado **Agotado**: stock = 0, producto activo.
+- Estado **Bajo stock**: stock ≤ mínimo configurado.
+- Estado **Activo**: stock > mínimo, producto activo.
+- Badges con colores semánticos del design system kawaii.
+
+### ✅ Productos — Porcentaje de ganancia
+- Columna `% Ganancia` visible en el listado de productos.
+- Campo calculado en tiempo real en el modal de creación/edición.
+- Fórmula: `(PrecioVenta - Costo) / Costo × 100`. Muestra "No calculable" si costo es 0.
+- Decisión: se usa costo fijo de adquisición (no promedio). Ver `TECHNICAL_DECISIONS.md`.
+
+### ✅ Categorías — Protección de eliminación
+- API valida `ProductCount > 0` antes de permitir eliminar una categoría.
+- Doble validación: UI (botón deshabilitado) + API (HTTP 400 con mensaje).
+
+### ✅ Proveedores — Simplificación de interfaz
+- Columna Estado eliminada de la vista de Proveedores.
+- Columna `IsActive` conservada en base de datos para uso futuro.
+
+### ✅ Configuración — Logo dinámico en sidebar
+- El sidebar carga el logo desde `/api/settings` al iniciar sesión.
+- Si no hay logo configurado, muestra el emoji 🛍️ predeterminado.
+- El logo se actualiza automáticamente al volver a cargar la aplicación después de configurarlo.
+
+### ✅ Clientes — Fecha de última compra y estado comercial
+- `LastPurchaseDate`: calculado desde la última factura no anulada del cliente.
+- `CommercialStatus` automático:
+  - **Activo**: compró en los últimos 6 meses.
+  - **Inactivo**: última compra hace más de 6 meses.
+  - **Sin compras**: nunca ha realizado compras.
+- Columna visible en la tabla de clientes.
+- Decisión: estado **completamente automático** sin anulación manual. Ver `TECHNICAL_DECISIONS.md`.
+
+### ✅ Clientes — Modal editable de recordatorio WhatsApp
+- Modal prellenado con nombre, teléfono y saldo del cliente.
+- Mensaje editable por el usuario antes de abrir WhatsApp.
+- Normalización automática del número colombiano (+57 para móviles de 10 dígitos).
+- Plantilla configurable desde Configuración de la tienda (`ReminderMessage`).
+- El envío lo confirma el usuario desde WhatsApp (no es automático).
+
+### 📋 Pendientes (Fase B2 y siguientes)
+- [ ] Importación masiva de productos con vista previa editable (Feature 17).
+- [ ] Registrar historial de recordatorios enviados por WhatsApp (Feature 16 — historial).
+- [ ] Integración con API oficial de WhatsApp Business (futura fase).

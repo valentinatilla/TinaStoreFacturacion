@@ -28,8 +28,69 @@
 }
 else
 {
-    <div class="mb-3">
-        <input class="form-control" style="max-width:320px" placeholder="🔍 Buscar producto o SKU..." @oninput="Filtrar" />
+    <!-- Filtros -->
+    <div class="card border-0 shadow-sm mb-3 p-3">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold mb-1">Buscar</label>
+                <input class="form-control form-control-sm" placeholder="🔍 Nombre o SKU..."
+                       value="@_filtroTexto"
+                       @oninput="e => { _filtroTexto = e.Value?.ToString() ?? string.Empty; Filtrar(); }" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold mb-1">Categoría</label>
+                <select class="form-select form-select-sm"
+                        @onchange="e => { _filtroCategoriaId = int.TryParse(e.Value?.ToString(), out var v) ? v : 0; Filtrar(); }">
+                    <option value="0">Todas</option>
+                    @foreach (var c in _categorias)
+                    {
+                        <option value="@c.Id" selected="@(_filtroCategoriaId == c.Id)">@c.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold mb-1">Proveedor</label>
+                <select class="form-select form-select-sm"
+                        @onchange="e => { _filtroProveedorId = int.TryParse(e.Value?.ToString(), out var v) ? v : 0; Filtrar(); }">
+                    <option value="0">Todos</option>
+                    @foreach (var s in _proveedores)
+                    {
+                        <option value="@s.Id" selected="@(_filtroProveedorId == s.Id)">@s.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold mb-1">Estado</label>
+                <select class="form-select form-select-sm"
+                        @onchange="e => { _filtroEstado = e.Value?.ToString() ?? string.Empty; Filtrar(); }">
+                    <option value="">Todos</option>
+                    <option value="activo">Activo</option>
+                    <option value="bajo">Bajo stock</option>
+                    <option value="agotado">Agotado</option>
+                    <option value="inactivo">Inactivo</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold mb-1">Orden por stock</label>
+                <select class="form-select form-select-sm"
+                        @onchange="e => { _ordenStock = e.Value?.ToString() ?? string.Empty; Filtrar(); }">
+                    <option value="">Sin orden</option>
+                    <option value="desc">Mayor a menor</option>
+                    <option value="asc">Menor a mayor</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-sm btn-outline-secondary w-100" @onclick="LimpiarFiltros">
+                    <i class="bi bi-x-circle me-1"></i>Limpiar
+                </button>
+            </div>
+        </div>
+        <div class="mt-2 pt-2 border-top d-flex gap-4 flex-wrap">
+            <span class="text-muted small"><i class="bi bi-box-seam me-1"></i>@_filtrados.Count producto(s)</span>
+            <span class="text-muted small"><i class="bi bi-check-circle me-1 text-success"></i>Activos: @_filtrados.Count(p => p.IsActive && p.CurrentStock > 0 && !p.IsLowStock)</span>
+            <span class="text-muted small"><i class="bi bi-exclamation-triangle me-1 text-warning"></i>Bajo stock: @_filtrados.Count(p => p.IsLowStock && p.IsActive)</span>
+            <span class="text-muted small"><i class="bi bi-x-circle me-1 text-danger"></i>Agotados: @_filtrados.Count(p => p.CurrentStock == 0 && p.IsActive)</span>
+        </div>
     </div>
     <div class="card ts-table border-0">
         <div class="table-responsive">
@@ -38,7 +99,9 @@ else
                     <tr>
                         <th></th>
                         <th>SKU</th><th>Producto</th><th>Categoría</th>
+                        <th class="text-end">Costo</th>
                         <th class="text-end">Precio venta</th>
+                        <th class="text-end">% Ganancia</th>
                         <th class="text-center">Stock</th><th>Estado</th><th></th>
                     </tr>
                 </thead>
@@ -59,14 +122,31 @@ else
                             <td class="text-muted small">@p.Sku</td>
                             <td class="fw-semibold">@p.Name</td>
                             <td>@p.CategoryName</td>
+                            <td class="text-end text-muted">@(p.PurchasePrice > 0 ? p.PurchasePrice.ToString("C0") : "—")</td>
                             <td class="text-end">@p.SalePrice.ToString("C0")</td>
+                            <td class="text-end small @(p.ProfitMargin > 0 ? "text-success fw-semibold" : "text-muted")">
+                                @(p.ProfitMargin > 0 ? p.ProfitMargin.ToString("0.0") + " %" : "—")
+                            </td>
                             <td class="text-center">
-                                <span class="badge @(p.IsLowStock ? "bg-danger" : "bg-success")">@p.CurrentStock</span>
+                                <span class="badge @(p.CurrentStock == 0 && p.IsActive ? "badge-sin-stock" : p.IsLowStock && p.IsActive ? "badge-bajo-stock" : "bg-success")">@p.CurrentStock</span>
                             </td>
                             <td>
-                                <span class="badge @(p.IsActive ? "bg-success" : "bg-secondary")">
-                                    @(p.IsActive ? "Activo" : "Inactivo")
-                                </span>
+                                @if (!p.IsActive)
+                                {
+                                    <span class="badge badge-estado-inactivo">Inactivo</span>
+                                }
+                                else if (p.CurrentStock == 0)
+                                {
+                                    <span class="badge badge-sin-stock">Agotado</span>
+                                }
+                                else if (p.IsLowStock)
+                                {
+                                    <span class="badge badge-bajo-stock">Bajo stock</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-estado-activo">Activo</span>
+                                }
                             </td>
                             <td class="text-end">
                                 <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => AbrirModal(p)">
@@ -115,6 +195,19 @@ else
                         <input type="number" class="form-control" @bind="_form.PurchasePrice" min="0" step="0.01" />
                     </div>
                     <div class="col-md-4">
+                        <label class="form-label small fw-semibold">% Ganancia</label>
+                        <div class="form-control bg-light fw-semibold text-purple" style="border-radius:10px;">
+                            @if (_form.PurchasePrice > 0)
+                            {
+                                @(Math.Round((_form.SalePrice - _form.PurchasePrice) / _form.PurchasePrice * 100, 1).ToString("0.0") + " %")
+                            }
+                            else
+                            {
+                                <span class="text-muted small">No calculable</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-md-4">
                         <label class="form-label small fw-semibold">Stock inicial</label>
                         <input type="number" class="form-control" @bind="_form.CurrentStock" min="0" />
                     </div>
@@ -146,6 +239,24 @@ else
                             }
                         </select>
                     </div>
+                    @if (_editando)
+                    {
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Ingresar unidades</label>
+                            <input type="number" class="form-control" @bind="_form.StockEntrada" min="0"
+                                   placeholder="0" title="Unidades que se están comprando ahora" />
+                            @if (_form.StockEntrada > 0 && _form.PurchasePrice > 0)
+                            {
+                                <p class="text-success small mt-1 mb-0">
+                                    <i class="bi bi-bag-check me-1"></i>Egreso: @((_form.StockEntrada * _form.PurchasePrice).ToString("C0"))
+                                </p>
+                            }
+                            else
+                            {
+                                <p class="text-muted small mt-1 mb-0">Deja en 0 si no hay compra nueva</p>
+                            }
+                        </div>
+                    }
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Imagen del producto</label>
                         <div class="ts-image-upload-area">
@@ -210,6 +321,14 @@ else
     private bool _exito;
     private ProductoForm _form = new();
     private IBrowserFile? _imagenSeleccionada;
+    private byte[]? _imagenBytes;
+
+    // ── Filtros ────────────────────────────────────────────────────────────────────
+    private string _filtroTexto       = string.Empty;
+    private int    _filtroCategoriaId;
+    private int    _filtroProveedorId;
+    private string _filtroEstado      = string.Empty;
+    private string _ordenStock        = string.Empty;
 
     [Inject] private IConfiguration Config { get; set; } = default!;
 
@@ -223,7 +342,7 @@ else
     {
         _loading = true;
         _productos = await Api.GetProductosAsync() ?? [];
-        _filtrados = _productos;
+        Filtrar();
         _loading = false;
     }
 
@@ -233,12 +352,39 @@ else
         _proveedores = await Api.GetProveedoresAsync() ?? [];
     }
 
-    private void Filtrar(ChangeEventArgs e)
+    private void Filtrar()
     {
-        var q = e.Value?.ToString()?.ToLower() ?? "";
-        _filtrados = string.IsNullOrWhiteSpace(q)
-            ? _productos
-            : _productos.Where(p => p.Name.ToLower().Contains(q) || (p.Sku?.ToLower().Contains(q) ?? false)).ToList();
+        var query = _productos
+            .Where(p => string.IsNullOrWhiteSpace(_filtroTexto) ||
+                        p.Name.Contains(_filtroTexto, StringComparison.OrdinalIgnoreCase) ||
+                        (p.Sku?.Contains(_filtroTexto, StringComparison.OrdinalIgnoreCase) ?? false))
+            .Where(p => _filtroCategoriaId == 0 || p.CategoryId == _filtroCategoriaId)
+            .Where(p => _filtroProveedorId == 0 || p.SupplierId == _filtroProveedorId)
+            .Where(p => _filtroEstado switch
+            {
+                "activo"   => p.IsActive && p.CurrentStock > 0 && !p.IsLowStock,
+                "bajo"     => p.IsActive && p.IsLowStock && p.CurrentStock > 0,
+                "agotado"  => p.IsActive && p.CurrentStock == 0,
+                "inactivo" => !p.IsActive,
+                _          => true
+            });
+
+        _filtrados = _ordenStock switch
+        {
+            "desc" => query.OrderByDescending(p => p.CurrentStock).ToList(),
+            "asc"  => query.OrderBy(p => p.CurrentStock).ToList(),
+            _      => query.ToList()
+        };
+    }
+
+    private void LimpiarFiltros()
+    {
+        _filtroTexto       = string.Empty;
+        _filtroCategoriaId = 0;
+        _filtroProveedorId = 0;
+        _filtroEstado      = string.Empty;
+        _ordenStock        = string.Empty;
+        _filtrados         = _productos;
     }
 
     private async Task AbrirModal(ProductoDto? p = null)
@@ -280,21 +426,66 @@ else
     {
         _mostrarModal = false;
         _imagenSeleccionada = null;
+        _imagenBytes = null;
     }
 
     private async Task SeleccionarImagen(InputFileChangeEventArgs e)
     {
-        _imagenSeleccionada = e.File;
-        // Generar preview en base64 para mostrar antes de guardar
-        var buffer = new byte[_imagenSeleccionada.Size];
-        await _imagenSeleccionada.OpenReadStream(2 * 1024 * 1024).ReadAsync(buffer);
-        var base64 = Convert.ToBase64String(buffer);
-        _form.ImagenPreviewUrl = $"data:{_imagenSeleccionada.ContentType};base64,{base64}";
+        var archivo = e.File;
+        const long maxBytes = 2 * 1024 * 1024; // 2 MB
+
+        // Validar extensión
+        var ext = Path.GetExtension(archivo.Name).ToLowerInvariant();
+        if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp"))
+        {
+            _mensaje = "Solo se permiten imágenes JPG, PNG o WEBP.";
+            _exito = false;
+            return;
+        }
+
+        // Validar tamaño
+        if (archivo.Size > maxBytes)
+        {
+            _mensaje = "La imagen no puede superar 2 MB.";
+            _exito = false;
+            return;
+        }
+
+        try
+        {
+            // Leer el stream completo con CopyToAsync para evitar lecturas parciales
+            using var ms = new MemoryStream();
+            await using var stream = archivo.OpenReadStream(maxBytes);
+            await stream.CopyToAsync(ms);
+            var bytes = ms.ToArray();
+
+            // Generar preview en base64
+            var contentType = ext switch
+            {
+                ".png"  => "image/png",
+                ".webp" => "image/webp",
+                _       => "image/jpeg"
+            };
+            var base64 = Convert.ToBase64String(bytes);
+            _form.ImagenPreviewUrl = $"data:{contentType};base64,{base64}";
+            _imagenSeleccionada = archivo;
+            _imagenBytes = bytes;
+            _mensaje = null;
+        }
+        catch (Exception ex)
+        {
+            _mensaje = $"Error al cargar la imagen: {ex.Message}";
+            _exito = false;
+            _imagenSeleccionada = null;
+            _imagenBytes = null;
+            _form.ImagenPreviewUrl = null;
+        }
     }
 
     private void QuitarImagenSeleccionada()
     {
         _imagenSeleccionada = null;
+        _imagenBytes = null;
         _form.ImagenPreviewUrl = null;
     }
 
@@ -312,7 +503,7 @@ else
 
         if (_editando)
         {
-            var dto = new UpdateProductoDto(_form.Sku, _form.Name, _form.Description, _form.Unit, _form.PurchasePrice, _form.SalePrice, _form.MinimumStock, true, _form.CategoryId, _form.SupplierId);
+            var dto = new UpdateProductoDto(_form.Sku, _form.Name, _form.Description, _form.Unit, _form.PurchasePrice, _form.SalePrice, _form.MinimumStock, true, _form.CategoryId, _form.SupplierId, _form.StockEntrada);
             var ok = await Api.UpdateProductoAsync(_editandoId, dto);
             if (!ok) { _guardando = false; _exito = false; _mensaje = "Error al guardar el producto."; return; }
             idProducto = _editandoId;
@@ -326,10 +517,23 @@ else
         }
 
         // Gestión de imagen
-        if (_imagenSeleccionada is not null)
+        if (_imagenSeleccionada is not null && _imagenBytes is not null)
         {
-            var stream = _imagenSeleccionada.OpenReadStream(2 * 1024 * 1024);
-            await Api.SubirImagenProductoAsync(idProducto, stream, _imagenSeleccionada.Name);
+            try
+            {
+                // Usar los bytes ya leídos durante la selección (IBrowserFile no puede reabrirse)
+                using var ms = new MemoryStream(_imagenBytes);
+                await Api.SubirImagenProductoAsync(idProducto, ms, _imagenSeleccionada.Name);
+            }
+            catch
+            {
+                _guardando = false;
+                _mensaje = "Producto guardado, pero no se pudo subir la imagen. Intente editarlo nuevamente.";
+                _exito = true;
+                CerrarModal();
+                await Cargar();
+                return;
+            }
         }
         else if (_form.ImagenEliminada)
         {
@@ -380,5 +584,6 @@ else
         public string? ImagePathActual { get; set; }
         public string? ImagenPreviewUrl { get; set; }
         public bool ImagenEliminada { get; set; }
+        public int StockEntrada { get; set; }
     }
 }

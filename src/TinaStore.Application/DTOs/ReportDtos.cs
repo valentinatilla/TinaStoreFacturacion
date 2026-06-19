@@ -65,3 +65,21 @@ public record ExcelImportResultDto(
     int Errores,
     List<string> MensajesError
 );
+
+/// <summary>Vista previa de una fila de Excel antes de confirmar la importación masiva.</summary>
+public record ImportPreviewRowDto(
+    int Fila,
+    string? Nombre,
+    string? Sku,
+    string? Descripcion,
+    decimal PrecioCosto,
+    decimal PrecioVenta,
+    int StockInicial,
+    int StockMinimo,
+    int CategoriaId,
+    string? CategoriaNombre,
+    int? ProveedorId,
+    string? ProveedorNombre,
+    bool Valido,
+    string? MensajeError
+);

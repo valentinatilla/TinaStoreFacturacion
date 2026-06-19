@@ -22,23 +22,111 @@
 }
 else
 {
+    <!-- Filtros -->
+    <div class="card border-0 shadow-sm mb-3 p-3">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold mb-1">Desde</label>
+                <input type="date" class="form-control form-control-sm"
+                       value="@_filtroDesdeStr"
+                       @onchange="e => { _filtroDesdeStr = e.Value?.ToString(); Filtrar(); }" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold mb-1">Hasta</label>
+                <input type="date" class="form-control form-control-sm"
+                       value="@_filtroHastaStr"
+                       @onchange="e => { _filtroHastaStr = e.Value?.ToString(); Filtrar(); }" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold mb-1">Categoría <span class="text-muted fw-normal">(otros egresos)</span></label>
+                <select class="form-select form-select-sm"
+                        @onchange="e => { _filtroCategoriaId = int.TryParse(e.Value?.ToString(), out var v) ? v : 0; Filtrar(); }">
+                    <option value="0">Todas</option>
+                    @foreach (var c in _categoriasGasto.Where(c => !c.Name.Equals(CategoriaCompras, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        <option value="@c.Id" selected="@(_filtroCategoriaId == c.Id)">@c.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button class="btn btn-sm btn-outline-secondary w-100" @onclick="LimpiarFiltros">
+                    <i class="bi bi-x-circle me-1"></i>Limpiar
+                </button>
+            </div>
+        </div>
+        <div class="mt-2 pt-2 border-top d-flex gap-4">
+            <span class="small text-muted">
+                <i class="bi bi-box-seam me-1"></i>Compras: <strong>@TotalCompras</strong>
+            </span>
+            <span class="small text-muted">
+                <i class="bi bi-receipt me-1"></i>Otros: <strong>@TotalOtros</strong>
+            </span>
+            <span class="small fw-bold" style="color: var(--ts-primary);">
+                Total: @TotalGeneral
+            </span>
+        </div>
+    </div>
+
+    <!-- Tabla 1: Compras de productos -->
+    <h6 class="fw-bold mb-2 mt-3"><i class="bi bi-box-seam me-2 text-purple"></i>Compras de productos</h6>
+    <div class="card ts-table border-0 mb-4">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr><th>Fecha</th><th>Descripción</th><th>Proveedor</th><th class="text-end">Monto</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var e in _filtradosCompras)
+                    {
+                        <tr>
+                            <td class="text-muted small">@e.ExpenseDate.ToString("dd/MM/yyyy")</td>
+                            <td>@e.Description</td>
+                            <td class="text-muted small">@(e.SupplierName ?? "—")</td>
+                            <td class="text-end fw-semibold">@e.Amount.ToString("C0")</td>
+                            <td class="text-end">
+                                @if (e.Status == 0)
+                                {
+                                    <button class="btn btn-sm btn-outline-danger" title="Anular"
+                                            @onclick="() => AnularEgreso(e.Id)">
+                                        <i class="bi bi-x-circle"></i>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Anulado</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    @if (!_filtradosCompras.Any())
+                    {
+                        <tr><td colspan="5" class="text-center text-muted py-3">Sin compras de productos en el período</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tabla 2: Otros egresos -->
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="fw-bold mb-0"><i class="bi bi-receipt me-2 text-purple"></i>Otros egresos</h6>
+    </div>
     <div class="card ts-table border-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
-                    <tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th class="text-end">Monto</th><th>Estado</th><th></th></tr>
+                    <tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th class="text-end">Monto</th><th></th></tr>
                 </thead>
                 <tbody>
-                    @foreach (var e in _egresos)
+                    @foreach (var e in _filtradosOtros)
                     {
                         <tr>
                             <td class="text-muted small">@e.ExpenseDate.ToString("dd/MM/yyyy")</td>
                             <td>@e.Description</td>
                             <td><span class="badge bg-secondary">@e.ExpenseCategoryName</span></td>
                             <td class="text-end fw-semibold">@e.Amount.ToString("C0")</td>
-                            <td><span class="badge @(e.StatusName == "Activo" ? "bg-success" : "bg-danger")">@e.StatusName</span></td>
                             <td class="text-end">
-                                @if (e.StatusName == "Activo")
+                                @if (e.Status == 0)
                                 {
                                     <button class="btn btn-sm btn-outline-secondary me-1" title="Editar"
                                             @onclick="() => AbrirEditar(e)">
@@ -49,12 +137,16 @@ else
                                         <i class="bi bi-x-circle"></i>
                                     </button>
                                 }
+                                else
+                                {
+                                    <span class="badge bg-danger">Anulado</span>
+                                }
                             </td>
                         </tr>
                     }
-                    @if (!_egresos.Any())
+                    @if (!_filtradosOtros.Any())
                     {
-                        <tr><td colspan="6" class="text-center text-muted py-4">Sin egresos registrados</td></tr>
+                        <tr><td colspan="5" class="text-center text-muted py-3">Sin egresos registrados</td></tr>
                     }
                 </tbody>
             </table>
@@ -88,7 +180,7 @@ else
                         <label class="form-label small fw-semibold">Categoría</label>
                         <select class="form-select" @bind="_form.CategoriaGastoId">
                             <option value="0">Seleccione...</option>
-                            @foreach (var c in _categoriasGasto)
+                            @foreach (var c in _categoriasGasto.Where(c => !c.Name.Equals(CategoriaCompras, StringComparison.OrdinalIgnoreCase)))
                             {
                                 <option value="@c.Id">@c.Name</option>
                             }
@@ -122,7 +214,11 @@ else
 }
 
 @code {
+    private const string CategoriaCompras = "Compras a proveedor";
+
     private List<EgresoDto> _egresos = [];
+    private List<EgresoDto> _filtradosCompras = [];
+    private List<EgresoDto> _filtradosOtros = [];
     private List<CategoriaGastoDto> _categoriasGasto = [];
     private List<MetodoPagoDto> _metodosPago = [];
     private bool _loading = true;
@@ -133,6 +229,19 @@ else
     private EgresoForm _form = new();
     private int _editandoId;
 
+    // ── Filtros ───────────────────────────────────────────────────────────────
+    private string? _filtroDesdeStr;
+    private string? _filtroHastaStr = DateTime.Today.ToString("yyyy-MM-dd");
+    private int _filtroCategoriaId;
+
+    private string TotalCompras =>
+        _filtradosCompras.Where(e => e.Status == 0).Sum(e => e.Amount).ToString("C0");
+    private string TotalOtros =>
+        _filtradosOtros.Where(e => e.Status == 0).Sum(e => e.Amount).ToString("C0");
+    private string TotalGeneral =>
+        (_filtradosCompras.Where(e => e.Status == 0).Sum(e => e.Amount)
+       + _filtradosOtros.Where(e => e.Status == 0).Sum(e => e.Amount)).ToString("C0");
+
     protected override async Task OnInitializedAsync()
     {
         _loading = true;
@@ -140,10 +249,45 @@ else
         var t2 = Api.GetCategoriasGastoAsync();
         var t3 = Api.GetMetodosPagoAsync();
         await Task.WhenAll(t1, t2, t3);
-        _egresos        = t1.Result ?? [];
+        _egresos         = t1.Result ?? [];
         _categoriasGasto = t2.Result ?? [];
-        _metodosPago    = t3.Result ?? [];
+        _metodosPago     = t3.Result ?? [];
+        Filtrar();
         _loading = false;
+    }
+
+    private void Filtrar()
+    {
+        var desde = DateTime.TryParse(_filtroDesdeStr, out var d) ? d : (DateTime?)null;
+        var hasta = DateTime.TryParse(_filtroHastaStr, out var h) ? h : (DateTime?)null;
+
+        var base_ = _egresos
+            .Where(e => desde is null || e.ExpenseDate.Date >= desde.Value.Date)
+            .Where(e => hasta is null || e.ExpenseDate.Date <= hasta.Value.Date)
+            .OrderByDescending(e => e.ExpenseDate);
+
+        _filtradosCompras = base_
+            .Where(e => e.ExpenseCategoryName.Equals(CategoriaCompras, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        _filtradosOtros = base_
+            .Where(e => !e.ExpenseCategoryName.Equals(CategoriaCompras, StringComparison.OrdinalIgnoreCase))
+            .Where(e => _filtroCategoriaId == 0 || e.ExpenseCategoryId == _filtroCategoriaId)
+            .ToList();
+    }
+
+    private void LimpiarFiltros()
+    {
+        _filtroDesdeStr    = null;
+        _filtroHastaStr    = DateTime.Today.ToString("yyyy-MM-dd");
+        _filtroCategoriaId = 0;
+        Filtrar();
+    }
+
+    private async Task RecargarYFiltrar()
+    {
+        _egresos = await Api.GetEgresosAsync() ?? [];
+        Filtrar();
     }
 
     private void AbrirModal() { _editandoId = 0; _form = new() { Fecha = DateTime.Today }; _mostrarModal = true; _mensaje = null; }
@@ -169,7 +313,7 @@ else
         var ok = await Api.AnularEgresoAsync(id);
         _exito   = ok;
         _mensaje = ok ? "Egreso anulado." : "No se pudo anular el egreso.";
-        if (ok) _egresos = await Api.GetEgresosAsync() ?? [];
+        if (ok) await RecargarYFiltrar();
     }
 
     private async Task Guardar()
@@ -193,7 +337,7 @@ else
         if (ok)
         {
             _mostrarModal = false;
-            _egresos = await Api.GetEgresosAsync() ?? [];
+            await RecargarYFiltrar();
         }
     }
 

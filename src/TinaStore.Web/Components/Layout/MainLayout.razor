@@ -2,6 +2,10 @@
 @inject NavigationManager Nav
 @inject SessionStateService Session
 @inject IJSRuntime JS
+@inject TinaStoreApiClient Api
+@inject IConfiguration Config
+@inject LogoStateService LogoState
+@implements IDisposable
 
 <div class="ts-wrapper">
     @if (Session.IsAuthenticated)
@@ -9,7 +13,14 @@
         <!-- Sidebar -->
         <nav class="ts-sidebar" id="sidebar">
             <a href="/" class="ts-brand">
-                <span class="ts-brand-emoji">🛍️</span>
+                @if (!string.IsNullOrEmpty(LogoState.LogoUrl))
+                {
+                    <img src="@LogoState.LogoUrl" alt="Logo Tina Store" class="ts-brand-logo" />
+                }
+                else
+                {
+                    <span class="ts-brand-emoji">🛍️</span>
+                }
                 <span>Tina Store</span>
             </a>
             <NavMenu />
@@ -44,10 +55,33 @@
 </div>
 
 @code {
+    protected override async Task OnInitializedAsync()
+    {
+        LogoState.OnChange += OnLogoChanged;
+        if (Session.IsAuthenticated && string.IsNullOrEmpty(LogoState.LogoUrl))
+        {
+            try
+            {
+                var cfg = await Api.GetConfiguracionAsync();
+                if (cfg is not null && !string.IsNullOrEmpty(cfg.LogoPath))
+                {
+                    var apiBase = Config["ApiBaseUrl"]?.TrimEnd('/') ?? string.Empty;
+                    LogoState.SetLogo($"{apiBase}{cfg.LogoPath}");
+                }
+            }
+            catch { /* Si falla, usar emoji predeterminado */ }
+        }
+    }
+
+    private void OnLogoChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => LogoState.OnChange -= OnLogoChanged;
+
     private async Task Logout()
     {
         await SessionStateService.ClearPersistenceAsync(JS);
         Session.Clear();
+        LogoState.SetLogo(null);
         Nav.NavigateTo("/login", forceLoad: true);
     }
 }

@@ -85,7 +85,8 @@ public record InvoiceSummaryDto(
     decimal Total,
     decimal Balance,
     InvoiceStatus Status,
-    string StatusName
+    string StatusName,
+    decimal AmountPaid = 0
 );
 
 /// <summary>Datos para anular una factura.</summary>

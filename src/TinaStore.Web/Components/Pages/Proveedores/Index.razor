@@ -29,7 +29,7 @@ else
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
-                    <tr><th>Nombre</th><th>NIT</th><th>Contacto</th><th>Teléfono</th><th>Email</th><th>Estado</th><th></th></tr>
+                    <tr><th>Nombre</th><th>NIT</th><th>Contacto</th><th>Teléfono</th><th>Email</th><th></th></tr>
                 </thead>
                 <tbody>
                     @foreach (var p in _filtrados)
@@ -40,7 +40,6 @@ else
                             <td>@p.ContactName</td>
                             <td>@p.Phone</td>
                             <td>@p.Email</td>
-                            <td><span class="badge @(p.IsActive ? "bg-success" : "bg-secondary")">@(p.IsActive ? "Activo" : "Inactivo")</span></td>
                             <td class="text-end">
                                 <button class="btn btn-sm btn-outline-secondary me-1" title="Editar"
                                         @onclick="() => AbrirEditar(p)">

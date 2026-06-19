@@ -7,6 +7,7 @@ public interface ICustomerRepository : IRepository<Customer>
     Task<Customer?> GetByDocumentAsync(string documentNumber, CancellationToken ct = default);
     Task<IReadOnlyList<Customer>> SearchAsync(string term, CancellationToken ct = default);
     Task<Customer?> GetWithInvoicesAsync(int customerId, CancellationToken ct = default);
+    Task<IReadOnlyList<Customer>> GetAllWithInvoicesAsync(CancellationToken ct = default);
 }
 
 public interface IProductRepository : IRepository<Product>
@@ -42,6 +43,7 @@ public interface IAccountReceivableRepository : IRepository<AccountReceivable>
 
 public interface IExpenseRepository : IRepository<Expense>
 {
+    Task<IReadOnlyList<Expense>> GetAllWithNavigationAsync(CancellationToken ct = default);
     Task<IReadOnlyList<Expense>> GetByDateRangeAsync(DateTime from, DateTime to, CancellationToken ct = default);
     Task<IReadOnlyList<Expense>> GetByCategoryAsync(int categoryId, CancellationToken ct = default);
     Task<decimal> GetTotalByDateRangeAsync(DateTime from, DateTime to, CancellationToken ct = default);
@@ -76,4 +78,11 @@ public interface IUserRepository : IRepository<User>
     Task<User?> GetByEmailAsync(string email, CancellationToken ct = default);
     Task<bool> EmailExistsAsync(string email, CancellationToken ct = default);
     Task<IReadOnlyList<User>> GetAllUsersAsync(CancellationToken ct = default);
+}
+
+public interface IReminderRepository : IRepository<Reminder>
+{
+    Task<Reminder?> GetByCustomerAsync(int customerId, CancellationToken ct = default);
+    Task<IReadOnlyList<ReminderHistory>> GetHistoryByCustomerAsync(int customerId, CancellationToken ct = default);
+    Task AddHistoryAsync(ReminderHistory history, CancellationToken ct = default);
 }

@@ -2,6 +2,7 @@
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 @inject IJSRuntime JS
+@inject LogoStateService LogoState
 
 <PageTitle>Configuración — Tina Store</PageTitle>
 
@@ -156,9 +157,11 @@ else if (_cargado)
             var cfg = await Api.UploadLogoAsync(stream, archivo.Name);
             if (cfg is not null)
             {
-                _logoUrl = string.IsNullOrEmpty(cfg.LogoPath)
+                var url = string.IsNullOrEmpty(cfg.LogoPath)
                     ? null
                     : $"{Api.BaseUrl.TrimEnd('/')}{cfg.LogoPath}";
+                _logoUrl = url;
+                LogoState.SetLogo(url);
                 _exito = true;
                 _mensaje = "Logo actualizado correctamente.";
             }

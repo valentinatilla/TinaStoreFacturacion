@@ -27,10 +27,22 @@ public class CustomerRepository(AppDbContext context) : Repository<Customer>(con
             .Include(c => c.Invoices)
             .Include(c => c.AccountReceivable)
             .FirstOrDefaultAsync(c => c.Id == customerId, ct);
+
+    public async Task<IReadOnlyList<Customer>> GetAllWithInvoicesAsync(CancellationToken ct = default)
+        => await DbSet
+            .Include(c => c.Invoices)
+            .Include(c => c.AccountReceivable)
+            .ToListAsync(ct);
 }
 
 public class ProductRepository(AppDbContext context) : Repository<Product>(context), IProductRepository
 {
+    public override async Task<Product?> GetByIdAsync(int id, CancellationToken ct = default)
+        => await DbSet
+            .Include(p => p.Category)
+            .Include(p => p.Supplier)
+            .FirstOrDefaultAsync(p => p.Id == id, ct);
+
     public async Task<Product?> GetByInternalCodeAsync(string code, CancellationToken ct = default)
         => await DbSet.FirstOrDefaultAsync(p => p.Sku == code, ct);  // redirigido a SKU
 
@@ -108,6 +120,11 @@ public class InvoiceRepository(AppDbContext context) : Repository<Invoice>(conte
 
 public class CategoryRepository(AppDbContext context) : Repository<Category>(context), ICategoryRepository
 {
+    public override async Task<Category?> GetByIdAsync(int id, CancellationToken ct = default)
+        => await DbSet
+            .Include(c => c.Products)
+            .FirstOrDefaultAsync(c => c.Id == id, ct);
+
     public async Task<IReadOnlyList<Category>> GetAllWithProductsAsync(CancellationToken ct = default)
         => await DbSet
             .Include(c => c.Products)
@@ -134,6 +151,14 @@ public class AccountReceivableRepository(AppDbContext context) : Repository<Acco
 
 public class ExpenseRepository(AppDbContext context) : Repository<Expense>(context), IExpenseRepository
 {
+    public async Task<IReadOnlyList<Expense>> GetAllWithNavigationAsync(CancellationToken ct = default)
+        => await DbSet
+            .Include(e => e.ExpenseCategory)
+            .Include(e => e.Supplier)
+            .Include(e => e.PaymentMethod)
+            .OrderByDescending(e => e.ExpenseDate)
+            .ToListAsync(ct);
+
     public async Task<IReadOnlyList<Expense>> GetByDateRangeAsync(DateTime from, DateTime to, CancellationToken ct = default)
         => await DbSet
             .Include(e => e.ExpenseCategory)
@@ -271,4 +296,31 @@ public class UserRepository : Repository<User>, IUserRepository
 
     public async Task<IReadOnlyList<User>> GetAllUsersAsync(CancellationToken ct = default)
         => await _db.Users.OrderBy(u => u.FullName).ToListAsync(ct);
+}
+
+// ─── ReminderRepository ───────────────────────────────────────────────────────
+
+public class ReminderRepository : Repository<Reminder>, IReminderRepository
+{
+    private readonly AppDbContext _db;
+
+    public ReminderRepository(AppDbContext db) : base(db) => _db = db;
+
+    public async Task<Reminder?> GetByCustomerAsync(int customerId, CancellationToken ct = default)
+        => await _db.Reminders
+            .Include(r => r.History)
+            .FirstOrDefaultAsync(r => r.CustomerId == customerId, ct);
+
+    public async Task<IReadOnlyList<ReminderHistory>> GetHistoryByCustomerAsync(int customerId, CancellationToken ct = default)
+        => await _db.ReminderHistories
+            .Include(h => h.Reminder)
+            .Where(h => h.Reminder.CustomerId == customerId)
+            .OrderByDescending(h => h.SentAt)
+            .ToListAsync(ct);
+
+    public async Task AddHistoryAsync(ReminderHistory history, CancellationToken ct = default)
+    {
+        await _db.ReminderHistories.AddAsync(history, ct);
+        await _db.SaveChangesAsync(ct);
+    }
 }
