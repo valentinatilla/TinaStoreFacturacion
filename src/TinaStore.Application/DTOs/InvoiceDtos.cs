@@ -4,23 +4,25 @@ namespace TinaStore.Application.DTOs;
 
 // ─── Detalle de línea ────────────────────────────────────────────────────────
 
-/// <summary>Línea de producto al crear una factura.</summary>
+/// <summary>Línea de producto al crear una factura. Si ProductId es null se trata como línea libre (no descuenta inventario).</summary>
 public record CreateInvoiceDetailDto(
-    int ProductId,
+    int? ProductId,
     int Quantity,
     decimal UnitPrice,
-    decimal DiscountAmount = 0
+    decimal DiscountAmount = 0,
+    string? FreeDescription = null
 );
 
 /// <summary>Línea de detalle en la respuesta de una factura.</summary>
 public record InvoiceDetailDto(
     int Id,
-    int ProductId,
+    int? ProductId,
     string ProductName,
     int Quantity,
     decimal UnitPrice,
     decimal DiscountAmount,
-    decimal Subtotal
+    decimal Subtotal,
+    string? ImagePath = null
 );
 
 // ─── Pago / Abono ────────────────────────────────────────────────────────────

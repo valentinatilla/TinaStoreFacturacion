@@ -1,16 +1,22 @@
-@page "/facturas"
+@page "/ventas"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject IConfiguration Config
 
-<PageTitle>Facturas — Tina Store</PageTitle>
+<PageTitle>Ventas — Tina Store</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold mb-0"><i class="bi bi-receipt me-2 text-purple"></i>Facturas</h4>
-    <NavLink href="/facturas/nueva" class="btn bg-purple text-white">
-        <i class="bi bi-plus-lg me-1"></i>Nueva factura
-    </NavLink>
+    <h4 class="fw-bold mb-0"><i class="bi bi-receipt me-2 text-purple"></i>Ventas</h4>
+    <div class="d-flex gap-2">
+        <NavLink href="/ventas/libre" class="btn btn-outline-purple">
+            <i class="bi bi-lightning-charge me-1"></i>Venta libre
+        </NavLink>
+        <NavLink href="/ventas/nueva" class="btn bg-purple text-white">
+            <i class="bi bi-plus-lg me-1"></i>Nueva venta
+        </NavLink>
+    </div>
 </div>
 
 @if (!string.IsNullOrEmpty(_mensaje))
@@ -61,17 +67,35 @@ else
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
-                        <th>N° Factura</th><th>Cliente</th>
-                        <th class="text-end">Total</th>
-                        <th class="text-end">Pagado</th>
-                        <th class="text-end">Saldo</th>
-                        <th>Estado</th><th>Fecha</th><th></th>
+                        <th style="width:32px"></th>
+                        <th style="cursor:pointer" @onclick='() => OrdenarPor("numero")'>
+                            N° Venta <i class="@(SortIconClass("numero")) ms-1 small"></i>
+                        </th>
+                        <th>Cliente</th>
+                        <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("total")'>
+                            Total <i class="@(SortIconClass("total")) ms-1 small"></i>
+                        </th>
+                        <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("pagado")'>
+                            Pagado <i class="@(SortIconClass("pagado")) ms-1 small"></i>
+                        </th>
+                        <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("saldo")'>
+                            Saldo <i class="@(SortIconClass("saldo")) ms-1 small"></i>
+                        </th>
+                        <th>Estado</th>
+                        <th style="cursor:pointer" @onclick='() => OrdenarPor("fecha")'>
+                            Fecha <i class="@(SortIconClass("fecha")) ms-1 small"></i>
+                        </th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var f in _filtradas)
                     {
-                        <tr>
+                        var expandida = _expandidas.Contains(f.Id);
+                        <tr class="@(expandida ? "table-active" : "")" style="cursor:pointer" @onclick="() => ToggleDetalle(f.Id)">
+                            <td class="text-center align-middle px-2">
+                                <i class="bi @(expandida ? "bi-chevron-up text-purple" : "bi-chevron-down text-muted") small"></i>
+                            </td>
                             <td><span class="badge bg-dark">@f.InvoiceNumber</span></td>
                             <td>@f.CustomerName</td>
                             <td class="text-end fw-semibold">@f.Total.ToString("C0")</td>
@@ -85,12 +109,21 @@ else
                                 <span class="badge badge-estado-@f.StatusName.ToLower()">@f.StatusName</span>
                             </td>
                             <td class="text-muted small">@f.InvoiceDate.ToString("dd/MM/yyyy")</td>
-                            <td class="text-end">
-                                <button class="btn btn-sm btn-outline-secondary me-1" title="Descargar PDF"
-                                        @onclick="() => DescargarPdf(f.Id)">
-                                    <i class="bi bi-file-earmark-pdf"></i>
-                                </button>
-                                 @if (f.StatusName != "Anulada")
+                            <td class="text-end" @onclick:stopPropagation="true">
+                                @if (_pdfDescargando.Contains(f.Id))
+                                {
+                                    <button class="btn btn-sm btn-outline-secondary me-1" disabled title="Generando PDF...">
+                                        <span class="spinner-border spinner-border-sm"></span>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-sm btn-outline-secondary me-1" title="Descargar PDF"
+                                            @onclick="() => DescargarPdf(f.Id)">
+                                        <i class="bi bi-file-earmark-pdf"></i>
+                                    </button>
+                                }
+                                @if (f.StatusName != "Anulada")
                                 {
                                     @if (f.Balance > 0)
                                     {
@@ -106,10 +139,143 @@ else
                                 }
                             </td>
                         </tr>
+
+                        @if (expandida)
+                        {
+                            <tr class="detalle-expandido">
+                                <td colspan="9" class="p-0">
+                                    <div class="detalle-venta-panel px-4 py-3">
+                                        @if (_detallesCargando.Contains(f.Id))
+                                        {
+                                            <div class="text-center py-3">
+                                                <span class="spinner-border spinner-border-sm text-purple me-2"></span>
+                                                <span class="text-muted small">Cargando detalle...</span>
+                                            </div>
+                                        }
+                                        else if (_detallesCache.TryGetValue(f.Id, out var detalle))
+                                        {
+                                            <!-- Productos de la venta -->
+                                            @if (detalle.Details.Any())
+                                            {
+                                                <div class="fw-semibold small text-purple mb-2">
+                                                    <i class="bi bi-box-seam me-1"></i>Productos vendidos
+                                                </div>
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm mb-2" style="font-size:.87rem">
+                                                        <thead class="table-light">
+                                                            <tr>
+                                                                <th style="width:44px"></th>
+                                                                <th>Producto</th>
+                                                                <th class="text-center">Cant.</th>
+                                                                <th class="text-end">P. Unit.</th>
+                                                                <th class="text-end">Descuento</th>
+                                                                <th class="text-end">Subtotal</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var linea in detalle.Details)
+                                                            {
+                                                                <tr>
+                                                                    <td class="align-middle text-center">
+                                                                        @if (!string.IsNullOrEmpty(linea.ImagePath))
+                                                                        {
+                                                                            <img src="@(_apiBase + linea.ImagePath)" alt="@linea.ProductName"
+                                                                                 style="width:32px;height:32px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;" />
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#f1f5f9;color:#94a3b8;font-size:.8rem;"><i class="bi bi-image"></i></span>
+                                                                        }
+                                                                    </td>
+                                                                    <td class="align-middle">@linea.ProductName</td>
+                                                                    <td class="text-center align-middle">@linea.Quantity</td>
+                                                                    <td class="text-end text-muted align-middle">@linea.UnitPrice.ToString("C0")</td>
+                                                                    <td class="text-end text-muted align-middle">
+                                                                        @(linea.DiscountAmount > 0 ? linea.DiscountAmount.ToString("C0") : "—")
+                                                                    </td>
+                                                                    <td class="text-end fw-semibold align-middle">@linea.Subtotal.ToString("C0")</td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                        <tfoot class="table-light">
+                                                            <tr>
+                                                                <td colspan="5" class="text-end text-muted small">Subtotal:</td>
+                                                                <td class="text-end text-muted small">@detalle.Subtotal.ToString("C0")</td>
+                                                            </tr>
+                                                            @if (detalle.DiscountAmount > 0)
+                                                            {
+                                                                <tr>
+                                                                    <td colspan="5" class="text-end text-muted small">Descuento:</td>
+                                                                    <td class="text-end text-muted small">-@detalle.DiscountAmount.ToString("C0")</td>
+                                                                </tr>
+                                                            }
+                                                            @if (detalle.TaxAmount > 0)
+                                                            {
+                                                                <tr>
+                                                                    <td colspan="5" class="text-end text-muted small">Impuesto:</td>
+                                                                    <td class="text-end text-muted small">@detalle.TaxAmount.ToString("C0")</td>
+                                                                </tr>
+                                                            }
+                                                            <tr>
+                                                                <td colspan="5" class="text-end fw-bold small">Total:</td>
+                                                                <td class="text-end fw-bold text-purple small">@detalle.Total.ToString("C0")</td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <p class="text-muted small mb-2">
+                                                    <i class="bi bi-info-circle me-1"></i>Esta venta no tiene productos asociados.
+                                                </p>
+                                            }
+
+                                            <!-- Notas -->
+                                            @if (!string.IsNullOrWhiteSpace(detalle.Notes))
+                                            {
+                                                <div class="text-muted small mb-2">
+                                                    <i class="bi bi-sticky me-1"></i><strong>Notas:</strong> @detalle.Notes
+                                                </div>
+                                            }
+
+                                            <!-- Pagos registrados -->
+                                            @if (detalle.Payments.Any())
+                                            {
+                                                <div class="fw-semibold small text-purple mt-2 mb-2">
+                                                    <i class="bi bi-cash-coin me-1"></i>Pagos registrados
+                                                </div>
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    @foreach (var pago in detalle.Payments)
+                                                    {
+                                                        <div class="pago-chip">
+                                                            <span class="fw-semibold">@pago.Amount.ToString("C0")</span>
+                                                            <span class="text-muted ms-1 small">@pago.PaymentMethodName</span>
+                                                            <span class="text-muted ms-1 small">·</span>
+                                                            <span class="text-muted small">@pago.PaymentDate.ToString("dd/MM/yyyy")</span>
+                                                            @if (!string.IsNullOrWhiteSpace(pago.Reference))
+                                                            {
+                                                                <span class="text-muted small ms-1">· Ref: @pago.Reference</span>
+                                                            }
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <div class="text-muted small py-2">
+                                                <i class="bi bi-exclamation-circle me-1"></i>No se pudo cargar el detalle.
+                                            </div>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
                     }
                     @if (!_filtradas.Any())
                     {
-                        <tr><td colspan="8" class="text-center text-muted py-4">Sin facturas</td></tr>
+                        <tr><td colspan="9" class="text-center text-muted py-4">Sin ventas</td></tr>
                     }
                 </tbody>
             </table>
@@ -121,17 +287,19 @@ else
 @if (_mostrarModalAnular)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-x-circle text-danger me-2"></i>Anular factura</h5>
+                    <h5 class="modal-title"><i class="bi bi-x-circle text-danger me-2"></i>Anular venta</h5>
                     <button class="btn-close" @onclick="CerrarModal"></button>
                 </div>
                 <div class="modal-body">
                     <p class="text-muted small">Esta acción revertirá el stock y las cuentas por cobrar asociadas.</p>
                     <label class="form-label fw-semibold">Motivo de anulación <span class="text-danger">*</span></label>
                     <textarea class="form-control" rows="3" placeholder="Indique el motivo..."
-                              @bind="_motivoAnulacion" maxlength="300"></textarea>
+                              @bind="_motivoAnulacion" @bind:event="oninput"
+                              @onkeydown="HandleAnulacionKeyDown"
+                              maxlength="300"></textarea>
                     @if (_errorModal is not null)
                     {
                         <div class="text-danger small mt-1">@_errorModal</div>
@@ -153,7 +321,7 @@ else
 @if (_mostrarModalPago)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="bi bi-cash-coin text-success me-2"></i>Registrar pago</h5>
@@ -161,7 +329,7 @@ else
                 </div>
                 <div class="modal-body">
                     <p class="text-muted small mb-3">
-                        Factura <strong>@_pagoFacturaNumero</strong> &mdash;
+                        Venta <strong>@_pagoFacturaNumero</strong> &mdash;
                         Saldo pendiente: <strong class="text-danger">@_pagoSaldo.ToString("C0")</strong>
                     </p>
                     <div class="row g-3">
@@ -207,15 +375,24 @@ else
 }
 
 @code {
+    private string _apiBase = string.Empty;
     private List<FacturaDto> _facturas = [];
     private List<FacturaDto> _filtradas = [];
     private bool _loading = true;
     private string? _mensaje;
     private bool _exito;
-    private string _busqueda = "";
-    private string _estadoFiltro = "";
+    private string    _busqueda     = "";
+    private string    _estadoFiltro = "";
     private DateTime? _filtroDesde;
     private DateTime? _filtroHasta;
+    private string    _ordenCampo   = "fecha";
+    private bool      _ordenDesc    = true;
+    private HashSet<int> _pdfDescargando = [];
+
+    // ── Detalle expandible ─────────────────────────────────────────────────────
+    private HashSet<int>                         _expandidas      = [];
+    private HashSet<int>                         _detallesCargando = [];
+    private Dictionary<int, VentaDetalleDto>     _detallesCache   = [];
 
     private bool   _mostrarModalAnular;
     private int    _idFacturaAnular;
@@ -242,6 +419,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        _apiBase = Config["ApiBaseUrl"] ?? string.Empty;
         var t1 = Api.GetFacturasAsync();
         var t2 = Api.GetMetodosPagoAsync();
         await Task.WhenAll(t1, t2);
@@ -255,8 +433,34 @@ else
     {
         _loading = true;
         _facturas = await Api.GetFacturasAsync() ?? [];
+        // Limpiar caché de detalles al recargar la lista
+        _expandidas.Clear();
+        _detallesCache.Clear();
+        _detallesCargando.Clear();
         AplicarFiltros();
         _loading = false;
+    }
+
+    private async Task ToggleDetalle(int id)
+    {
+        if (_expandidas.Contains(id))
+        {
+            _expandidas.Remove(id);
+            return;
+        }
+
+        _expandidas.Add(id);
+
+        // Cargar solo si no está en caché
+        if (!_detallesCache.ContainsKey(id))
+        {
+            _detallesCargando.Add(id);
+            StateHasChanged();
+            var detalle = await Api.GetVentaDetalleAsync(id);
+            _detallesCargando.Remove(id);
+            if (detalle is not null)
+                _detallesCache[id] = detalle;
+        }
     }
 
     private void Filtrar(ChangeEventArgs e)
@@ -285,11 +489,13 @@ else
 
     private void LimpiarFiltros()
     {
-        _busqueda = "";
+        _busqueda     = "";
         _estadoFiltro = "";
-        _filtroDesde = null;
-        _filtroHasta = null;
-        _filtradas = _facturas;
+        _filtroDesde  = null;
+        _filtroHasta  = null;
+        _ordenCampo   = "fecha";
+        _ordenDesc    = true;
+        AplicarFiltros();
     }
 
     private void AplicarFiltros()
@@ -303,6 +509,7 @@ else
              && (_filtroDesde is null || f.InvoiceDate >= _filtroDesde)
              && (_filtroHasta is null || f.InvoiceDate <= _filtroHasta))
             .ToList();
+        AplicarOrden();
     }
 
     private void AbrirPago(FacturaDto f)
@@ -370,7 +577,7 @@ else
             var ok = await Api.AnularFacturaAsync(_idFacturaAnular, _motivoAnulacion.Trim());
             _mostrarModalAnular = false;
             _exito   = ok;
-            _mensaje = ok ? "Factura anulada correctamente." : "No se pudo anular la factura.";
+            _mensaje = ok ? "Venta anulada correctamente." : "No se pudo anular la venta.";
             if (ok) await Cargar();
         }
         catch { _errorModal = "Error al comunicarse con la API."; }
@@ -379,6 +586,8 @@ else
 
     private async Task DescargarPdf(int id)
     {
+        _pdfDescargando.Add(id);
+        _mensaje = null;
         try
         {
             var bytes = await Api.DescargarPdfFacturaAsync(id);
@@ -386,8 +595,60 @@ else
             {
                 var base64 = Convert.ToBase64String(bytes);
                 await JS.InvokeVoidAsync("downloadFileFromBase64", base64, $"factura-{id}.pdf", "application/pdf");
+                _exito   = true;
+                _mensaje = "PDF generado correctamente.";
+            }
+            else
+            {
+                _exito   = false;
+                _mensaje = "No se pudo generar el PDF.";
             }
         }
-        catch { _mensaje = "Error al generar el PDF."; _exito = false; }
+        catch
+        {
+            _exito   = false;
+            _mensaje = "Error al generar el PDF.";
+        }
+        finally
+        {
+            _pdfDescargando.Remove(id);
+        }
+    }
+
+    // ── Ordenamiento de columnas ────────────────────────────────────────────────────
+    private void OrdenarPor(string campo)
+    {
+        if (_ordenCampo == campo)
+            _ordenDesc = !_ordenDesc;
+        else
+        {
+            _ordenCampo = campo;
+            _ordenDesc  = true;
+        }
+        AplicarOrden();
+    }
+
+    private void AplicarOrden()
+    {
+        _filtradas = (_ordenCampo switch
+        {
+            "numero" => _ordenDesc ? _filtradas.OrderByDescending(f => f.InvoiceNumber) : _filtradas.OrderBy(f => f.InvoiceNumber),
+            "total"  => _ordenDesc ? _filtradas.OrderByDescending(f => f.Total)         : _filtradas.OrderBy(f => f.Total),
+            "pagado" => _ordenDesc ? _filtradas.OrderByDescending(f => f.AmountPaid)    : _filtradas.OrderBy(f => f.AmountPaid),
+            "saldo"  => _ordenDesc ? _filtradas.OrderByDescending(f => f.Balance)       : _filtradas.OrderBy(f => f.Balance),
+            "fecha"  => _ordenDesc ? _filtradas.OrderByDescending(f => f.InvoiceDate)   : _filtradas.OrderBy(f => f.InvoiceDate),
+            _        => _filtradas.OrderByDescending(f => f.InvoiceDate)
+        }).ToList();
+    }
+
+    private string SortIconClass(string campo) =>
+        _ordenCampo != campo ? "bi bi-arrow-down-up text-muted" :
+        _ordenDesc            ? "bi bi-sort-down text-purple"   :
+                                "bi bi-sort-up text-purple";
+
+    private async Task HandleAnulacionKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+            await ConfirmarAnulacion();
     }
 }

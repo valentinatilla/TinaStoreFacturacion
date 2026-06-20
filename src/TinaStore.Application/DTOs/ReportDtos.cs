@@ -9,7 +9,7 @@ public record VentasPorPeriodoDto(
 );
 
 public record TopProductoDto(
-    int ProductId,
+    int? ProductId,
     string ProductName,
     string? Sku,
     int TotalVendido,

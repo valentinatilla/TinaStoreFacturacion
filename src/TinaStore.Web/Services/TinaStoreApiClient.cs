@@ -19,10 +19,14 @@ public record DashboardDto(
     int ProductosStockBajo,
     int TotalProductosActivos,
     List<UltimaFacturaDto> UltimasFacturas,
-    List<DeudorResumenDto> TopDeudores);
+    List<DeudorResumenDto> TopDeudores,
+    ProductoEstrellaDto? ProductoEstrella,
+    List<VentaDiariaDto> VentasUltimos7Dias);
 
 public record UltimaFacturaDto(int Id, string InvoiceNumber, DateTime InvoiceDate, string CustomerName, decimal Total, decimal Balance, int Status, string StatusName);
 public record DeudorResumenDto(int CustomerId, string CustomerName, string? Phone, decimal Saldo);
+public record ProductoEstrellaDto(int ProductId, string ProductName, string? Sku, int UnidadesVendidas, decimal TotalIngresos);
+public record VentaDiariaDto(DateTime Fecha, decimal Total);
 
 public record ClienteDto(int Id, string FullName, string? DocumentType, string? DocumentNumber, string? Phone, string? Email, string? Address, string? Notes, bool IsActive, decimal PendingBalance, DateTime CreatedAt, DateTime? LastPurchaseDate, string CommercialStatus);
 public record CreateClienteDto(string FullName, string? DocumentType, string? DocumentNumber, string? Phone, string? Email, string? Address, string? Notes);
@@ -40,11 +44,20 @@ public record MetodoPagoDto(int Id, string Name, string? Description, bool IsAct
 public record ProductoDto(int Id, string? Sku, string Name, string? Description, string? Unit, decimal SalePrice, decimal PurchasePrice, int CurrentStock, int MinimumStock, bool IsActive, bool IsLowStock, decimal ProfitMargin, int CategoryId, string CategoryName, int? SupplierId, string? SupplierName, string? ImagePath);
 public record CreateProductoDto(string? Sku, string Name, string? Description, string? Unit, decimal PurchasePrice, decimal SalePrice, int CurrentStock, int MinimumStock, int CategoryId, int? SupplierId);
 public record UpdateProductoDto(string? Sku, string Name, string? Description, string? Unit, decimal PurchasePrice, decimal SalePrice, int MinimumStock, bool IsActive, int CategoryId, int? SupplierId, int StockEntrada = 0);
+public record AjusteStockDto(int Cantidad, string? Notas = null);
+
+public record BulkUpdateItemDto(int ProductId, decimal? NuevoCosto, decimal? NuevoPrecioVenta, int? NuevoStock);
+public record BulkUpdateItemResultDto(int ProductId, string ProductName, bool Ok, string? Error);
+public record BulkUpdateResultDto(int TotalSolicitados, int TotalActualizados, int TotalErrores, List<BulkUpdateItemResultDto> Resultados);
 
 public record FacturaDto(int Id, string InvoiceNumber, DateTime InvoiceDate, string CustomerName, decimal Subtotal, decimal DiscountAmount, decimal TaxAmount, decimal Total, decimal AmountPaid, decimal Balance, int Status, string StatusName, string? Notes);
 public record CreateFacturaDto(int CustomerId, decimal DiscountAmount, decimal TaxAmount, string? Notes, List<CreateDetalleFacturaDto> Details, CreatePagoInicialDto? PagoInicial);
-public record CreateDetalleFacturaDto(int ProductId, int Quantity, decimal UnitPrice, decimal DiscountAmount = 0);
+public record CreateDetalleFacturaDto(int? ProductId, int Quantity, decimal UnitPrice, decimal DiscountAmount = 0, string? FreeDescription = null);
 public record CreatePagoInicialDto(int PaymentMethodId, decimal Amount, string? Reference, string? Notes);
+
+public record DetalleLineaVentaDto(int Id, int ProductId, string ProductName, int Quantity, decimal UnitPrice, decimal DiscountAmount, decimal Subtotal, string? ImagePath = null);
+public record PagoRegistradoDto(int Id, int PaymentMethodId, string PaymentMethodName, DateTime PaymentDate, decimal Amount, string? Reference, string? Notes);
+public record VentaDetalleDto(int Id, string InvoiceNumber, DateTime InvoiceDate, string CustomerName, decimal Subtotal, decimal DiscountAmount, decimal TaxAmount, decimal Total, decimal AmountPaid, decimal Balance, int Status, string StatusName, string? Notes, List<DetalleLineaVentaDto> Details, List<PagoRegistradoDto> Payments);
 
 public record EgresoDto(int Id, DateTime ExpenseDate, string Description, decimal Amount, string? Notes, int Status, string StatusName, int ExpenseCategoryId, string ExpenseCategoryName, int? SupplierId, string? SupplierName, int? PaymentMethodId, string? PaymentMethodName);
 public record CreateEgresoDto(DateTime ExpenseDate, string Description, decimal Amount, string? Notes, int ExpenseCategoryId, int? SupplierId, int? PaymentMethodId);
@@ -339,9 +352,31 @@ public class TinaStoreApiClient
         return r.IsSuccessStatusCode;
     }
 
-    // ── Facturas ──────────────────────────────────────────────────────────────
+    public async Task<ProductoDto?> AjustarStockAsync(int id, AjusteStockDto dto)
+    {
+        SetAuthHeader();
+        var r = await _http.PostAsJsonAsync($"/api/products/{id}/ajuste-stock", dto);
+        if (!r.IsSuccessStatusCode) return null;
+        return await r.Content.ReadFromJsonAsync<ProductoDto>();
+    }
+
+    public async Task<BulkUpdateResultDto?> BulkUpdateProductosAsync(List<BulkUpdateItemDto> items)
+    {
+        SetAuthHeader();
+        var r = await _http.PutAsJsonAsync("/api/products/bulk", items);
+        if (!r.IsSuccessStatusCode) return null;
+        return await r.Content.ReadFromJsonAsync<BulkUpdateResultDto>();
+    }
+
+    // ── Facturas
     public Task<List<FacturaDto>?> GetFacturasAsync() =>
         GetSafeAsync<List<FacturaDto>>("/api/invoices");
+
+    public Task<List<FacturaDto>?> GetVentasPorClienteAsync(int customerId) =>
+        GetSafeAsync<List<FacturaDto>>($"/api/invoices/cliente/{customerId}");
+
+    public Task<VentaDetalleDto?> GetVentaDetalleAsync(int id) =>
+        GetSafeAsync<VentaDetalleDto>($"/api/invoices/{id}");
 
     public async Task<bool> CreateFacturaAsync(CreateFacturaDto dto)
     {

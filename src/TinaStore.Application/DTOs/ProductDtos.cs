@@ -33,6 +33,7 @@ public record ProductSummaryDto(
     int CurrentStock,
     bool IsLowStock,
     bool IsActive,
+    int CategoryId,
     string CategoryName,
     string? ImagePath
 );
@@ -65,4 +66,36 @@ public record UpdateProductDto(
     int? SupplierId,
     /// <summary>Unidades adicionales compradas en esta edición. Si > 0 se suma al stock y genera egreso automático.</summary>
     int StockEntrada = 0
+);
+
+/// <summary>DTO para registrar una entrada rápida de stock desde cualquier vista.</summary>
+public record AjusteStockDto(
+    int Cantidad,
+    string? Notas = null
+);
+
+// ─── Edición masiva ───────────────────────────────────────────────────────────
+
+/// <summary>Una fila del lote de edición masiva. Solo se envían los campos que cambian.</summary>
+public record BulkUpdateItemDto(
+    int ProductId,
+    decimal? NuevoCosto,
+    decimal? NuevoPrecioVenta,
+    int?     NuevoStock
+);
+
+/// <summary>Resultado por fila en la respuesta de edición masiva.</summary>
+public record BulkUpdateItemResultDto(
+    int     ProductId,
+    string  ProductName,
+    bool    Ok,
+    string? Error
+);
+
+/// <summary>Respuesta completa de la operación de edición masiva.</summary>
+public record BulkUpdateResultDto(
+    int TotalSolicitados,
+    int TotalActualizados,
+    int TotalErrores,
+    List<BulkUpdateItemResultDto> Resultados
 );

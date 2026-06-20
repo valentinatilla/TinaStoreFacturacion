@@ -5,6 +5,438 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [2.5.0] — 2026-06-19 — Fase A2: Corrección de bugs en Productos y Categorías
+
+### Tipo de cambio
+Bugfix
+
+### Módulos afectados
+Productos, Categorías
+
+### Correcciones
+- **BUG-A2-01**: Badge numérico de stock ahora muestra `bg-secondary` para productos inactivos en lugar de verde.
+- **BUG-A2-02**: Al abrir el modal de edición de un producto, la categoría (y demás campos) ya se precarga correctamente desde el DTO de listado cuando el endpoint de detalle no responde.
+- **BUG-A2-03**: `ProductCount` en categorías ya refleja el número real de productos; se eliminó el filtro redundante `&& p.IsActive` que excluía productos inactivos del conteo.
+
+---
+
+## [2.4.0] — 2026-06-19 — Fase D: Dashboard mejorado
+
+### Tipo de cambio
+Nueva funcionalidad visual
+
+### Módulo afectado
+Dashboard
+
+### Descripción
+Se añadieron dos nuevos widgets en el Dashboard:
+
+**Producto estrella del mes**
+- El producto con más unidades vendidas en el mes en curso.
+- Muestra nombre, SKU, unidades vendidas e ingresos generados.
+- Si no hay ventas en el mes, muestra un mensaje informativo.
+
+**Mini gráfico de tendencia (7 días)**
+- Barras proporcionales de las ventas de los últimos 7 días.
+- La barra del día actual se resalta en morado sólido.
+- El total del periodo aparece como badge junto al título.
+- Implementado con divs CSS, sin JS ni librerías externas.
+- Cada barra tiene tooltip con fecha y total al hacer hover.
+
+### Archivos modificados
+| Archivo | Cambio |
+|---------|--------|
+| `Domain/Interfaces/IRepositories.cs` | Firmas `GetTopProductThisMonthAsync` y `GetSalesLast7DaysAsync` en `IDashboardRepository` |
+| `Infrastructure/Repositories/SpecificRepositories.cs` | Implementación EF Core de los dos nuevos métodos |
+| `Application/DTOs/DashboardDtos.cs` | `ProductoEstrellaDto`, `VentaDiariaDto` y nuevos campos en `DashboardDto` |
+| `Application/Services/DashboardService.cs` | Pobla `ProductoEstrella` y `VentasUltimos7Dias` |
+| `Web/Services/TinaStoreApiClient.cs` | `ProductoEstrellaDto`, `VentaDiariaDto` y `DashboardDto` actualizado |
+| `Web/Components/Pages/Home.razor` | Fila 2 de KPIs con tarjeta estrella y mini gráfico |
+
+### Resultado
+✅ Build exitoso. Sin regresiones.
+
+---
+
+## [2.3.0] — 2026-06-19 — Fase E2: Detalle desplegable en Cuentas por Cobrar
+
+### Tipo de cambio
+Mejora UX
+
+### Módulo afectado
+Cuentas por Cobrar
+
+### Descripción
+Cada fila de cliente en Cuentas por Cobrar es ahora expandible. Al hacer clic
+se despliega un panel con la lista de ventas pendientes de cobro del cliente,
+cargadas bajo demanda desde `/api/invoices/cliente/{id}`.
+
+**Comportamiento:**
+- Chevron `›` / `⌄` indica si la fila está cerrada o abierta.
+- La carga es lazy: la primera vez que se expande un cliente se llama a la API;
+las siguientes expansiones usan caché local (sin llamada adicional).
+- El panel muestra: N° venta, fecha, total, pagado, saldo pendiente y estado.
+- Solo se muestran facturas con `Balance > 0` y estado distinto de Anulada.
+- El pie del panel resume el total pendiente del cliente.
+- El botón de WhatsApp sigue funcionando con `stopPropagation` para no activar el toggle.
+
+### Archivos modificados
+| Archivo | Cambio |
+|---------|--------|
+| `Web/Services/TinaStoreApiClient.cs` | Método `GetVentasPorClienteAsync(int customerId)` |
+| `Web/Components/Pages/CuentasPorCobrar/Index.razor` | Chevron, `ToggleDetalle`, `_expandidos`, `_detallesCache`, panel desplegable |
+
+### Resultado
+✅ Build exitoso. Sin regresiones.
+
+---
+
+## [2.2.0] — 2026-06-19 — Fase B: Venta libre
+
+### Tipo de cambio
+Nueva funcionalidad
+
+### Módulo afectado
+Ventas
+
+### Descripción
+Se añadió la modalidad de **venta libre**: permite registrar una venta con cliente
+obligatorio pero con líneas de detalle de **descripción libre** (sin productos del
+inventario). Útil para servicios, productos importados puntuales o artículos que
+no se gestionan en el inventario habitual.
+
+**Diferencias con una venta normal:**
+| Aspecto | Venta normal | Venta libre |
+|---------|-------------|-------------|
+| Cliente | Obligatorio | Obligatorio |
+| Líneas | Vinculadas a producto del inventario | Descripción libre (texto) |
+| Descuento de stock | Sí | No |
+| Movimiento de inventario | Sí (Exit) | No |
+| CxC / pagos | Sí | Sí |
+| Consecutivo / PDF | Sí | Sí |
+
+**Reglas de negocio:**
+- Cada línea libre debe tener descripción, cantidad ≥ 1 y precio ≥ 0.
+- El pago inicial, descuento e impuesto funcionan igual que en venta normal.
+- Las líneas libres no generan `InventoryMovement`.
+- Al anular una venta libre, no se revierte stock (solo se cambia estado y CxC).
+
+### Archivos modificados
+| Archivo | Cambio |
+|---------|--------|
+| `Domain/Entities/InvoiceDetail.cs` | `ProductId int → int?`, `Product → Product?` |
+| `Application/DTOs/InvoiceDtos.cs` | `CreateInvoiceDetailDto` con `ProductId int?` y `FreeDescription`; `InvoiceDetailDto` con `ProductId int?` |
+| `Application/DTOs/ReportDtos.cs` | `TopProductoDto.ProductId int → int?` |
+| `Application/Validators/InvoiceValidators.cs` | Validación condicional: `ProductId > 0` solo si tiene valor; `FreeDescription` obligatoria si `ProductId` es null |
+| `Application/Services/InvoiceService.cs` | Guard de stock/movimiento solo para líneas con `ProductId`; `CancelAsync` omite reversión de stock en líneas libres |
+| `Web/Services/TinaStoreApiClient.cs` | `CreateDetalleFacturaDto` con `ProductId int?` y `FreeDescription` |
+| `Web/Components/Pages/Facturas/VentaLibre.razor` | Nueva página `/ventas/libre` |
+| `Web/Components/Layout/NavMenu.razor` | Enlace "Venta libre" en menú comercial |
+| `Infrastructure/Migrations/AllowFreeLineInInvoice` | `ProductId` nullable en `InvoiceDetails` |
+
+### Resultado
+✅ Build exitoso. Migración aplicada. Sin regresiones en ventas normales ni anulaciones.
+
+---
+
+## [2.1.0] — 2026-06-19 — Fase C2: Edición masiva de productos
+
+### Tipo de cambio
+Nueva funcionalidad (bulk edit)
+
+### Módulo afectado
+Productos
+
+### Descripción
+Se implementó un flujo de edición masiva que permite actualizar costo de compra,
+precio de venta y stock de varios productos simultáneamente en un único lote.
+
+**Flujo UX de dos pasos:**
+1. **Paso 1 — Editar:** tabla con buscador en tiempo real; celdas editables para
+   costo, precio y stock; resaltado automático de filas modificadas; validación
+   inmediata (valores negativos marcados como inválidos).
+2. **Paso 2 — Confirmar:** resumen con valores anteriores y nuevos en modo diff;
+   advertencia de que los cambios de stock generan movimientos de inventario.
+
+**Reglas de negocio:**
+- Los cambios de stock registran automáticamente un `InventoryMovement` de tipo
+  `Adjustment` con los valores antes/después.
+- Si el costo, precio o stock no cambia respecto al original, ese campo se envía
+  como `null` y el backend no lo modifica.
+- Validaciones: costo ≥ 0, precio ≥ 0, stock ≥ 0.
+- Respuesta por fila con `Ok/Error` para mostrar problemas parciales sin abortar
+  el lote completo.
+
+### Archivos modificados
+| Archivo | Cambio |
+|---------|--------|
+| `Application/DTOs/ProductDtos.cs` | Nuevos records `BulkUpdateItemDto`, `BulkUpdateItemResultDto`, `BulkUpdateResultDto` |
+| `Application/Interfaces/IServices.cs` | Firma `Task<BulkUpdateResultDto> BulkUpdateAsync(...)` en `IProductService` |
+| `Application/Services/ProductService.cs` | Implementación de `BulkUpdateAsync` con validaciones y `InventoryMovement` |
+| `Api/Controllers/ProductsController.cs` | Endpoint `PUT /api/products/bulk` |
+| `Web/Services/TinaStoreApiClient.cs` | DTOs de bulk y método `BulkUpdateProductosAsync` |
+| `Web/Components/Pages/Productos/Index.razor` | Botón "Edición masiva", modal 2 pasos, clase `BulkFila`, métodos de estado |
+| `Web/wwwroot/app.css` | Clases `btn-outline-purple`, `bulk-row-modified`, `bulk-table`, `badge-estado-pendiente` |
+
+### Resultado
+✅ Build exitoso. Sin regresiones en módulos anteriores.
+
+---
+
+## [2.0.0] — 2026-06-19 — Fase C1: Tarjetas resumen en módulo Productos
+
+### Tipo de cambio
+Nueva funcionalidad visual
+
+### Módulo afectado
+Productos
+
+### Descripción
+Se agregaron dos tarjetas KPI en la parte superior del módulo Productos, visibles
+inmediatamente al cargar la página. Los valores se calculan directamente desde la lista
+de productos ya cargada en memoria, sin llamadas adicionales a la API.
+
+| Tarjeta | Valor | Definición |
+|---------|-------|-----------|
+| **Referencias disponibles** | Número entero | Productos activos con `CurrentStock > 0` |
+| **Costo total del inventario** | Moneda formateada | `∑ PurchasePrice × CurrentStock` para productos activos |
+
+Las tarjetas usan las clases `kpi-card` y `kpi-icon` del tema rosado/kawaii existente.
+Se actualizan automáticamente cada vez que la lista de productos se recarga (al crear,
+editar o eliminar un producto).
+
+### Archivos modificados
+
+| Archivo | Cambio |
+|---------|--------|
+| `src/TinaStore.Web/Components/Pages/Productos/Index.razor` | Bloque de dos tarjetas KPI antes de los filtros; propiedades calculadas `_refDisponibles` y `_costoInventario` en `@code` |
+
+### Decisiones tomadas
+
+- **Las tarjetas muestran totales generales** (no filtrados): refleja el estado real del
+  inventario independientemente del filtro activo.
+- **Productos con costo 0** aportan 0 al total de costo, sin advertencia — el diseño
+  es simple y claro.
+- **Sin nueva llamada a la API**: los datos provienen de `_productos` ya cargado en
+  `OnInitializedAsync`.
+
+### Impacto en datos existentes
+Ninguno. Solo lectura de datos ya disponibles en memoria.
+
+### Migración requerida
+No
+
+### Pruebas realizadas
+- ✅ Compilación correcta (0 errores)
+- ✅ Tarjeta "Referencias disponibles" muestra conteo correcto de activos con stock > 0
+- ✅ Tarjeta "Costo total" aplica fórmula `PurchasePrice × CurrentStock`
+- ✅ Tarjetas visibles en escritorio y móvil (Bootstrap `col-sm-6`)
+- ✅ Al crear/editar/eliminar un producto, los valores se recalculan automáticamente
+- ✅ Estilo coherente con el tema kawaii rosado del dashboard
+
+### Resultado
+✅ Exitoso
+
+---
+
+## [2.0.0] — 2026-06-19 — Fase E1: Detalle desplegable en módulo Ventas
+
+### Tipo de cambio
+Nueva funcionalidad
+
+### Módulo afectado
+Ventas
+
+### Descripción
+Al hacer clic en cualquier fila del listado de Ventas, se despliega un panel que muestra
+los productos vendidos, totales desglosados y los pagos registrados de esa venta. La
+carga es bajo demanda (lazy loading): solo se consulta la API la primera vez que se
+expande una fila; las siguientes expansiones usan caché local del componente.
+
+### Archivos modificados
+
+| Archivo | Cambio |
+|---------|--------|
+| `src/TinaStore.Web/Services/TinaStoreApiClient.cs` | Nuevos DTOs `DetalleLineaVentaDto`, `PagoRegistradoDto`, `VentaDetalleDto`; método `GetVentaDetalleAsync(int id)` |
+| `src/TinaStore.Web/Components/Pages/Facturas/Index.razor` | Columna chevron, fila expandible, variables y método `ToggleDetalle`, limpieza de caché en `Cargar()` |
+| `src/TinaStore.Web/wwwroot/app.css` | Clases `.detalle-venta-panel`, `.pago-chip`, `tr.detalle-expandido`, animación `slideDown` |
+
+### Impacto en datos existentes
+Ninguno. Solo lectura del endpoint `GET /api/invoices/{id}` ya existente.
+
+### Migración requerida
+No
+
+### Pruebas realizadas
+- ✅ Compilación correcta (0 errores)
+- ✅ Clic en fila expande panel; segundo clic lo colapsa
+- ✅ Botones de acción no activan el toggle (`stopPropagation`)
+- ✅ Panel muestra productos, totales y pagos
+- ✅ Caché local evita llamadas repetidas a la API
+- ✅ Al recargar la lista el caché se limpia
+
+### Resultado
+✅ Exitoso
+
+---
+
+## [2.0.0] — 2026-06-19 — Fase A: Cambio de lenguaje Facturas → Ventas
+
+### Tipo de cambio
+Ajuste visual / cambio de lenguaje (sin impacto en base de datos ni en lógica interna)
+
+### Módulo afectado
+Ventas (anteriormente llamado Facturas en la UI)
+
+### Descripción
+Se cambió el lenguaje visible de la aplicación para que el módulo deje de llamarse
+"Facturas" y pase a llamarse "Ventas". Los nombres internos técnicos (`Invoice`,
+`InvoiceService`, `InvoicesController`, tabla `Invoices` en SQLite) se mantienen sin
+cambios para preservar estabilidad y evitar migraciones de base de datos innecesarias.
+
+### Archivos modificados
+
+| Archivo | Cambio |
+|---------|--------|
+| `src/TinaStore.Web/Components/Layout/NavMenu.razor` | Enlace `/facturas` → `/ventas`; texto "Facturas" → "Ventas" |
+| `src/TinaStore.Web/Components/Pages/Facturas/Index.razor` | `@page "/ventas"`, título, botón "Nueva venta", textos modales |
+| `src/TinaStore.Web/Components/Pages/Facturas/Nueva.razor` | `@page "/ventas/nueva"`, título, botón "Registrar Venta", mensajes y navegación |
+| `src/TinaStore.Web/Components/Pages/Home.razor` | "Últimas Facturas" → "Últimas Ventas" en dashboard |
+| `src/TinaStore.Web/Components/Pages/CuentasPorCobrar/Index.razor` | "Facturas pend." → "Ventas pend.", "Última factura" → "Última venta" |
+
+### Impacto en datos existentes
+Ninguno. Solo se modificaron textos visibles en la UI.
+
+### Migración requerida
+No
+
+### Pruebas realizadas
+- ✅ Compilación correcta (0 errores)
+- ✅ Menú muestra "Ventas" con enlace `/ventas`
+- ✅ Rutas `/ventas` y `/ventas/nueva` funcionales
+- ✅ Dashboard muestra "Últimas Ventas"
+- ✅ Cuentas por cobrar muestra "Ventas pend." y "Última venta"
+
+### Pendientes conocidos
+- El PDF generado sigue diciendo "Factura de Venta" (decisión intencional: es documento legal).
+- Fases B, C, D, E pendientes de implementación.
+
+---
+
+## [1.6.0]
+
+### Añadido
+
+#### [D1] Filtro de categorías en la pantalla "Nueva Factura"
+- **Módulo**: Facturas
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Facturas/Nueva.razor`
+- **Detalle**: Selector de categoría junto al campo de búsqueda. Permite filtrar la lista de productos por categoría sin necesidad de escribir. Funciona combinado con búsqueda por nombre/SKU.
+
+#### [D2] Indicador "Stock bajo" en el buscador de productos
+- **Módulo**: Facturas
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Facturas/Nueva.razor`
+- **Detalle**: Badge amarillo "Stock bajo" visible en cada fila del dropdown de productos cuando `IsLowStock == true`. Botón rápido `+` para abrir el modal de stock cuando el producto tiene `CurrentStock == 0`.
+
+#### [D3] Modal de ajuste rápido de stock desde la factura
+- **Módulo**: Facturas / Productos
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Facturas/Nueva.razor`, `src/TinaStore.Web/Services/TinaStoreApiClient.cs`
+- **Detalle**: Modal pequeño que permite ingresar unidades al stock de un producto sin salir de la pantalla de factura. Muestra el nombre del producto y el stock actual antes de confirmar. Actualiza la lista local en memoria al cerrar.
+
+#### [D4] Endpoint `POST /api/products/{id}/ajuste-stock`
+- **Módulo**: Productos (API)
+- **Archivos**: `src/TinaStore.Api/Controllers/ProductsController.cs`
+- **Detalle**: Nuevo endpoint dedicado para entradas rápidas de stock. Recibe `{ Cantidad, Notas }`, registra un `InventoryMovement` de tipo `Entry` con trazabilidad completa y devuelve el `ProductDto` actualizado.
+
+#### [D5] Servicio `AjustarStockAsync` en la capa Application
+- **Módulo**: Productos (Application)
+- **Archivos**: `src/TinaStore.Application/Services/ProductService.cs`, `src/TinaStore.Application/Interfaces/IServices.cs`, `src/TinaStore.Application/DTOs/ProductDtos.cs`
+- **Detalle**: `IProductService` extendido con `AjustarStockAsync(int id, AjusteStockDto dto)`. La implementación incrementa `CurrentStock`, persiste un movimiento de inventario con stock antes/después y devuelve el producto actualizado.
+
+---
+
+## [1.5.0] — 2026-06-19 — Fase C: PDF y facturas
+
+### Corregido / Añadido
+
+#### [C8] Indicador de carga al descargar PDF
+- **Módulo**: Facturas
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Facturas/Index.razor`
+- **Detalle**: `HashSet<int> _pdfDescargando` por ID de factura. El botón muestra spinner mientras descarga, queda deshabilitado para evitar dobles clics, y vuelve a la normalidad al terminar. Si el PDF se genera correctamente muestra confirmación; si falla muestra error claro.
+
+#### [C9] Estado de factura en español en el PDF
+- **Módulo**: PDF / Facturas
+- **Archivos**: `src/TinaStore.Infrastructure/Services/PdfService.cs`
+- **Detalle**: Switch expression que mapea `InvoiceStatus` a etiquetas en español: PAGADA, ANULADA, PARCIAL, PENDIENTE. Reemplaza `invoice.Status.ToString().ToUpper()` que producía PAID/CANCELLED/etc.
+
+#### [C10] Etiqueta "N° Factura" visible en el PDF
+- **Módulo**: PDF / Facturas
+- **Archivos**: `src/TinaStore.Infrastructure/Services/PdfService.cs`
+- **Detalle**: Encabezado del PDF con texto "N° Factura" en gris pequeño sobre el número, para distinguirlo claramente del nombre de la tienda y la fecha.
+
+#### [C11] Confirmar anulación de factura con Enter
+- **Módulo**: Facturas
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Facturas/Index.razor`
+- **Detalle**: Handler `HandleAnulacionKeyDown` con `@onkeydown` en el textarea. Si `Key == "Enter"` y no es `ShiftKey`, ejecuta `ConfirmarAnulacion()`. Shift+Enter permite salto de línea. Textarea usa `@bind:event="oninput"` para que el valor esté actualizado al presionar Enter.
+
+#### [C12] Validación de descuento y valores negativos en nueva factura
+- **Módulo**: Facturas / Nueva factura
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Facturas/Nueva.razor`
+- **Detalle**: `RecalcularTotales()` recorta automáticamente el descuento si es negativo o supera el subtotal, mostrando advertencia inline con Bootstrap `is-invalid`. `CrearFactura()` valida 8 reglas antes de llamar a la API: cliente seleccionado, al menos un producto, cantidad > 0, precio >= 0, descuento dentro del rango, impuesto >= 0, pago inicial >= 0 y pago inicial <= total.
+
+---
+
+## [1.4.0] — 2026-06-19 — Fase B: Filtros y ordenamientos
+
+### Añadido
+
+#### [B6] Ordenamiento interactivo en módulo Facturas
+- **Módulo**: Facturas
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Facturas/Index.razor`
+- **Detalle**: Cabeceras de tabla clickeables con iconos de estado (↓ mayor a menor, ↑ menor a mayor, ↕ sin orden) para las columnas: N° Factura, Total, Pagado, Saldo y Fecha. Al hacer clic en una columna ya activa se invierte la dirección. Al hacer clic en una columna diferente se activa descendente por defecto. "Limpiar filtros" también resetea el orden a Fecha descendente.
+
+#### [B7] Selector de orden ampliado en módulo Productos
+- **Módulo**: Productos
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Productos/Index.razor`
+- **Detalle**: El selector "Orden por stock" fue reemplazado por "Ordenar por" con 10 opciones agrupadas: Stock (↑↓), Precio venta (↑↓), Costo (↑↓), % Ganancia (↑↓) y Nombre (A→Z / Z→A). El campo interno `_ordenStock` fue renombrado a `_orden` y el switch en `Filtrar()` fue extendido con todos los nuevos casos.
+
+---
+
+## [1.3.0] — 2026-06-19 — Fase A: Validaciones, errores en modal y responsividad
+
+### Corregido / Añadido
+
+#### [A1] Validación de correo en frontend
+- **Módulo**: Clientes
+- **Causa raíz**: El campo Email no tenía validación visual en Blazor; los errores de la API se mostraban fuera del modal.
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Clientes/Index.razor`
+- **Solución**: Regex `^[^@\s]+@[^@\s]+\.[^@\s]+$` validado antes de llamar a la API. El modal no se cierra si el correo es inválido.
+
+#### [A2] Validación de teléfono en frontend y backend
+- **Módulo**: Clientes
+- **Causa raíz**: Backend solo validaba longitud máxima; no había regex de formato colombiano.
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Clientes/Index.razor`, `src/TinaStore.Application/Validators/CustomerValidators.cs`
+- **Solución**: Regex `^\+?[\d\s\-]{7,20}$` en frontend y en CreateCustomerValidator + UpdateCustomerValidator. Mensaje en español consistente.
+
+#### [A3] Errores dentro del modal de cliente
+- **Módulo**: Clientes
+- **Causa raíz**: `_mensaje` se renderizaba a nivel de página, detrás del backdrop del modal.
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Clientes/Index.razor`
+- **Solución**: Nuevo `_erroresModal` (List<string>) + campos `_errNombre`, `_errEmail`, `_errTelefono`. Resumen de errores en `alert-danger` dentro del `modal-body`. Clases Bootstrap `is-invalid` + `invalid-feedback` por campo.
+
+#### [A4] Modales responsivos con scroll interno
+- **Módulo**: Clientes, Facturas, Productos
+- **Causa raíz**: Modales sin `modal-dialog-scrollable`; en pantallas pequeñas el contenido se cortaba.
+- **Archivos**: `Clientes/Index.razor`, `Facturas/Index.razor`, `Productos/Index.razor`
+- **Solución**: `modal-dialog-scrollable` añadido a todos los modales afectados. Columnas responsive `col-12 col-sm-6 col-md-*`.
+
+#### [B5-parcial] Filtros de estado y correo en módulo Clientes
+- **Módulo**: Clientes
+- **Causa raíz**: Solo existía filtro de texto libre y fechas. Sin filtro por estado ni correo.
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Clientes/Index.razor`
+- **Solución**: Nuevo `<select>` de estado (Todos/Activo/Inactivo/Sin correo) y campo de búsqueda por correo. `Filtrar()` ampliado con ambas condiciones.
+
+---
+
 ## [1.2.0] — 2026-06-18 — Fases A2 + B1 + B3: Datos, visualización y nuevas funcionalidades
 
 ### Corregido

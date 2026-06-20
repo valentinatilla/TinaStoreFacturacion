@@ -66,19 +66,24 @@ public sealed class InvoiceService : IInvoiceService
             ?? throw new DomainException("No se encontró la configuración de la tienda.");
 
         // ── Validar productos y calcular subtotal ─────────────────────────────
-        var lineas = new List<(Product producto, CreateInvoiceDetailDto linea)>();
+        // lineasInventario: solo las líneas que tienen ProductId (descuentan stock)
+        var lineasInventario = new List<(Product producto, CreateInvoiceDetailDto linea)>();
         decimal subtotal = 0;
 
         foreach (var linea in dto.Details)
         {
-            var producto = await _products.GetByIdAsync(linea.ProductId)
-                ?? throw new EntityNotFoundException(nameof(Product), linea.ProductId);
+            if (linea.ProductId.HasValue)
+            {
+                var producto = await _products.GetByIdAsync(linea.ProductId.Value)
+                    ?? throw new EntityNotFoundException(nameof(Product), linea.ProductId.Value);
 
-            if (!settings.AllowNegativeStock && producto.CurrentStock < linea.Quantity)
-                throw new InsufficientStockException(producto.Name, linea.Quantity, producto.CurrentStock);
+                if (!settings.AllowNegativeStock && producto.CurrentStock < linea.Quantity)
+                    throw new InsufficientStockException(producto.Name, linea.Quantity, producto.CurrentStock);
+
+                lineasInventario.Add((producto, linea));
+            }
 
             subtotal += (linea.UnitPrice * linea.Quantity) - linea.DiscountAmount;
-            lineas.Add((producto, linea));
         }
 
         var total = subtotal - dto.DiscountAmount + dto.TaxAmount;
@@ -98,18 +103,33 @@ public sealed class InvoiceService : IInvoiceService
             Status = InvoiceStatus.Pending
         };
 
-        // ── Líneas de detalle + movimientos de inventario ─────────────────────
-        foreach (var (producto, linea) in lineas)
+        // ── Líneas de detalle ─────────────────────────────────────────────────
+        foreach (var linea in dto.Details)
         {
+            string nombreLinea;
+            if (linea.ProductId.HasValue)
+            {
+                var prod = lineasInventario.First(x => x.linea == linea).producto;
+                nombreLinea = prod.Name;
+            }
+            else
+            {
+                nombreLinea = linea.FreeDescription!;
+            }
+
             invoice.Details.Add(new InvoiceDetail
             {
-                ProductId = producto.Id,
-                ProductName = producto.Name,
+                ProductId = linea.ProductId,
+                ProductName = nombreLinea,
                 Quantity = linea.Quantity,
                 UnitPrice = linea.UnitPrice,
                 DiscountAmount = linea.DiscountAmount
             });
+        }
 
+        // ── Movimientos de inventario (solo líneas con producto) ──────────────
+        foreach (var (producto, linea) in lineasInventario)
+        {
             var stockAntes = producto.CurrentStock;
             producto.CurrentStock -= linea.Quantity;
 
@@ -234,10 +254,11 @@ public sealed class InvoiceService : IInvoiceService
         if (invoice.Status == InvoiceStatus.Cancelled)
             throw new InvoiceCancelledException(invoice.Id);
 
-        // ── Revertir stock
+        // ── Revertir stock (solo líneas con producto de inventario)
         foreach (var detalle in invoice.Details)
         {
-            var producto = await _products.GetByIdAsync(detalle.ProductId);
+            if (!detalle.ProductId.HasValue) continue;
+            var producto = await _products.GetByIdAsync(detalle.ProductId.Value);
             if (producto is null) continue;
 
             var stockAntes = producto.CurrentStock;
@@ -317,7 +338,8 @@ public sealed class InvoiceService : IInvoiceService
         i.Notes,
         i.Details.Select(d => new InvoiceDetailDto(
             d.Id, d.ProductId, d.ProductName,
-            d.Quantity, d.UnitPrice, d.DiscountAmount, d.Subtotal
+            d.Quantity, d.UnitPrice, d.DiscountAmount, d.Subtotal,
+            d.Product?.ImagePath
         )).ToList(),
         i.Payments.Select(p => new PaymentDto(
             p.Id, p.PaymentMethodId,
