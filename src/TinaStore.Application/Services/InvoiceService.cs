@@ -338,7 +338,8 @@ public sealed class InvoiceService : IInvoiceService
         i.Notes,
         i.Details.Select(d => new InvoiceDetailDto(
             d.Id, d.ProductId, d.ProductName,
-            d.Quantity, d.UnitPrice, d.DiscountAmount, d.Subtotal
+            d.Quantity, d.UnitPrice, d.DiscountAmount, d.Subtotal,
+            d.Product?.ImagePath
         )).ToList(),
         i.Payments.Select(p => new PaymentDto(
             p.Id, p.PaymentMethodId,
