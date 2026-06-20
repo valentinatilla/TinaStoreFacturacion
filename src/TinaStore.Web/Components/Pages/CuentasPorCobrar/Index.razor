@@ -28,19 +28,35 @@ else if (_data is not null)
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
-                    <tr><th>Cliente</th><th>Documento</th><th>Teléfono</th><th class="text-center">Facturas pend.</th><th class="text-end">Saldo</th><th>Última factura</th><th></th></tr>
+                    <tr>
+                        <th style="width:32px"></th>
+                        <th>Cliente</th>
+                        <th>Documento</th>
+                        <th>Teléfono</th>
+                        <th class="text-center">Ventas pend.</th>
+                        <th class="text-end">Saldo</th>
+                        <th>Última venta</th>
+                        <th></th>
+                    </tr>
                 </thead>
                 <tbody>
                     @foreach (var cxc in _data.Deudores.OrderByDescending(c => c.SaldoPendiente))
                     {
-                        <tr>
-                            <td class="fw-semibold">@cxc.CustomerName</td>
-                            <td class="text-muted">@cxc.DocumentNumber</td>
-                            <td class="text-muted small">@cxc.Phone</td>
-                            <td class="text-center"><span class="badge bg-warning text-dark">@cxc.FacturasPendientes</span></td>
-                            <td class="text-end fw-bold text-danger fs-6">@cxc.SaldoPendiente.ToString("C0")</td>
-                            <td class="text-muted small">@cxc.UltimaFacturaFecha?.ToString("dd/MM/yyyy")</td>
-                            <td class="text-end">
+                        var expandido = _expandidos.Contains(cxc.CustomerId);
+                        <tr class="@(expandido ? "detalle-expandido" : "")" style="cursor:pointer"
+                            @onclick="() => ToggleDetalle(cxc.CustomerId)">
+                            <td class="text-center align-middle">
+                                <i class="bi @(expandido ? "bi-chevron-down" : "bi-chevron-right") text-purple small"></i>
+                            </td>
+                            <td class="fw-semibold align-middle">@cxc.CustomerName</td>
+                            <td class="text-muted align-middle">@cxc.DocumentNumber</td>
+                            <td class="text-muted small align-middle">@cxc.Phone</td>
+                            <td class="text-center align-middle">
+                                <span class="badge bg-warning text-dark">@cxc.FacturasPendientes</span>
+                            </td>
+                            <td class="text-end fw-bold text-danger fs-6 align-middle">@cxc.SaldoPendiente.ToString("C0")</td>
+                            <td class="text-muted small align-middle">@cxc.UltimaFacturaFecha?.ToString("dd/MM/yyyy")</td>
+                            <td class="text-end align-middle" @onclick:stopPropagation="true">
                                 @if (!string.IsNullOrWhiteSpace(cxc.Phone))
                                 {
                                     <button class="btn btn-sm btn-outline-success" title="Enviar recordatorio por WhatsApp"
@@ -50,11 +66,76 @@ else if (_data is not null)
                                 }
                             </td>
                         </tr>
+
+                        @if (expandido)
+                        {
+                            <tr class="detalle-expandido">
+                                <td colspan="8" class="p-0 border-0">
+                                    <div class="detalle-venta-panel px-4 py-3">
+                                        @if (_cargandoDetalle.Contains(cxc.CustomerId))
+                                        {
+                                            <div class="text-center py-2">
+                                                <span class="spinner-border spinner-border-sm text-purple me-2"></span>
+                                                <span class="text-muted small">Cargando ventas...</span>
+                                            </div>
+                                        }
+                                        else if (_detallesCache.TryGetValue(cxc.CustomerId, out var facturas))
+                                        {
+                                            @if (facturas.Any())
+                                            {
+                                                <table class="table table-sm mb-0">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th>N° Venta</th>
+                                                            <th>Fecha</th>
+                                                            <th class="text-end">Total</th>
+                                                            <th class="text-end">Pagado</th>
+                                                            <th class="text-end text-danger">Saldo</th>
+                                                            <th class="text-center">Estado</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var f in facturas)
+                                                        {
+                                                            <tr>
+                                                                <td><span class="badge bg-secondary">@f.InvoiceNumber</span></td>
+                                                                <td class="text-muted small">@f.InvoiceDate.ToString("dd/MM/yyyy")</td>
+                                                                <td class="text-end fw-semibold">@f.Total.ToString("C0")</td>
+                                                                <td class="text-end text-success">@f.AmountPaid.ToString("C0")</td>
+                                                                <td class="text-end fw-bold text-danger">@f.Balance.ToString("C0")</td>
+                                                                <td class="text-center">
+                                                                    <span class="badge badge-estado-@f.StatusName.ToLower()">@f.StatusName</span>
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                    <tfoot class="table-light">
+                                                        <tr>
+                                                            <td colspan="4" class="text-end fw-semibold small">Total pendiente:</td>
+                                                            <td class="text-end fw-bold text-danger">
+                                                                @facturas.Sum(f => f.Balance).ToString("C0")
+                                                            </td>
+                                                            <td></td>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            }
+                                            else
+                                            {
+                                                <p class="text-muted small mb-0 py-1">
+                                                    <i class="bi bi-check-circle text-success me-1"></i>Sin ventas pendientes de cobro.
+                                                </p>
+                                            }
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
                     }
                     @if (!_data.Deudores.Any())
                     {
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">
+                            <td colspan="8" class="text-center text-muted py-4">
                                 <i class="bi bi-check-circle-fill text-success me-2 fs-4"></i>
                                 <div>¡Sin cuentas pendientes! Todos los clientes están al día.</div>
                             </td>
@@ -71,6 +152,10 @@ else if (_data is not null)
     private bool _loading = true;
     private string? _reminderMessage;
 
+    private readonly HashSet<int> _expandidos = [];
+    private readonly HashSet<int> _cargandoDetalle = [];
+    private readonly Dictionary<int, List<FacturaDto>> _detallesCache = [];
+
     protected override async Task OnInitializedAsync()
     {
         try
@@ -82,6 +167,36 @@ else if (_data is not null)
             _reminderMessage = cfg?.ReminderMessage;
         }
         finally { _loading = false; }
+    }
+
+    private async Task ToggleDetalle(int customerId)
+    {
+        if (_expandidos.Contains(customerId))
+        {
+            _expandidos.Remove(customerId);
+            return;
+        }
+
+        _expandidos.Add(customerId);
+
+        if (_detallesCache.ContainsKey(customerId)) return;
+
+        _cargandoDetalle.Add(customerId);
+        StateHasChanged();
+
+        try
+        {
+            var facturas = await Api.GetVentasPorClienteAsync(customerId);
+            // Solo mostramos facturas con saldo pendiente
+            _detallesCache[customerId] = (facturas ?? [])
+                .Where(f => f.Balance > 0 && f.Status != 3) // 3 = Cancelled
+                .OrderByDescending(f => f.InvoiceDate)
+                .ToList();
+        }
+        finally
+        {
+            _cargandoDetalle.Remove(customerId);
+        }
     }
 
     private async Task EnviarWhatsApp(DeudorCXCDto cxc)

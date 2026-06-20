@@ -24,22 +24,11 @@ Los issues marcados ✅ ya están resueltos. Los marcados 🔴/🟡/🟢 están 
 
 ---
 
-## 🔴 PENDIENTES (alta prioridad — Fase A2)
+## ✅ RESUELTOS EN v2.5.0 (2026-06-19 — Fase A2)
 
-### BUG-A2-01 — Productos con stock 0 aparecen como "Activo"
-
-- **Descripción**: El badge de estado solo evalúa `IsActive`. No distingue Agotado, Bajo stock, Inactivo.
-- **Planificado para**: Fase A2
-
-### BUG-A2-02 — Categoría vacía en detalle de producto
-- **Módulo**: Productos
-- **Descripción**: `GetByIdAsync` del repositorio base no hace `Include` de Category. Al abrir el modal de edición, `CategoryName` aparece vacío.
-- **Planificado para**: Fase A2
-
-### BUG-A2-03 — Conteo de productos por categoría siempre 0
-- **Módulo**: Categorías
-- **Descripción**: `ProductCount` devuelve 0 aunque existan productos asociados.
-- **Planificado para**: Fase A2
+### BUG-A2-01 — Badge de stock incorrecto en productos inactivos → resuelto en v2.5.0
+### BUG-A2-02 — Categoría vacía al abrir modal de edición → resuelto en v2.5.0
+### BUG-A2-03 — Conteo de productos por categoría siempre 0 → resuelto en v2.5.0
 
 ---
 

@@ -63,6 +63,10 @@ public interface IDashboardRepository
     Task<int> GetActiveProductCountAsync(CancellationToken ct = default);
     Task<IReadOnlyList<Invoice>> GetLastInvoicesTodayAsync(DateTime from, DateTime to, int top, CancellationToken ct = default);
     Task<IReadOnlyList<AccountReceivable>> GetTopDebtorsAsync(int top, CancellationToken ct = default);
+    /// <summary>Producto más vendido (unidades) en el mes actual.</summary>
+    Task<(int ProductId, string ProductName, string? Sku, int Units, decimal Revenue)?> GetTopProductThisMonthAsync(DateTime mesInicio, CancellationToken ct = default);
+    /// <summary>Ventas totales día a día en los últimos N días (de más antiguo a más reciente).</summary>
+    Task<IReadOnlyList<(DateTime Fecha, decimal Total)>> GetSalesLast7DaysAsync(DateTime desde, CancellationToken ct = default);
 }
 
 public interface IReportRepository

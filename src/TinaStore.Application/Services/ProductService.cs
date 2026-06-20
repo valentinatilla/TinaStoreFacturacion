@@ -178,6 +178,77 @@ public sealed class ProductService : IProductService
         return ToDto(entity);
     }
 
+    public async Task<BulkUpdateResultDto> BulkUpdateAsync(IEnumerable<BulkUpdateItemDto> items)
+    {
+        var resultados = new List<BulkUpdateItemResultDto>();
+        var lista      = items.ToList();
+
+        foreach (var item in lista)
+        {
+            var entity = await _products.GetByIdAsync(item.ProductId);
+            if (entity is null)
+            {
+                resultados.Add(new BulkUpdateItemResultDto(item.ProductId, $"ID {item.ProductId}", false, "Producto no encontrado."));
+                continue;
+            }
+
+            // ── Validaciones ──────────────────────────────────────────────────
+            if (item.NuevoCosto.HasValue && item.NuevoCosto.Value < 0)
+            {
+                resultados.Add(new BulkUpdateItemResultDto(entity.Id, entity.Name, false, "El costo no puede ser negativo."));
+                continue;
+            }
+            if (item.NuevoPrecioVenta.HasValue && item.NuevoPrecioVenta.Value < 0)
+            {
+                resultados.Add(new BulkUpdateItemResultDto(entity.Id, entity.Name, false, "El precio de venta no puede ser negativo."));
+                continue;
+            }
+            if (item.NuevoStock.HasValue && item.NuevoStock.Value < 0)
+            {
+                resultados.Add(new BulkUpdateItemResultDto(entity.Id, entity.Name, false, "El stock no puede ser negativo."));
+                continue;
+            }
+
+            // ── Aplicar cambios ───────────────────────────────────────────────
+            if (item.NuevoCosto.HasValue)
+                entity.PurchasePrice = item.NuevoCosto.Value;
+
+            if (item.NuevoPrecioVenta.HasValue)
+                entity.SalePrice = item.NuevoPrecioVenta.Value;
+
+            if (item.NuevoStock.HasValue && item.NuevoStock.Value != entity.CurrentStock)
+            {
+                var stockAntes = entity.CurrentStock;
+                var diferencia = item.NuevoStock.Value - stockAntes;
+
+                entity.CurrentStock = item.NuevoStock.Value;
+
+                await _movements.AddAsync(new InventoryMovement
+                {
+                    ProductId    = entity.Id,
+                    MovementType = InventoryMovementType.Adjustment,
+                    Quantity     = Math.Abs(diferencia),
+                    StockBefore  = stockAntes,
+                    StockAfter   = entity.CurrentStock,
+                    Notes        = "Ajuste por edición masiva"
+                });
+            }
+
+            await _products.UpdateAsync(entity);
+            resultados.Add(new BulkUpdateItemResultDto(entity.Id, entity.Name, true, null));
+        }
+
+        // Un único SaveChanges para todo el lote
+        await _products.SaveChangesAsync();
+
+        return new BulkUpdateResultDto(
+            lista.Count,
+            resultados.Count(r => r.Ok),
+            resultados.Count(r => !r.Ok),
+            resultados
+        );
+    }
+
     private async Task RegistrarEgresoCompraAsync(Product product, int cantidad, decimal precioUnitario)
     {
         // Busca la categoría por nombre directamente

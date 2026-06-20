@@ -152,6 +152,17 @@ public sealed class ProductsController : ControllerBase
             : Ok(resultado);
     }
 
+    /// <summary>Actualiza costo, precio de venta y/o stock de varios productos en un solo lote.</summary>
+    [HttpPut("bulk")]
+    public async Task<IActionResult> BulkUpdate([FromBody] List<BulkUpdateItemDto> items)
+    {
+        if (items is null || items.Count == 0)
+            return BadRequest(new { mensaje = "La lista de productos a actualizar está vacía." });
+
+        var resultado = await _service.BulkUpdateAsync(items);
+        return Ok(resultado);
+    }
+
     /// <summary>Elimina la imagen de un producto.</summary>
     [HttpDelete("{id:int}/imagen")]
     public async Task<IActionResult> DeleteImage(int id)

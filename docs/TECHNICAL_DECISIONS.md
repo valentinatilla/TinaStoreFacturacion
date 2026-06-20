@@ -5,6 +5,28 @@ Esto sirve para entender *por qué* se hizo algo de cierta manera, y cómo rever
 
 ---
 
+## TD-Fase-A — Decisiones técnicas Fase A (v2.0.0 — 2026-06-19)
+
+### TD-A-01 — Mantener nombres internos `Invoice` aunque la UI muestre "Ventas"
+
+**Decisión**: Los nombres técnicos internos (`Invoice`, `InvoiceService`, `InvoicesController`, tabla `Invoices`) se mantienen sin cambios. Solo se modificaron textos visibles en la capa Blazor.
+
+**Justificación**:
+1. Renombrar requeriría una migración costosa de la tabla `Invoices` con datos reales.
+2. Cambiar contratos afectaría todos los repositorios e inyecciones de dependencia.
+3. Es práctica estándar separar el lenguaje técnico del lenguaje de negocio visible.
+4. Las rutas API (`/api/invoices`) son internas y no visibles para la usuaria final.
+
+**Nota para desarrolladores**: La UI dice "Ventas" pero el código usa `Invoice`. Esto es intencional y documentado.
+
+### TD-A-02 — El PDF sigue usando "Factura de Venta"
+
+**Decisión**: El documento PDF generado por `PdfService.cs` (QuestPDF) mantiene el texto "Factura de Venta".
+
+**Justificación**: El término "factura" tiene significado legal y contable en Colombia. Cambiar a "venta" en un documento formal podría generar confusión tributaria.
+
+---
+
 ## TD-Fase-A1 — Decisiones técnicas de la Fase A1 (v1.1.0 — 2025-06-18)
 
 ### TD-A1-01 — StatusName en español a nivel de servicio, no de DTO

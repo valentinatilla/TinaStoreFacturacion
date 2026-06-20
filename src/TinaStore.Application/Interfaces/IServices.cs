@@ -32,6 +32,7 @@ public interface IProductService
     Task<bool> DeleteAsync(int id);
     Task<ProductDto?> UpdateImagePathAsync(int id, string? imagePath);
     Task<ProductDto?> AjustarStockAsync(int id, AjusteStockDto dto);
+    Task<BulkUpdateResultDto> BulkUpdateAsync(IEnumerable<BulkUpdateItemDto> items);
 }
 
 public interface ISupplierService

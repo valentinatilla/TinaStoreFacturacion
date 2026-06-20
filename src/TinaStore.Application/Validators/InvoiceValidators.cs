@@ -7,7 +7,21 @@ public class CreateInvoiceDetailDtoValidator : AbstractValidator<CreateInvoiceDe
 {
     public CreateInvoiceDetailDtoValidator()
     {
-        RuleFor(x => x.ProductId).GreaterThan(0).WithMessage("El producto es requerido.");
+        // Línea normal: ProductId debe ser > 0; línea libre: FreeDescription obligatoria
+        RuleFor(x => x.ProductId)
+            .GreaterThan(0).When(x => x.ProductId.HasValue)
+            .WithMessage("El producto es requerido.");
+
+        RuleFor(x => x.FreeDescription)
+            .NotEmpty().When(x => !x.ProductId.HasValue)
+            .WithMessage("La descripción es obligatoria para líneas libres.")
+            .MaximumLength(200).When(x => !x.ProductId.HasValue);
+
+        // No puede haber ProductId nulo Y FreeDescription nulo al mismo tiempo
+        RuleFor(x => x)
+            .Must(x => x.ProductId.HasValue || !string.IsNullOrWhiteSpace(x.FreeDescription))
+            .WithMessage("Cada línea debe tener un producto o una descripción libre.");
+
         RuleFor(x => x.Quantity).GreaterThan(0).WithMessage("La cantidad debe ser mayor a 0.");
         RuleFor(x => x.UnitPrice).GreaterThanOrEqualTo(0).WithMessage("El precio no puede ser negativo.");
         RuleFor(x => x.DiscountAmount).GreaterThanOrEqualTo(0).WithMessage("El descuento no puede ser negativo.");

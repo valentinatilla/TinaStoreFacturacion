@@ -4,6 +4,87 @@ Registro de funcionalidades implementadas y planificadas del proyecto.
 
 ---
 
+## Dashboard (v2.4.0 — 2026-06-19)
+
+### ✅ Producto estrella del mes (Fase D)
+- Tarjeta con el producto más vendido (unidades) en el mes actual.
+- Muestra nombre, SKU, unidades e ingresos del mes.
+- Si no hay ventas muestra texto informativo.
+
+### ✅ Tendencia de ventas 7 días (Fase D)
+- Mini gráfico de barras CSS con las ventas de los últimos 7 días.
+- La barra de hoy se resalta en morado sólido; los demás días en morado semitransparente.
+- Badge con el total del periodo.
+- Sin librerías JavaScript adicionales.
+
+---
+
+## Módulo Cuentas por Cobrar (v2.3.0 — 2026-06-19)
+
+### ✅ Detalle desplegable por cliente (Fase E2)
+- Cada fila de cliente es expandible con clic.
+- Panel con ventas pendientes cargadas bajo demanda (lazy loading).
+- Caché local: segunda apertura sin llamada a la API.
+- Columnas: N° venta, fecha, total, pagado, saldo y estado.
+- Pie del panel con total de saldo pendiente del cliente.
+- Compatible con el botón de recordatorio WhatsApp (stopPropagation).
+
+---
+
+## Módulo Ventas (v2.2.0 — 2026-06-19)
+
+### ✅ Venta libre (Fase B)
+- Nueva ruta `/ventas/libre` accesible desde el menú lateral.
+- Cliente sigue siendo obligatorio (igual que una venta normal).
+- Líneas de detalle con **descripción libre** (texto), cantidad y precio unitario.
+- No descuenta stock de inventario ni genera movimientos.
+- Compatibles con: descuento global (%), impuesto (%), pago inicial, notas.
+- Genera número consecutivo y aparece en el listado de ventas igual que una venta normal.
+- Compatible con CxC, abonos y anulación.
+
+---
+
+## Mejoras módulo Productos (v2.1.0 — 2026-06-19)
+
+### ✅ Edición masiva (Fase C2)
+- Botón "Edición masiva" en la cabecera del módulo Productos.
+- Modal de dos pasos: (1) tabla editable con buscador, (2) resumen con diff.
+- Campos editables por fila: costo de compra, precio de venta, stock.
+- Filas con cambios resaltadas visualmente con borde morado.
+- Validación inmediata en cliente: valores negativos marcados en rojo.
+- Solo se envían al backend los campos que realmente cambiaron (null = sin cambio).
+- Los cambios de stock generan `InventoryMovement` tipo `Adjustment` automáticamente.
+- Respuesta por fila: éxito o mensaje de error sin abortar el lote completo.
+- Endpoint: `PUT /api/products/bulk`.
+
+---
+
+## Mejoras módulo Productos (v2.0.0 — 2026-06-19)
+
+### ✅ Tarjetas resumen (Fase C1)
+- **Referencias disponibles**: cantidad de productos activos con stock mayor a 0.
+- **Costo total del inventario**: suma de `PurchasePrice × CurrentStock` para todos los productos activos.
+- Tarjetas siempre visibles al entrar al módulo, antes de los filtros.
+- Se actualizan automáticamente al crear, editar o eliminar productos.
+- Valores calculados en memoria, sin llamada adicional a la API.
+
+---
+
+## Cambios de lenguaje (v2.0.0 — 2026-06-19)
+
+### ✅ Módulo Ventas (renombrado desde Facturas)
+- Menú principal muestra "Ventas" (antes "Facturas").
+- Ruta `/ventas` (antes `/facturas`).
+- Ruta `/ventas/nueva` (antes `/facturas/nueva`).
+- Título de pantalla: "Ventas".
+- Botón principal: "Nueva venta" (antes "Nueva factura").
+- Botón del formulario: "Registrar Venta" (antes "Emitir Factura").
+- Dashboard muestra "Últimas Ventas".
+- Cuentas por cobrar muestra "Ventas pend." y "Última venta".
+- El PDF sigue diciendo "Factura de Venta" (documento legal).
+
+---
+
 ## Funcionalidades implementadas (v0.1.0 — v0.2.0)
 
 ### ✅ Autenticación
