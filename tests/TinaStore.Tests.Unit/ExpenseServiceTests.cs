@@ -37,7 +37,7 @@ public class ExpenseServiceTests
             new() { Id = 1, ExpenseDate = DateTime.Today.AddDays(-2), Description = "A", Amount = 100, ExpenseCategory = _categoria, ExpenseCategoryId = 1 },
             new() { Id = 2, ExpenseDate = DateTime.Today,             Description = "B", Amount = 200, ExpenseCategory = _categoria, ExpenseCategoryId = 1 },
         };
-        _expenseRepoMock.Setup(r => r.GetAllAsync(default)).ReturnsAsync(egresos);
+        _expenseRepoMock.Setup(r => r.GetAllWithNavigationAsync(default)).ReturnsAsync(egresos);
 
         var resultado = await _sut.GetAllAsync();
 
