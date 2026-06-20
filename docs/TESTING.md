@@ -19,6 +19,90 @@ dotnet test tests/TinaStore.Tests.Integration
 
 ---
 
+## Pruebas manuales — Fase C (v1.5.0)
+
+### 🧾 Facturas — PDF, anulación y descuento
+
+| # | Prueba | Resultado esperado | Estado |
+|---|---|---|---|
+| C1 | Clic en descargar PDF | Botón muestra spinner, se deshabilita mientras descarga | ✅ v1.5.0 |
+| C2 | Descarga completa | Botón vuelve al ícono PDF normal, mensaje "PDF generado" | ✅ v1.5.0 |
+| C3 | Error al generar PDF | Botón se reactiva, mensaje de error claro | ✅ v1.5.0 |
+| C4 | PDF descargado: estado | Muestra PAGADA / PENDIENTE / PARCIAL / ANULADA (en español) | ✅ v1.5.0 |
+| C5 | PDF descargado: encabezado | Aparece "N° Factura" en gris sobre el número de factura | ✅ v1.5.0 |
+| C6 | Escribir motivo + Enter | Ejecuta la anulación si el motivo es válido | ✅ v1.5.0 |
+| C7 | Enter con motivo vacío | No anula, muestra error "El motivo de anulación es obligatorio" | ✅ v1.5.0 |
+| C8 | Shift+Enter en textarea | Inserta salto de línea, no ejecuta anulación | ✅ v1.5.0 |
+| C9 | Descuento negativo en nueva factura | Se ajusta a 0 automáticamente con advertencia | ✅ v1.5.0 |
+| C10 | Descuento > subtotal | Se ajusta al valor del subtotal con advertencia inline | ✅ v1.5.0 |
+| C11 | Descuento válido < subtotal | Total se calcula correctamente sin advertencia | ✅ v1.5.0 |
+| C12 | Pago inicial > total | Muestra error "Pago inicial no puede ser mayor al total" | ✅ v1.5.0 |
+| C13 | Pago inicial negativo | Muestra error "Pago inicial no puede ser negativo" | ✅ v1.5.0 |
+| C14 | Cantidad de producto = 0 | Muestra error antes de enviar | ✅ v1.5.0 |
+| C15 | Emitir factura con descuento y pago correcto | Factura guardada, estado correcto en listado | ✅ v1.5.0 |
+
+---
+
+## Pruebas manuales — Fase B (v1.4.0)
+
+### 🗂️ Facturas — Ordenamiento por columnas
+
+| # | Prueba | Resultado esperado | Estado |
+|---|---|---|---|
+| B1 | Clic en cabecera "Fecha" | Ordena descendente (↓ activo), más recientes primero | ✅ v1.4.0 |
+| B2 | Clic de nuevo en "Fecha" | Invierte a ascendente (↑), más antiguas primero | ✅ v1.4.0 |
+| B3 | Clic en "Total" | Ordena descendente, facturas de mayor total primero | ✅ v1.4.0 |
+| B4 | Clic de nuevo en "Total" | Invierte a ascendente (↑ activo) | ✅ v1.4.0 |
+| B5 | Clic en "Saldo" descendente | Facturas con mayor saldo pendiente primero | ✅ v1.4.0 |
+| B6 | Clic en "Pagado" descendente | Facturas con mayor pago registrado primero | ✅ v1.4.0 |
+| B7 | Clic en "N° Factura" | Ordena por número de factura descendente | ✅ v1.4.0 |
+| B8 | Clic en columna diferente | Iconos anteriores vuelven a ↕ neutro, nuevo campo activo | ✅ v1.4.0 |
+| B9 | Limpiar filtros | Orden vuelve a Fecha descendente, ícono ↕ en demás columnas | ✅ v1.4.0 |
+| B10 | Filtrar + ordenar | Filtros y sort funcionan combinados sin afectar datos | ✅ v1.4.0 |
+
+### 📦 Productos — Selector de orden ampliado
+
+| # | Prueba | Resultado esperado | Estado |
+|---|---|---|---|
+| B11 | Seleccionar "Stock mayor a menor" | Productos con más stock aparecen primero | ✅ v1.4.0 |
+| B12 | Seleccionar "Stock menor a mayor" | Productos con menos stock (agotados) primero | ✅ v1.4.0 |
+| B13 | Seleccionar "Precio mayor a menor" | Productos más caros primero | ✅ v1.4.0 |
+| B14 | Seleccionar "Precio menor a mayor" | Productos más económicos primero | ✅ v1.4.0 |
+| B15 | Seleccionar "Costo mayor a menor" | Productos con mayor costo primero | ✅ v1.4.0 |
+| B16 | Seleccionar "Ganancia mayor a menor" | Mayor % de margen primero | ✅ v1.4.0 |
+| B17 | Seleccionar "A → Z" | Productos en orden alfabético | ✅ v1.4.0 |
+| B18 | Seleccionar "Z → A" | Productos en orden alfabético inverso | ✅ v1.4.0 |
+| B19 | Ordenar + filtrar por categoría | Orden conserva el filtro activo | ✅ v1.4.0 |
+| B20 | Limpiar filtros | Selector vuelve a "Sin orden" | ✅ v1.4.0 |
+
+---
+
+## Pruebas manuales — Fase A (v1.3.0)
+
+### 👥 Clientes — Validaciones y modal
+
+| # | Prueba | Resultado esperado | Estado |
+|---|---|---|---|
+| A1 | Crear cliente con correo válido (`cliente@correo.com`) | Guarda correctamente | ✅ v1.3.0 |
+| A2 | Crear cliente con correo inválido (`cliente@`) | Error inline en campo email, modal no se cierra | ✅ v1.3.0 |
+| A3 | Crear cliente con correo inválido (`cliente.com`) | Error inline en campo email | ✅ v1.3.0 |
+| A4 | Crear cliente con correo vacío (campo opcional) | Permite guardar sin error | ✅ v1.3.0 |
+| A5 | Crear cliente con teléfono válido (`3001234567`) | Guarda correctamente | ✅ v1.3.0 |
+| A6 | Crear cliente con teléfono internacional (`+573001234567`) | Guarda correctamente | ✅ v1.3.0 |
+| A7 | Crear cliente con teléfono inválido (`abc123!!`) | Error inline en campo teléfono | ✅ v1.3.0 |
+| A8 | Crear cliente con teléfono vacío (opcional) | Permite guardar sin error | ✅ v1.3.0 |
+| A9 | Guardar con nombre vacío | Error inline en campo nombre, modal no se cierra | ✅ v1.3.0 |
+| A10 | Error de API (p.ej. duplicado) | Mensaje de error aparece DENTRO del modal | ✅ v1.3.0 |
+| A11 | Ver modal en pantalla pequeña (móvil) | Modal con scroll, no se corta, botones visibles | ✅ v1.3.0 |
+| A12 | Filtrar clientes por estado "Activo" | Solo muestra clientes activos | ✅ v1.3.0 |
+| A13 | Filtrar clientes por estado "Inactivo" | Solo muestra clientes inactivos | ✅ v1.3.0 |
+| A14 | Filtrar clientes por "Sin correo" | Solo clientes activos sin email | ✅ v1.3.0 |
+| A15 | Buscar cliente por correo parcial | Filtra correctamente | ✅ v1.3.0 |
+| A16 | Limpiar filtros | Restaura lista completa | ✅ v1.3.0 |
+| A17 | Modal de eliminar cliente en móvil | Modal con scroll, botones visibles | ✅ v1.3.0 |
+
+---
+
 ## Pruebas manuales por módulo
 
 ### 🔐 Autenticación
@@ -38,7 +122,7 @@ dotnet test tests/TinaStore.Tests.Integration
 
 | # | Prueba | Resultado esperado | Estado |
 |---|---|---|---|
-| 1 | Crear producto con todos los campos | Producto aparece en el listado | ✅ v0.2.0 |
+
 | 2 | Crear producto sin nombre | Mensaje de validación | ✅ v0.2.0 |
 | 3 | Crear producto sin categoría | Mensaje de validación | ✅ v0.2.0 |
 | 4 | Abrir modal de edición | Todos los campos del producto cargados, incluyendo categoría y proveedor | ✅ v0.2.0 |

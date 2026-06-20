@@ -16,19 +16,22 @@ public sealed class ProductService : IProductService
     private readonly IRepository<Supplier> _suppliers;
     private readonly IExpenseRepository _expenses;
     private readonly IRepository<ExpenseCategory> _expenseCategories;
+    private readonly IRepository<InventoryMovement> _movements;
 
     public ProductService(
         IProductRepository products,
         IRepository<Category> categories,
         IRepository<Supplier> suppliers,
         IExpenseRepository expenses,
-        IRepository<ExpenseCategory> expenseCategories)
+        IRepository<ExpenseCategory> expenseCategories,
+        IRepository<InventoryMovement> movements)
     {
         _products = products;
         _categories = categories;
         _suppliers = suppliers;
         _expenses = expenses;
         _expenseCategories = expenseCategories;
+        _movements = movements;
     }
 
     public async Task<IEnumerable<ProductSummaryDto>> GetAllAsync(bool soloActivos = false)
@@ -147,6 +150,34 @@ public sealed class ProductService : IProductService
         return ToDto(entity);
     }
 
+    public async Task<ProductDto?> AjustarStockAsync(int id, AjusteStockDto dto)
+    {
+        if (dto.Cantidad <= 0)
+            throw new DomainException("La cantidad del ajuste debe ser mayor a cero.");
+
+        var entity = await _products.GetByIdAsync(id);
+        if (entity is null) return null;
+
+        var stockAntes = entity.CurrentStock;
+        entity.CurrentStock += dto.Cantidad;
+
+        var movimiento = new InventoryMovement
+        {
+            ProductId    = entity.Id,
+            MovementType = InventoryMovementType.Entry,
+            Quantity     = dto.Cantidad,
+            StockBefore  = stockAntes,
+            StockAfter   = entity.CurrentStock,
+            Notes        = dto.Notas ?? "Entrada rápida desde factura"
+        };
+
+        await _products.UpdateAsync(entity);
+        await _movements.AddAsync(movimiento);
+        await _products.SaveChangesAsync();
+
+        return ToDto(entity);
+    }
+
     private async Task RegistrarEgresoCompraAsync(Product product, int cantidad, decimal precioUnitario)
     {
         // Busca la categoría por nombre directamente
@@ -180,6 +211,7 @@ public sealed class ProductService : IProductService
         p.CurrentStock,
         p.IsLowStock,
         p.IsActive,
+        p.CategoryId,
         p.Category?.Name ?? string.Empty,
         p.ImagePath
     );

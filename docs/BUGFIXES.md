@@ -4,6 +4,106 @@ Registro detallado de todos los bugs corregidos en el proyecto.
 
 ---
 
+## BUG-C8 — Sin indicador de carga al descargar PDF *(v1.5.0 — 2026-06-19)*
+
+- **Módulo**: Facturas
+- **Problema**: Al hacer clic en "Descargar PDF" no había feedback visual; el usuario podía hacer clic múltiples veces.
+- **Causa raíz**: `DescargarPdf()` sin estado de carga por ID.
+- **Solución**: `HashSet<int> _pdfDescargando` — spinner mientras descarga, botón deshabilitado, confirmación/error al terminar.
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Facturas/Index.razor`
+
+---
+
+## BUG-C9 — Estado de factura en inglés en el PDF *(v1.5.0 — 2026-06-19)*
+
+- **Módulo**: PDF / Facturas
+- **Problema**: El PDF mostraba PAID, CANCELLED, PARTIAL, PENDING.
+- **Causa raíz**: `invoice.Status.ToString().ToUpper()` usa el nombre del enum en inglés.
+- **Solución**: Switch expression `(color, etiqueta)` con valores PAGADA / ANULADA / PARCIAL / PENDIENTE.
+- **Archivos**: `src/TinaStore.Infrastructure/Services/PdfService.cs`
+
+---
+
+## BUG-C10 — N° Factura sin etiqueta visible en PDF *(v1.5.0 — 2026-06-19)*
+
+- **Módulo**: PDF / Facturas
+- **Problema**: El número de factura aparecía sin contexto en el encabezado del PDF.
+- **Solución**: Añadida etiqueta "N° Factura" en gris pequeño encima del número.
+- **Archivos**: `src/TinaStore.Infrastructure/Services/PdfService.cs`
+
+---
+
+## BUG-C11 — No se podía confirmar anulación con Enter *(v1.5.0 — 2026-06-19)*
+
+- **Módulo**: Facturas
+- **Problema**: Presionar Enter en el textarea de motivo no hacía nada.
+- **Causa raíz**: Sin `@onkeydown` en el textarea.
+- **Solución**: Handler `HandleAnulacionKeyDown` — Enter (sin Shift) llama `ConfirmarAnulacion()`. Shift+Enter permite salto de línea.
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Facturas/Index.razor`
+
+---
+
+## BUG-C12 — Sin validación de descuento y valores negativos en nueva factura *(v1.5.0 — 2026-06-19)*
+
+- **Módulo**: Facturas / Nueva factura
+- **Problema**: No había bloqueo para descuentos mayores al subtotal, valores negativos ni pago inicial mayor al total.
+- **Causa raíz**: `RecalcularTotales()` usaba `Math.Max(0,...)` pero no avisaba al usuario. `CrearFactura()` enviaba cualquier valor.
+- **Solución**: Clamp + advertencia inline en `RecalcularTotales()`. 8 validaciones en `CrearFactura()` antes de llamar a la API.
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Facturas/Nueva.razor`
+
+---
+
+## FEAT-B6 — Ordenamiento por columnas en Facturas *(v1.4.0 — 2026-06-19)*
+
+- **Módulo**: Facturas
+- **Problema**: No había forma de ordenar la lista de facturas por importe, saldo o fecha desde la UI.
+- **Solución**: Cabeceras de tabla clickeables con iconos Bootstrap (↓↑↕). Métodos `OrdenarPor()`, `AplicarOrden()` y `SortIconClass()` en el bloque `@code`. El estado de sort se resetea con "Limpiar filtros".
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Facturas/Index.razor`
+
+---
+
+## FEAT-B7 — Selector de orden ampliado en Productos *(v1.4.0 — 2026-06-19)*
+
+- **Módulo**: Productos
+- **Problema**: Solo existía ordenamiento por stock (mayor/menor). No había orden por precio, costo, ganancia ni nombre.
+- **Solución**: Selector "Ordenar por" con 10 opciones en 5 grupos. Campo `_orden` (antes `_ordenStock`) con switch extendido de 10 casos en `Filtrar()`.
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Productos/Index.razor`
+
+---
+
+## BUG-A1 — Correo sin validación visual frontend *(v1.3.0 — 2026-06-19)*
+
+- **Módulo**: Clientes
+- **Problema**: El campo Email aceptaba cualquier texto; los errores del backend llegaban como mensaje genérico fuera del modal.
+- **Causa raíz**: `<input>` sin validación en Blazor; `Guardar()` solo validaba que el nombre no fuera vacío.
+- **Solución**: Regex `^[^@\s]+@[^@\s]+\.[^@\s]+$` ejecutado en `Guardar()` antes de llamar a la API. Si falla, se muestra `invalid-feedback` junto al campo.
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Clientes/Index.razor`
+- **Pruebas**: Correo inválido → error inline. Correo vacío → permite guardar. Correo válido → guarda correctamente.
+
+---
+
+## BUG-A2 — Teléfono sin validación de formato *(v1.3.0 — 2026-06-19)*
+
+- **Módulo**: Clientes
+- **Problema**: El backend solo validaba longitud máxima (20 chars). No había validación de formato colombiano ni en frontend.
+- **Causa raíz**: `CustomerValidators.cs` sin `.Matches()`. Frontend sin regex.
+- **Solución**: Regex `^\+?[\d\s\-]{7,20}$` en frontend (`EsTelefonoValido()`) y en `CreateCustomerValidator` + `UpdateCustomerValidator`.
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Clientes/Index.razor`, `src/TinaStore.Application/Validators/CustomerValidators.cs`
+- **Pruebas**: "abc123" → error. "3001234567" → válido. "+573001234567" → válido. Vacío → permite guardar.
+
+---
+
+## BUG-A3 — Errores del modal de cliente aparecían fuera del modal *(v1.3.0 — 2026-06-19)*
+
+- **Módulo**: Clientes
+- **Problema**: `_mensaje` se renderizaba a nivel de página. Al tener el backdrop del modal activo, el error quedaba tapado o era invisible para el usuario.
+- **Causa raíz**: Un solo `_mensaje` compartido entre página y modal. Sin errores por campo.
+- **Solución**: Nuevos `_erroresModal` (List<string>), `_errNombre`, `_errEmail`, `_errTelefono`. El `modal-body` muestra `alert-danger` como resumen + `invalid-feedback` por campo. El modal no se cierra al fallar validación.
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Clientes/Index.razor`
+- **Pruebas**: Guardar con nombre vacío → error dentro del modal. Guardar con email inválido → error en campo email. Modal permanece abierto al fallar.
+
+---
+
 ## BUG-06 — Botones de acción principales invisibles *(v1.1.0 — 2025-06-18)*
 
 - **Módulo**: Global / UI

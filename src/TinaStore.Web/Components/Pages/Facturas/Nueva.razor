@@ -59,23 +59,59 @@
         <div class="card border-0 shadow-sm p-3">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h6 class="fw-bold mb-0">Detalle de productos</h6>
-                <div class="d-flex gap-2" style="max-width:400px; flex:1; margin-left:1rem;">
+                <div class="d-flex gap-2 flex-wrap" style="max-width:600px; flex:1; margin-left:1rem;">
+                    <select class="form-select form-select-sm" style="max-width:170px;"
+                            @bind="_filtroCategoriaId"
+                            @bind:after="AplicarFiltros">
+                        <option value="0">Todas las categorías</option>
+                        @foreach (var c in _categorias)
+                        {
+                            <option value="@c.Id">@c.Name</option>
+                        }
+                    </select>
                     <input class="form-control form-control-sm" placeholder="🔍 Buscar producto..."
                            @bind="_busquedaProducto" @oninput="FiltrarProductos" />
                 </div>
             </div>
 
-            @if (_productosFiltrados.Any() && !string.IsNullOrEmpty(_busquedaProducto))
+            @if (_productosFiltrados.Any() && (!string.IsNullOrEmpty(_busquedaProducto) || _filtroCategoriaId > 0))
             {
-                <div class="list-group mb-3" style="max-height:180px; overflow-y:auto;">
-                    @foreach (var p in _productosFiltrados.Take(8))
+                <div class="list-group mb-3" style="max-height:260px; overflow-y:auto;">
+                    @foreach (var p in string.IsNullOrWhiteSpace(_busquedaProducto)
+                        ? _productosFiltrados
+                        : _productosFiltrados.Take(10))
                     {
                         <button class="list-group-item list-group-item-action d-flex justify-content-between py-2"
                                 @onclick="() => AgregarProducto(p)">
-                            <span>@p.Name <small class="text-muted">(@p.Sku)</small></span>
-                            <span class="text-purple fw-semibold">@p.SalePrice.ToString("C0") — Stock: @p.CurrentStock</span>
+                            <span>
+                                @p.Name <small class="text-muted">(@p.Sku)</small>
+                                @if (p.IsLowStock)
+                                {
+                                    <span class="badge bg-warning text-dark ms-1 small">Stock bajo</span>
+                                }
+                            </span>
+                            <span class="d-flex align-items-center gap-2">
+                                <span class="text-purple fw-semibold">@p.SalePrice.ToString("C0")</span>
+                                <span class="text-muted small">Stock: @p.CurrentStock</span>
+                                @if (p.CurrentStock == 0)
+                                {
+                                    <button class="btn btn-xs btn-outline-warning py-0 px-1"
+                                            title="Añadir stock"
+                                            @onclick:stopPropagation="true"
+                                            @onclick="() => AbrirModalStock(p)">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </button>
+                                }
+                            </span>
                         </button>
                     }
+                </div>
+            }
+
+            @if (_advertenciaStock is not null)
+            {
+                <div class="alert alert-warning py-1 small mb-2">
+                    <i class="bi bi-exclamation-triangle me-1"></i>@_advertenciaStock
                 </div>
             }
 
@@ -91,8 +127,15 @@
                             <tr>
                                 <td>@d.NombreProducto</td>
                                 <td class="text-center">
-                                    <input type="number" class="form-control form-control-sm text-center" style="width:70px"
-                                           min="1" @bind="d.Cantidad" @bind:after="() => RecalcularTotales()" />
+                                    <input type="number"
+                                           class="form-control form-control-sm text-center @(d.Cantidad > d.StockDisponible ? "is-invalid" : "")"
+                                           style="width:70px"
+                                           min="1" max="@d.StockDisponible"
+                                           @bind="d.Cantidad" @bind:after="() => RecalcularTotales()" />
+                                    @if (d.Cantidad > d.StockDisponible)
+                                    {
+                                        <div class="text-danger" style="font-size:0.7rem;">Máx. @d.StockDisponible</div>
+                                    }
                                 </td>
                                 <td class="text-end">@d.PrecioUnitario.ToString("C0")</td>
                                 <td class="text-end fw-semibold">@((d.Cantidad * d.PrecioUnitario).ToString("C0"))</td>
@@ -111,12 +154,22 @@
                             <td></td>
                         </tr>
                         <tr>
-                            <td colspan="3" class="text-end text-muted small">Descuento:</td>
+                            <td colspan="3" class="text-end text-muted small">Descuento (%):</td>
                             <td class="text-end text-muted small">
-                                <input type="number" class="form-control form-control-sm text-end"
-                                       style="width:100px;display:inline-block"
-                                       min="0" step="0.01"
-                                       @bind="_descuento" @bind:after="RecalcularTotales" />
+                                <div class="d-flex align-items-center justify-content-end gap-2">
+                                    <input type="number" class="form-control form-control-sm text-end @(_advertenciaDescuento is not null ? "is-invalid" : "")"
+                                           style="width:80px;display:inline-block"
+                                           min="0" max="100" step="0.01"
+                                           @bind="_descuentoPct" @bind:after="RecalcularTotales" />
+                                    @if (_descuento > 0)
+                                    {
+                                        <span class="text-muted small text-nowrap">-@_descuento.ToString("C0")</span>
+                                    }
+                                </div>
+                                @if (_advertenciaDescuento is not null)
+                                {
+                                    <div class="invalid-feedback d-block small">@_advertenciaDescuento</div>
+                                }
                             </td>
                             <td></td>
                         </tr>
@@ -147,7 +200,7 @@
 
             <div class="d-flex justify-content-end">
                 <button class="btn bg-purple text-white px-4" @onclick="CrearFactura"
-                        disabled="@(!_detalles.Any() || _clienteId == 0 || _creando)">
+                        disabled="@(!_detalles.Any() || _clienteId == 0 || _creando || _detalles.Any(d => d.Cantidad > d.StockDisponible))">
                     @if (_creando) { <span class="spinner-border spinner-border-sm me-2"></span> }
                     <i class="bi bi-check-lg me-1"></i>Emitir Factura
                 </button>
@@ -156,53 +209,152 @@
     </div>
 </div>
 
+<!-- Modal: Añadir stock rápido -->
+@if (_modalStockVisible)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.4)">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title fw-bold">
+                        <i class="bi bi-plus-circle me-1 text-warning"></i>Añadir stock
+                    </h6>
+                    <button class="btn-close" @onclick="CerrarModalStock"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted mb-2">
+                        <strong>@_stockProducto?.Name</strong><br />
+                        Stock actual: <span class="fw-semibold text-danger">@(_stockProducto?.CurrentStock ?? 0)</span>
+                    </p>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Cantidad a ingresar</label>
+                        <input type="number" class="form-control form-control-sm" min="1"
+                               @bind="_stockCantidad" />
+                    </div>
+                    <div>
+                        <label class="form-label small fw-semibold">Notas (opcional)</label>
+                        <input type="text" class="form-control form-control-sm"
+                               placeholder="Ej.: Compra de emergencia" @bind="_stockNotas" />
+                    </div>
+                    @if (_stockError is not null)
+                    {
+                        <div class="alert alert-danger py-1 small mt-2">@_stockError</div>
+                    }
+                </div>
+                <div class="modal-footer py-2">
+                    <button class="btn btn-sm btn-secondary" @onclick="CerrarModalStock">Cancelar</button>
+                    <button class="btn btn-sm btn-warning text-dark" @onclick="ConfirmarAjusteStock"
+                            disabled="@_stockGuardando">
+                        @if (_stockGuardando) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                        Añadir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<ClienteDto> _clientes = [];
     private List<MetodoPagoDto> _metodosPago = [];
     private List<ProductoDto> _productos = [];
     private List<ProductoDto> _productosFiltrados = [];
     private List<DetalleLinea> _detalles = [];
+    private List<CategoriaDto> _categorias = [];
 
     private int _clienteId;
     private int _metodoPagoId;
     private decimal? _pagoInicial;
     private string? _notas;
     private string _busquedaProducto = "";
+    private int _filtroCategoriaId;
     private decimal _subtotal;
-    private decimal _descuento;
+    private decimal _descuentoPct;  // porcentaje ingresado por el usuario (0-100)
+    private decimal _descuento;     // monto calculado = subtotal * descuentoPct / 100
     private decimal _impuestoPct;
     private decimal _total;
     private bool _creando;
     private string? _error;
+    private string? _advertenciaDescuento;
+
+    // Modal ajuste stock
+    private bool _modalStockVisible;
+    private ProductoDto? _stockProducto;
+    private int _stockCantidad = 1;
+    private string? _stockNotas;
+    private string? _stockError;
+    private bool _stockGuardando;
 
     protected override async Task OnInitializedAsync()
     {
         var t1 = Api.GetClientesAsync();
         var t2 = Api.GetMetodosPagoAsync();
         var t3 = Api.GetProductosAsync();
-        await Task.WhenAll(t1, t2, t3);
+        var t4 = Api.GetCategoriasAsync();
+        await Task.WhenAll(t1, t2, t3, t4);
         _clientes     = t1.Result ?? [];
         _metodosPago  = t2.Result ?? [];
         _productos    = t3.Result ?? [];
+        _categorias   = t4.Result ?? [];
     }
 
     private void FiltrarProductos(ChangeEventArgs e)
     {
         _busquedaProducto = e.Value?.ToString() ?? "";
-        if (string.IsNullOrWhiteSpace(_busquedaProducto)) { _productosFiltrados = []; return; }
+        AplicarFiltros();
+    }
+
+    private void FiltrarProductosActual() => AplicarFiltros();
+
+    private void AplicarFiltros()
+    {
+        if (string.IsNullOrWhiteSpace(_busquedaProducto) && _filtroCategoriaId == 0)
+        {
+            _productosFiltrados = [];
+            return;
+        }
+
         var q = _busquedaProducto.ToLower();
         _productosFiltrados = _productos
-            .Where(p => p.IsActive && (p.Name.ToLower().Contains(q) || (p.Sku?.ToLower().Contains(q) ?? false)))
+            .Where(p => p.IsActive
+                && (_filtroCategoriaId == 0 || p.CategoryId == _filtroCategoriaId)
+                && (string.IsNullOrWhiteSpace(q) || p.Name.ToLower().Contains(q) || (p.Sku?.ToLower().Contains(q) ?? false)))
             .ToList();
     }
+
+    private string? _advertenciaStock;
 
     private void AgregarProducto(ProductoDto p)
     {
         var existente = _detalles.FirstOrDefault(d => d.ProductoId == p.Id);
-        if (existente is not null) { existente.Cantidad++; }
-        else _detalles.Add(new DetalleLinea { ProductoId = p.Id, NombreProducto = p.Name, PrecioUnitario = p.SalePrice, Cantidad = 1 });
+        if (existente is not null)
+        {
+            if (existente.Cantidad >= existente.StockDisponible)
+            {
+                _advertenciaStock = $"Stock máximo alcanzado para '{p.Name}' ({existente.StockDisponible} unid.)";
+                return;
+            }
+            existente.Cantidad++;
+        }
+        else
+        {
+            if (p.CurrentStock <= 0)
+            {
+                _advertenciaStock = $"'{p.Name}' no tiene stock disponible. Añade stock antes de facturar.";
+                return;
+            }
+            _detalles.Add(new DetalleLinea
+            {
+                ProductoId       = p.Id,
+                NombreProducto   = p.Name,
+                PrecioUnitario   = p.SalePrice,
+                Cantidad         = 1,
+                StockDisponible  = p.CurrentStock
+            });
+        }
+        _advertenciaStock = null;
         _busquedaProducto = "";
-        _productosFiltrados = [];
+        AplicarFiltros();
         RecalcularTotales();
     }
 
@@ -211,6 +363,24 @@
     private void RecalcularTotales()
     {
         _subtotal = _detalles.Sum(d => d.Cantidad * d.PrecioUnitario);
+
+        // Clamp del porcentaje de descuento
+        if (_descuentoPct < 0)
+        {
+            _descuentoPct = 0;
+            _advertenciaDescuento = "El descuento no puede ser negativo.";
+        }
+        else if (_descuentoPct > 100)
+        {
+            _descuentoPct = 100;
+            _advertenciaDescuento = "El descuento no puede superar el 100%.";
+        }
+        else
+        {
+            _advertenciaDescuento = null;
+        }
+
+        _descuento = Math.Round(_subtotal * (_descuentoPct / 100m), 2);
         var baseImponible = Math.Max(0, _subtotal - _descuento);
         var impuesto = Math.Round(baseImponible * (_impuestoPct / 100m), 2);
         _total = baseImponible + impuesto;
@@ -218,8 +388,26 @@
 
     private async Task CrearFactura()
     {
-        _creando = true;
         _error = null;
+
+        // ── Validaciones de negocio ───────────────────────────────────────────
+        if (_clienteId == 0)            { _error = "Selecciona un cliente antes de emitir la factura.";      return; }
+        if (!_detalles.Any())           { _error = "Agrega al menos un producto a la factura.";              return; }
+        if (_detalles.Any(d => d.Cantidad <= 0))
+                                        { _error = "La cantidad de cada producto debe ser mayor a cero.";    return; }
+        if (_detalles.Any(d => d.Cantidad > d.StockDisponible))
+                                        { _error = "Una o más líneas superan el stock disponible. Corrija las cantidades antes de emitir."; return; }
+        if (_detalles.Any(d => d.PrecioUnitario < 0))
+                                        { _error = "El precio unitario no puede ser negativo.";              return; }
+        if (_descuentoPct < 0)         { _error = "El descuento no puede ser negativo.";                    return; }
+        if (_descuentoPct > 100)        { _error = "El descuento no puede superar el 100%.";                 return; }
+        if (_impuestoPct < 0)           { _error = "El porcentaje de impuesto no puede ser negativo.";       return; }
+        if (_pagoInicial.HasValue && _pagoInicial.Value < 0)
+                                        { _error = "El pago inicial no puede ser negativo.";                 return; }
+        if (_pagoInicial.HasValue && _pagoInicial.Value > _total)
+                                        { _error = "El pago inicial no puede ser mayor al total de la factura."; return; }
+
+        _creando = true;
         try
         {
             CreatePagoInicialDto? pagoInicial = null;
@@ -245,11 +433,57 @@
         finally { _creando = false; }
     }
 
+    private void AbrirModalStock(ProductoDto p)
+    {
+        _stockProducto  = p;
+        _stockCantidad  = 1;
+        _stockNotas     = null;
+        _stockError     = null;
+        _modalStockVisible = true;
+    }
+
+    private void CerrarModalStock()
+    {
+        _modalStockVisible = false;
+        _stockProducto = null;
+    }
+
+    private async Task ConfirmarAjusteStock()
+    {
+        if (_stockProducto is null) return;
+        if (_stockCantidad <= 0) { _stockError = "La cantidad debe ser mayor a cero."; return; }
+
+        _stockGuardando = true;
+        _stockError = null;
+        try
+        {
+            var actualizado = await Api.AjustarStockAsync(
+                _stockProducto.Id,
+                new AjusteStockDto(_stockCantidad, _stockNotas));
+
+            if (actualizado is null)
+            {
+                _stockError = "No se pudo actualizar el stock. Inténtalo de nuevo.";
+                return;
+            }
+
+            // Refrescar el producto en la lista local
+            var idx = _productos.FindIndex(p => p.Id == actualizado.Id);
+            if (idx >= 0) _productos[idx] = actualizado;
+
+            CerrarModalStock();
+            AplicarFiltros();
+        }
+        catch { _stockError = "Error al comunicarse con la API."; }
+        finally { _stockGuardando = false; }
+    }
+
     private class DetalleLinea
     {
         public int ProductoId { get; set; }
         public string NombreProducto { get; set; } = "";
         public decimal PrecioUnitario { get; set; }
         public int Cantidad { get; set; }
+        public int StockDisponible { get; set; }
     }
 }

@@ -26,22 +26,37 @@ else
 {
     <div class="card border-0 shadow-sm mb-3 p-3">
         <div class="row g-2 align-items-end">
-            <div class="col-md-4">
+            <div class="col-12 col-sm-6 col-md-3">
                 <label class="form-label small fw-semibold mb-1">Buscar cliente</label>
                 <input class="form-control form-control-sm" placeholder="Nombre, documento o teléfono..."
                        @oninput="e => { _filtroTexto = e.Value?.ToString() ?? string.Empty; Filtrar(); }" />
             </div>
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-md-2">
+                <label class="form-label small fw-semibold mb-1">Estado</label>
+                <select class="form-select form-select-sm"
+                        @onchange="e => { _filtroEstado = e.Value?.ToString() ?? string.Empty; Filtrar(); }">
+                    <option value="">Todos</option>
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                    <option value="sin-correo">Sin correo</option>
+                </select>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <label class="form-label small fw-semibold mb-1">Correo</label>
+                <input class="form-control form-control-sm" placeholder="Buscar por correo..."
+                       @oninput="e => { _filtroEmail = e.Value?.ToString() ?? string.Empty; Filtrar(); }" />
+            </div>
+            <div class="col-12 col-sm-6 col-md-2">
                 <label class="form-label small fw-semibold mb-1">Compra desde</label>
                 <input type="date" class="form-control form-control-sm"
                        @onchange="e => { _filtroDesde = e.Value is string s && !string.IsNullOrEmpty(s) ? DateOnly.Parse(s) : (DateOnly?)null; Filtrar(); }" />
             </div>
-            <div class="col-md-3">
+            <div class="col-12 col-sm-6 col-md-2">
                 <label class="form-label small fw-semibold mb-1">Compra hasta</label>
                 <input type="date" class="form-control form-control-sm"
                        @onchange="e => { _filtroHasta = e.Value is string s && !string.IsNullOrEmpty(s) ? DateOnly.Parse(s) : (DateOnly?)null; Filtrar(); }" />
             </div>
-            <div class="col-md-2 d-flex align-items-end">
+            <div class="col-12 col-sm-auto d-flex align-items-end">
                 <button class="btn btn-sm btn-outline-secondary w-100" @onclick="LimpiarFiltros">
                     <i class="bi bi-x-circle me-1"></i>Limpiar
                 </button>
@@ -106,48 +121,75 @@ else
 @if (_mostrarModal)
 {
     <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">@(_editando ? "Editar" : "Nuevo") cliente</h5>
                     <button class="btn-close" @onclick="CerrarModal"></button>
                 </div>
-                <div class="modal-body row g-3">
-                    <div class="col-12">
-                        <label class="form-label small fw-semibold">Nombre completo *</label>
-                        <input class="form-control" @bind="_form.FullName" />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Tipo doc.</label>
-                        <select class="form-select" @bind="_form.DocumentType">
-                            <option value="">— Selecciona —</option>
-                            <option value="CC">CC — Cédula de ciudadanía</option>
-                            <option value="NIT">NIT — Número de identificación tributaria</option>
-                            <option value="CE">CE — Cédula de extranjería</option>
-                            <option value="PP">PP — Pasaporte</option>
-                            <option value="TI">TI — Tarjeta de identidad</option>
-                            <option value="Otro">Otro</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Documento</label>
-                        <input class="form-control" @bind="_form.DocumentNumber" />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Teléfono</label>
-                        <input class="form-control" @bind="_form.Phone" />
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label small fw-semibold">Email</label>
-                        <input class="form-control" @bind="_form.Email" />
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label small fw-semibold">Dirección</label>
-                        <input class="form-control" @bind="_form.Address" />
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label small fw-semibold">Notas</label>
-                        <input class="form-control" @bind="_form.Notes" />
+                <div class="modal-body">
+                    @if (_erroresModal.Any())
+                    {
+                        <div class="alert alert-danger py-2 small mb-3">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            <strong>Revisa los campos marcados antes de guardar:</strong>
+                            <ul class="mb-0 mt-1 ps-3">
+                                @foreach (var err in _erroresModal)
+                                {
+                                    <li>@err</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Nombre completo *</label>
+                            <input class="form-control @(_errNombre is not null ? "is-invalid" : "")" @bind="_form.FullName" />
+                            @if (_errNombre is not null)
+                            {
+                                <div class="invalid-feedback">@_errNombre</div>
+                            }
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small fw-semibold">Tipo doc.</label>
+                            <select class="form-select" @bind="_form.DocumentType">
+                                <option value="">— Selecciona —</option>
+                                <option value="CC">CC — Cédula de ciudadanía</option>
+                                <option value="NIT">NIT — Número de identificación tributaria</option>
+                                <option value="CE">CE — Cédula de extranjería</option>
+                                <option value="PP">PP — Pasaporte</option>
+                                <option value="TI">TI — Tarjeta de identidad</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small fw-semibold">Documento</label>
+                            <input class="form-control" @bind="_form.DocumentNumber" />
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small fw-semibold">Teléfono</label>
+                            <input class="form-control @(_errTelefono is not null ? "is-invalid" : "")" @bind="_form.Phone" placeholder="Ej: 3001234567" />
+                            @if (_errTelefono is not null)
+                            {
+                                <div class="invalid-feedback">@_errTelefono</div>
+                            }
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small fw-semibold">Email</label>
+                            <input class="form-control @(_errEmail is not null ? "is-invalid" : "")" @bind="_form.Email" placeholder="Ej: cliente@correo.com" />
+                            @if (_errEmail is not null)
+                            {
+                                <div class="invalid-feedback">@_errEmail</div>
+                            }
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Dirección</label>
+                            <input class="form-control" @bind="_form.Address" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Notas</label>
+                            <input class="form-control" @bind="_form.Notes" />
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -202,8 +244,16 @@ else
     private int _idAEliminar;
     private string _nombreAEliminar = "";
 
+    // ── Errores de validación del modal ────────────────────────────────────────────
+    private string? _errNombre;
+    private string? _errEmail;
+    private string? _errTelefono;
+    private List<string> _erroresModal = [];
+
     // ── Filtros ────────────────────────────────────────────────────────────────────
-    private string  _filtroTexto  = string.Empty;
+    private string    _filtroTexto  = string.Empty;
+    private string    _filtroEstado = string.Empty;
+    private string    _filtroEmail  = string.Empty;
     private DateOnly? _filtroDesde;
     private DateOnly? _filtroHasta;
 
@@ -227,6 +277,15 @@ else
                         c.FullName.Contains(_filtroTexto, StringComparison.OrdinalIgnoreCase) ||
                         (c.DocumentNumber?.Contains(_filtroTexto, StringComparison.OrdinalIgnoreCase) ?? false) ||
                         (c.Phone?.Contains(_filtroTexto) ?? false))
+            .Where(c => _filtroEstado switch
+            {
+                "activo"     => c.IsActive,
+                "inactivo"   => !c.IsActive,
+                "sin-correo" => c.IsActive && string.IsNullOrWhiteSpace(c.Email),
+                _            => true
+            })
+            .Where(c => string.IsNullOrWhiteSpace(_filtroEmail) ||
+                        (c.Email?.Contains(_filtroEmail, StringComparison.OrdinalIgnoreCase) ?? false))
             .Where(c =>
             {
                 if (_filtroDesde is null && _filtroHasta is null) return true;
@@ -241,10 +300,12 @@ else
 
     private void LimpiarFiltros()
     {
-        _filtroTexto = string.Empty;
-        _filtroDesde = null;
-        _filtroHasta = null;
-        _filtrados   = _clientes;
+        _filtroTexto  = string.Empty;
+        _filtroEstado = string.Empty;
+        _filtroEmail  = string.Empty;
+        _filtroDesde  = null;
+        _filtroHasta  = null;
+        _filtrados    = _clientes;
     }
 
     private void AbrirModal(ClienteDto? c = null)
@@ -254,15 +315,44 @@ else
         _form = c is null
             ? new()
             : new() { FullName = c.FullName, DocumentType = c.DocumentType, DocumentNumber = c.DocumentNumber, Phone = c.Phone, Email = c.Email, Address = c.Address, Notes = c.Notes };
+        LimpiarErroresModal();
         _mostrarModal = true;
         _mensaje = null;
     }
 
-    private void CerrarModal() => _mostrarModal = false;
+    private void CerrarModal()
+    {
+        _mostrarModal = false;
+        LimpiarErroresModal();
+    }
+
+    private void LimpiarErroresModal()
+    {
+        _errNombre   = null;
+        _errEmail    = null;
+        _errTelefono = null;
+        _erroresModal = [];
+    }
 
     private async Task Guardar()
     {
-        if (string.IsNullOrWhiteSpace(_form.FullName)) return;
+        LimpiarErroresModal();
+
+        if (string.IsNullOrWhiteSpace(_form.FullName))
+            _errNombre = "El nombre completo es obligatorio.";
+
+        if (!EsEmailValido(_form.Email))
+            _errEmail = "Ingresa un correo válido, por ejemplo: cliente@correo.com.";
+
+        if (!EsTelefonoValido(_form.Phone))
+            _errTelefono = "Ingresa un número de teléfono válido. Para Colombia debe tener 10 dígitos.";
+
+        if (_errNombre   is not null) _erroresModal.Add(_errNombre);
+        if (_errEmail    is not null) _erroresModal.Add(_errEmail);
+        if (_errTelefono is not null) _erroresModal.Add(_errTelefono);
+
+        if (_erroresModal.Any()) return;
+
         _guardando = true;
         bool ok;
         if (_editando)
@@ -276,9 +366,18 @@ else
             ok = await Api.CreateClienteAsync(dto);
         }
         _guardando = false;
-        _exito = ok;
-        _mensaje = ok ? "Cliente guardado correctamente." : "Error al guardar el cliente.";
-        if (ok) { CerrarModal(); await Cargar(); }
+
+        if (ok)
+        {
+            _exito = true;
+            _mensaje = "Cliente guardado correctamente.";
+            CerrarModal();
+            await Cargar();
+        }
+        else
+        {
+            _erroresModal.Add("Error al guardar el cliente. Verifica los datos e intenta de nuevo.");
+        }
     }
 
     private void ConfirmarEliminar(ClienteDto c)
@@ -295,6 +394,22 @@ else
         _exito = ok;
         _mensaje = ok ? "Cliente eliminado." : "No se pudo eliminar el cliente.";
         if (ok) await Cargar();
+    }
+
+    private static bool EsEmailValido(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email)) return true;
+        return System.Text.RegularExpressions.Regex.IsMatch(
+            email.Trim(),
+            @"^[^@\s]+@[^@\s]+\.[^@\s]+$");
+    }
+
+    private static bool EsTelefonoValido(string? phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone)) return true;
+        return System.Text.RegularExpressions.Regex.IsMatch(
+            phone.Trim(),
+            @"^\+?[\d\s\-]{7,20}$");
     }
 
     private class ClienteForm

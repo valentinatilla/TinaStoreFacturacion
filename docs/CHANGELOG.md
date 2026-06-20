@@ -5,6 +5,120 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [1.6.0] — Fase D: Grilla de categorías y ajuste rápido de stock
+
+### Añadido
+
+#### [D1] Filtro de categorías en la pantalla "Nueva Factura"
+- **Módulo**: Facturas
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Facturas/Nueva.razor`
+- **Detalle**: Selector de categoría junto al campo de búsqueda. Permite filtrar la lista de productos por categoría sin necesidad de escribir. Funciona combinado con búsqueda por nombre/SKU.
+
+#### [D2] Indicador "Stock bajo" en el buscador de productos
+- **Módulo**: Facturas
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Facturas/Nueva.razor`
+- **Detalle**: Badge amarillo "Stock bajo" visible en cada fila del dropdown de productos cuando `IsLowStock == true`. Botón rápido `+` para abrir el modal de stock cuando el producto tiene `CurrentStock == 0`.
+
+#### [D3] Modal de ajuste rápido de stock desde la factura
+- **Módulo**: Facturas / Productos
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Facturas/Nueva.razor`, `src/TinaStore.Web/Services/TinaStoreApiClient.cs`
+- **Detalle**: Modal pequeño que permite ingresar unidades al stock de un producto sin salir de la pantalla de factura. Muestra el nombre del producto y el stock actual antes de confirmar. Actualiza la lista local en memoria al cerrar.
+
+#### [D4] Endpoint `POST /api/products/{id}/ajuste-stock`
+- **Módulo**: Productos (API)
+- **Archivos**: `src/TinaStore.Api/Controllers/ProductsController.cs`
+- **Detalle**: Nuevo endpoint dedicado para entradas rápidas de stock. Recibe `{ Cantidad, Notas }`, registra un `InventoryMovement` de tipo `Entry` con trazabilidad completa y devuelve el `ProductDto` actualizado.
+
+#### [D5] Servicio `AjustarStockAsync` en la capa Application
+- **Módulo**: Productos (Application)
+- **Archivos**: `src/TinaStore.Application/Services/ProductService.cs`, `src/TinaStore.Application/Interfaces/IServices.cs`, `src/TinaStore.Application/DTOs/ProductDtos.cs`
+- **Detalle**: `IProductService` extendido con `AjustarStockAsync(int id, AjusteStockDto dto)`. La implementación incrementa `CurrentStock`, persiste un movimiento de inventario con stock antes/después y devuelve el producto actualizado.
+
+---
+
+## [1.5.0] — 2026-06-19 — Fase C: PDF y facturas
+
+### Corregido / Añadido
+
+#### [C8] Indicador de carga al descargar PDF
+- **Módulo**: Facturas
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Facturas/Index.razor`
+- **Detalle**: `HashSet<int> _pdfDescargando` por ID de factura. El botón muestra spinner mientras descarga, queda deshabilitado para evitar dobles clics, y vuelve a la normalidad al terminar. Si el PDF se genera correctamente muestra confirmación; si falla muestra error claro.
+
+#### [C9] Estado de factura en español en el PDF
+- **Módulo**: PDF / Facturas
+- **Archivos**: `src/TinaStore.Infrastructure/Services/PdfService.cs`
+- **Detalle**: Switch expression que mapea `InvoiceStatus` a etiquetas en español: PAGADA, ANULADA, PARCIAL, PENDIENTE. Reemplaza `invoice.Status.ToString().ToUpper()` que producía PAID/CANCELLED/etc.
+
+#### [C10] Etiqueta "N° Factura" visible en el PDF
+- **Módulo**: PDF / Facturas
+- **Archivos**: `src/TinaStore.Infrastructure/Services/PdfService.cs`
+- **Detalle**: Encabezado del PDF con texto "N° Factura" en gris pequeño sobre el número, para distinguirlo claramente del nombre de la tienda y la fecha.
+
+#### [C11] Confirmar anulación de factura con Enter
+- **Módulo**: Facturas
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Facturas/Index.razor`
+- **Detalle**: Handler `HandleAnulacionKeyDown` con `@onkeydown` en el textarea. Si `Key == "Enter"` y no es `ShiftKey`, ejecuta `ConfirmarAnulacion()`. Shift+Enter permite salto de línea. Textarea usa `@bind:event="oninput"` para que el valor esté actualizado al presionar Enter.
+
+#### [C12] Validación de descuento y valores negativos en nueva factura
+- **Módulo**: Facturas / Nueva factura
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Facturas/Nueva.razor`
+- **Detalle**: `RecalcularTotales()` recorta automáticamente el descuento si es negativo o supera el subtotal, mostrando advertencia inline con Bootstrap `is-invalid`. `CrearFactura()` valida 8 reglas antes de llamar a la API: cliente seleccionado, al menos un producto, cantidad > 0, precio >= 0, descuento dentro del rango, impuesto >= 0, pago inicial >= 0 y pago inicial <= total.
+
+---
+
+## [1.4.0] — 2026-06-19 — Fase B: Filtros y ordenamientos
+
+### Añadido
+
+#### [B6] Ordenamiento interactivo en módulo Facturas
+- **Módulo**: Facturas
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Facturas/Index.razor`
+- **Detalle**: Cabeceras de tabla clickeables con iconos de estado (↓ mayor a menor, ↑ menor a mayor, ↕ sin orden) para las columnas: N° Factura, Total, Pagado, Saldo y Fecha. Al hacer clic en una columna ya activa se invierte la dirección. Al hacer clic en una columna diferente se activa descendente por defecto. "Limpiar filtros" también resetea el orden a Fecha descendente.
+
+#### [B7] Selector de orden ampliado en módulo Productos
+- **Módulo**: Productos
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Productos/Index.razor`
+- **Detalle**: El selector "Orden por stock" fue reemplazado por "Ordenar por" con 10 opciones agrupadas: Stock (↑↓), Precio venta (↑↓), Costo (↑↓), % Ganancia (↑↓) y Nombre (A→Z / Z→A). El campo interno `_ordenStock` fue renombrado a `_orden` y el switch en `Filtrar()` fue extendido con todos los nuevos casos.
+
+---
+
+## [1.3.0] — 2026-06-19 — Fase A: Validaciones, errores en modal y responsividad
+
+### Corregido / Añadido
+
+#### [A1] Validación de correo en frontend
+- **Módulo**: Clientes
+- **Causa raíz**: El campo Email no tenía validación visual en Blazor; los errores de la API se mostraban fuera del modal.
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Clientes/Index.razor`
+- **Solución**: Regex `^[^@\s]+@[^@\s]+\.[^@\s]+$` validado antes de llamar a la API. El modal no se cierra si el correo es inválido.
+
+#### [A2] Validación de teléfono en frontend y backend
+- **Módulo**: Clientes
+- **Causa raíz**: Backend solo validaba longitud máxima; no había regex de formato colombiano.
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Clientes/Index.razor`, `src/TinaStore.Application/Validators/CustomerValidators.cs`
+- **Solución**: Regex `^\+?[\d\s\-]{7,20}$` en frontend y en CreateCustomerValidator + UpdateCustomerValidator. Mensaje en español consistente.
+
+#### [A3] Errores dentro del modal de cliente
+- **Módulo**: Clientes
+- **Causa raíz**: `_mensaje` se renderizaba a nivel de página, detrás del backdrop del modal.
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Clientes/Index.razor`
+- **Solución**: Nuevo `_erroresModal` (List<string>) + campos `_errNombre`, `_errEmail`, `_errTelefono`. Resumen de errores en `alert-danger` dentro del `modal-body`. Clases Bootstrap `is-invalid` + `invalid-feedback` por campo.
+
+#### [A4] Modales responsivos con scroll interno
+- **Módulo**: Clientes, Facturas, Productos
+- **Causa raíz**: Modales sin `modal-dialog-scrollable`; en pantallas pequeñas el contenido se cortaba.
+- **Archivos**: `Clientes/Index.razor`, `Facturas/Index.razor`, `Productos/Index.razor`
+- **Solución**: `modal-dialog-scrollable` añadido a todos los modales afectados. Columnas responsive `col-12 col-sm-6 col-md-*`.
+
+#### [B5-parcial] Filtros de estado y correo en módulo Clientes
+- **Módulo**: Clientes
+- **Causa raíz**: Solo existía filtro de texto libre y fechas. Sin filtro por estado ni correo.
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Clientes/Index.razor`
+- **Solución**: Nuevo `<select>` de estado (Todos/Activo/Inactivo/Sin correo) y campo de búsqueda por correo. `Filtrar()` ampliado con ambas condiciones.
+
+---
+
 ## [1.2.0] — 2026-06-18 — Fases A2 + B1 + B3: Datos, visualización y nuevas funcionalidades
 
 ### Corregido

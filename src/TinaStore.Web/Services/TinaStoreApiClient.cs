@@ -40,6 +40,7 @@ public record MetodoPagoDto(int Id, string Name, string? Description, bool IsAct
 public record ProductoDto(int Id, string? Sku, string Name, string? Description, string? Unit, decimal SalePrice, decimal PurchasePrice, int CurrentStock, int MinimumStock, bool IsActive, bool IsLowStock, decimal ProfitMargin, int CategoryId, string CategoryName, int? SupplierId, string? SupplierName, string? ImagePath);
 public record CreateProductoDto(string? Sku, string Name, string? Description, string? Unit, decimal PurchasePrice, decimal SalePrice, int CurrentStock, int MinimumStock, int CategoryId, int? SupplierId);
 public record UpdateProductoDto(string? Sku, string Name, string? Description, string? Unit, decimal PurchasePrice, decimal SalePrice, int MinimumStock, bool IsActive, int CategoryId, int? SupplierId, int StockEntrada = 0);
+public record AjusteStockDto(int Cantidad, string? Notas = null);
 
 public record FacturaDto(int Id, string InvoiceNumber, DateTime InvoiceDate, string CustomerName, decimal Subtotal, decimal DiscountAmount, decimal TaxAmount, decimal Total, decimal AmountPaid, decimal Balance, int Status, string StatusName, string? Notes);
 public record CreateFacturaDto(int CustomerId, decimal DiscountAmount, decimal TaxAmount, string? Notes, List<CreateDetalleFacturaDto> Details, CreatePagoInicialDto? PagoInicial);
@@ -339,7 +340,15 @@ public class TinaStoreApiClient
         return r.IsSuccessStatusCode;
     }
 
-    // ── Facturas ──────────────────────────────────────────────────────────────
+    public async Task<ProductoDto?> AjustarStockAsync(int id, AjusteStockDto dto)
+    {
+        SetAuthHeader();
+        var r = await _http.PostAsJsonAsync($"/api/products/{id}/ajuste-stock", dto);
+        if (!r.IsSuccessStatusCode) return null;
+        return await r.Content.ReadFromJsonAsync<ProductoDto>();
+    }
+
+    // ── Facturas
     public Task<List<FacturaDto>?> GetFacturasAsync() =>
         GetSafeAsync<List<FacturaDto>>("/api/invoices");
 
