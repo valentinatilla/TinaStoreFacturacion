@@ -21,7 +21,8 @@ public record InvoiceDetailDto(
     int Quantity,
     decimal UnitPrice,
     decimal DiscountAmount,
-    decimal Subtotal
+    decimal Subtotal,
+    string? ImagePath = null
 );
 
 // ─── Pago / Abono ────────────────────────────────────────────────────────────

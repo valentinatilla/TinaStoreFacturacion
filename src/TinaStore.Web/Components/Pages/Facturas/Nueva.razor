@@ -2,6 +2,7 @@
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 @inject NavigationManager Nav
+@inject IConfiguration Config
 
 <PageTitle>Nueva Venta — Tina Store</PageTitle>
 
@@ -81,14 +82,25 @@
                         ? _productosFiltrados
                         : _productosFiltrados.Take(10))
                     {
-                        <button class="list-group-item list-group-item-action d-flex justify-content-between py-2"
+                        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2"
                                 @onclick="() => AgregarProducto(p)">
-                            <span>
-                                @p.Name <small class="text-muted">(@p.Sku)</small>
-                                @if (p.IsLowStock)
+                            <span class="d-flex align-items-center gap-2">
+                                @if (!string.IsNullOrEmpty(p.ImagePath))
                                 {
-                                    <span class="badge bg-warning text-dark ms-1 small">Stock bajo</span>
+                                    <img src="@(_apiBase + p.ImagePath)" alt="@p.Name"
+                                         style="width:32px;height:32px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;" />
                                 }
+                                else
+                                {
+                                    <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#f1f5f9;color:#94a3b8;font-size:.75rem;"><i class="bi bi-image"></i></span>
+                                }
+                                <span>
+                                    @p.Name <small class="text-muted">(@p.Sku)</small>
+                                    @if (p.IsLowStock)
+                                    {
+                                        <span class="badge bg-warning text-dark ms-1 small">Stock bajo</span>
+                                    }
+                                </span>
                             </span>
                             <span class="d-flex align-items-center gap-2">
                                 <span class="text-purple fw-semibold">@p.SalePrice.ToString("C0")</span>
@@ -118,14 +130,25 @@
             @if (_detalles.Any())
             {
                 <table class="table table-sm mb-3">
-                    <thead class="table-light">
-                        <tr><th>Producto</th><th class="text-center">Cant.</th><th class="text-end">P. Unit.</th><th class="text-end">Subtotal</th><th></th></tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var d in _detalles)
-                        {
-                            <tr>
-                                <td>@d.NombreProducto</td>
+                        <thead class="table-light">
+                            <tr><th style="width:44px"></th><th>Producto</th><th class="text-center">Cant.</th><th class="text-end">P. Unit.</th><th class="text-end">Subtotal</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var d in _detalles)
+                            {
+                                <tr>
+                                    <td class="align-middle text-center">
+                                        @if (!string.IsNullOrEmpty(d.ImagePath))
+                                        {
+                                            <img src="@(_apiBase + d.ImagePath)" alt="@d.NombreProducto"
+                                                 style="width:32px;height:32px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;" />
+                                        }
+                                        else
+                                        {
+                                            <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#f1f5f9;color:#94a3b8;font-size:.75rem;"><i class="bi bi-image"></i></span>
+                                        }
+                                    </td>
+                                    <td class="align-middle">@d.NombreProducto</td>
                                 <td class="text-center">
                                     <input type="number"
                                            class="form-control form-control-sm text-center @(d.Cantidad > d.StockDisponible ? "is-invalid" : "")"
@@ -149,12 +172,12 @@
                     </tbody>
                     <tfoot class="table-light">
                         <tr>
-                            <td colspan="3" class="text-end text-muted small">Subtotal:</td>
+                            <td colspan="4" class="text-end text-muted small">Subtotal:</td>
                             <td class="text-end text-muted small">@_subtotal.ToString("C0")</td>
                             <td></td>
                         </tr>
                         <tr>
-                            <td colspan="3" class="text-end text-muted small">Descuento (%):</td>
+                            <td colspan="4" class="text-end text-muted small">Descuento (%):</td>
                             <td class="text-end text-muted small">
                                 <div class="d-flex align-items-center justify-content-end gap-2">
                                     <input type="number" class="form-control form-control-sm text-end @(_advertenciaDescuento is not null ? "is-invalid" : "")"
@@ -174,7 +197,7 @@
                             <td></td>
                         </tr>
                         <tr>
-                            <td colspan="3" class="text-end text-muted small">Impuesto (%):</td>
+                            <td colspan="4" class="text-end text-muted small">Impuesto (%):</td>
                             <td class="text-end text-muted small">
                                 <input type="number" class="form-control form-control-sm text-end"
                                        style="width:80px;display:inline-block"
@@ -184,7 +207,7 @@
                             <td></td>
                         </tr>
                         <tr class="fw-bold border-top">
-                            <td colspan="3" class="text-end fw-bold">Total:</td>
+                            <td colspan="4" class="text-end fw-bold">Total:</td>
                             <td class="text-end fw-bold fs-5 text-purple">@_total.ToString("C0")</td>
                             <td></td>
                         </tr>
@@ -255,6 +278,7 @@
 }
 
 @code {
+    private string _apiBase = string.Empty;
     private List<ClienteDto> _clientes = [];
     private List<MetodoPagoDto> _metodosPago = [];
     private List<ProductoDto> _productos = [];
@@ -287,6 +311,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _apiBase = Config["ApiBaseUrl"] ?? string.Empty;
         var t1 = Api.GetClientesAsync();
         var t2 = Api.GetMetodosPagoAsync();
         var t3 = Api.GetProductosAsync();
@@ -349,7 +374,8 @@
                 NombreProducto   = p.Name,
                 PrecioUnitario   = p.SalePrice,
                 Cantidad         = 1,
-                StockDisponible  = p.CurrentStock
+                StockDisponible  = p.CurrentStock,
+                ImagePath        = p.ImagePath
             });
         }
         _advertenciaStock = null;
@@ -482,6 +508,7 @@
     {
         public int ProductoId { get; set; }
         public string NombreProducto { get; set; } = "";
+        public string? ImagePath { get; set; }
         public decimal PrecioUnitario { get; set; }
         public int Cantidad { get; set; }
         public int StockDisponible { get; set; }

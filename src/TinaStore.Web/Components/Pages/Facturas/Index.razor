@@ -3,6 +3,7 @@
 @inject TinaStoreApiClient Api
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject IConfiguration Config
 
 <PageTitle>Ventas — Tina Store</PageTitle>
 
@@ -163,6 +164,7 @@ else
                                                     <table class="table table-sm mb-2" style="font-size:.87rem">
                                                         <thead class="table-light">
                                                             <tr>
+                                                                <th style="width:44px"></th>
                                                                 <th>Producto</th>
                                                                 <th class="text-center">Cant.</th>
                                                                 <th class="text-end">P. Unit.</th>
@@ -174,37 +176,48 @@ else
                                                             @foreach (var linea in detalle.Details)
                                                             {
                                                                 <tr>
-                                                                    <td>@linea.ProductName</td>
-                                                                    <td class="text-center">@linea.Quantity</td>
-                                                                    <td class="text-end text-muted">@linea.UnitPrice.ToString("C0")</td>
-                                                                    <td class="text-end text-muted">
+                                                                    <td class="align-middle text-center">
+                                                                        @if (!string.IsNullOrEmpty(linea.ImagePath))
+                                                                        {
+                                                                            <img src="@(_apiBase + linea.ImagePath)" alt="@linea.ProductName"
+                                                                                 style="width:32px;height:32px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;" />
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#f1f5f9;color:#94a3b8;font-size:.8rem;"><i class="bi bi-image"></i></span>
+                                                                        }
+                                                                    </td>
+                                                                    <td class="align-middle">@linea.ProductName</td>
+                                                                    <td class="text-center align-middle">@linea.Quantity</td>
+                                                                    <td class="text-end text-muted align-middle">@linea.UnitPrice.ToString("C0")</td>
+                                                                    <td class="text-end text-muted align-middle">
                                                                         @(linea.DiscountAmount > 0 ? linea.DiscountAmount.ToString("C0") : "—")
                                                                     </td>
-                                                                    <td class="text-end fw-semibold">@linea.Subtotal.ToString("C0")</td>
+                                                                    <td class="text-end fw-semibold align-middle">@linea.Subtotal.ToString("C0")</td>
                                                                 </tr>
                                                             }
                                                         </tbody>
                                                         <tfoot class="table-light">
                                                             <tr>
-                                                                <td colspan="4" class="text-end text-muted small">Subtotal:</td>
+                                                                <td colspan="5" class="text-end text-muted small">Subtotal:</td>
                                                                 <td class="text-end text-muted small">@detalle.Subtotal.ToString("C0")</td>
                                                             </tr>
                                                             @if (detalle.DiscountAmount > 0)
                                                             {
                                                                 <tr>
-                                                                    <td colspan="4" class="text-end text-muted small">Descuento:</td>
+                                                                    <td colspan="5" class="text-end text-muted small">Descuento:</td>
                                                                     <td class="text-end text-muted small">-@detalle.DiscountAmount.ToString("C0")</td>
                                                                 </tr>
                                                             }
                                                             @if (detalle.TaxAmount > 0)
                                                             {
                                                                 <tr>
-                                                                    <td colspan="4" class="text-end text-muted small">Impuesto:</td>
+                                                                    <td colspan="5" class="text-end text-muted small">Impuesto:</td>
                                                                     <td class="text-end text-muted small">@detalle.TaxAmount.ToString("C0")</td>
                                                                 </tr>
                                                             }
                                                             <tr>
-                                                                <td colspan="4" class="text-end fw-bold small">Total:</td>
+                                                                <td colspan="5" class="text-end fw-bold small">Total:</td>
                                                                 <td class="text-end fw-bold text-purple small">@detalle.Total.ToString("C0")</td>
                                                             </tr>
                                                         </tfoot>
@@ -362,6 +375,7 @@ else
 }
 
 @code {
+    private string _apiBase = string.Empty;
     private List<FacturaDto> _facturas = [];
     private List<FacturaDto> _filtradas = [];
     private bool _loading = true;
@@ -405,6 +419,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        _apiBase = Config["ApiBaseUrl"] ?? string.Empty;
         var t1 = Api.GetFacturasAsync();
         var t2 = Api.GetMetodosPagoAsync();
         await Task.WhenAll(t1, t2);
