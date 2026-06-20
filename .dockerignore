@@ -1,0 +1,36 @@
+# ─── Directorios de build/ide ────────────────────────────────────────────────
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+
+# ─── Proyectos de tests (no se necesitan en la imagen) ───────────────────────
+tests/
+
+# ─── Git ─────────────────────────────────────────────────────────────────────
+.git/
+.gitignore
+.gitattributes
+
+# ─── Bases de datos locales ──────────────────────────────────────────────────
+**/*.db
+**/*.db-shm
+**/*.db-wal
+
+# ─── Secretos y configuraciones de producción local ─────────────────────────
+**/appsettings.Production.json
+**/appsettings.Development.json
+**/.env*
+
+# ─── Logs locales ────────────────────────────────────────────────────────────
+**/logs/
+
+# ─── Documentación (no es necesaria en la imagen) ────────────────────────────
+docs/
+*.md
+LICENSE
+
+# ─── Otros ───────────────────────────────────────────────────────────────────
+.editorconfig
+*.user
+*.suo

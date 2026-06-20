@@ -46,8 +46,9 @@ ENV ASPNETCORE_HTTP_PORTS=8080
 # Copiar la aplicación publicada
 COPY --from=build /app/publish .
 
-# Crear carpeta de logs
-RUN mkdir -p /app/logs
+# Carpeta de logs y directorio para la base de datos SQLite
+# En Railway, monta un volumen persistente en /app/data
+RUN mkdir -p /app/logs /app/data
 
 # Exponer el puerto
 EXPOSE 8080
