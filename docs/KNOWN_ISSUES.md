@@ -5,6 +5,13 @@ Los issues marcados ✅ ya están resueltos. Los marcados 🔴/🟡/🟢 están 
 
 ---
 
+## ✅ RESUELTOS EN v2.7.0 (2026-06-20 — Fases C + D + E)
+
+### ✅ ISSUE-05 — Diseño del login no alineado con la identidad visual → resuelto en v2.7.0
+- **Solución**: Login rediseñado con fondo glassmorphism kawaii, tarjeta con backdrop-filter, logo degradado rosa-morado, animación de entrada. Versión de la app visible (`v2.7.0`) con badge de ambiente (DEV/STAGING) solo en entornos no productivos.
+
+---
+
 ## ✅ RESUELTOS EN v1.3.0 (2026-06-19 — Fase A)
 
 ### BUG-A1 — Correo sin validación visual → resuelto en v1.3.0
@@ -50,26 +57,21 @@ Los issues marcados ✅ ya están resueltos. Los marcados 🔴/🟡/🟢 están 
 
 ## 🟡 PENDIENTES (media prioridad)
 
-### ISSUE-01 — Sesión no persiste al recargar el servidor Blazor
-- **Módulo**: Autenticación
-- **Descripción**: `SessionStateService` guarda el token solo en memoria del circuito Blazor Server. Si el servidor se reinicia o el circuito se desconecta, el usuario debe volver a iniciar sesión.
-- **Causa**: No hay persistencia en cookie ni en `localStorage`.
-- **Solución propuesta**: Persistir token en cookie segura (HttpOnly) o en `localStorage` via JS Interop.
-- **Planificado para**: Fase 4
+### ✅ ISSUE-01 — Sesión no persiste al recargar el servidor Blazor → resuelto en v1.3.0
+- **Versión corregida**: v1.3.0
+- **Solución**: Token JWT persistido en cookie HTTP-only vía `SessionStateService.PersistAsync()` + endpoints `/session/set`, `/session/get`, `/session/clear` en `Program.cs` del Web. `SessionRestorer.razor` restaura la sesión al iniciar el circuito Blazor.
 
 ### ✅ ISSUE-02 — Código interno (InternalCode) y SKU duplicaban responsabilidad
 - **Versión corregida**: 0.3.0
 - **Ver detalles**: `docs/CHANGELOG.md → v0.3.0`
 
-### ISSUE-03 — Sin soporte de imágenes en productos
-- **Módulo**: Productos
-- **Descripción**: No existe campo de imagen en la entidad `Product`. Los listados muestran texto sin representación visual de los productos.
-- **Planificado para**: Fase 3
+### ✅ ISSUE-03 — Sin soporte de imágenes en productos → resuelto en v2.6.0
+- **Versión corregida**: v2.6.0
+- **Solución**: Campo `ImagePath` en entidad `Product`. Subida de imagen en modal de Productos. Miniaturas en tabla de Productos, Nueva Venta y Venta Libre. Migración `AddProductImagePath` aplicada.
 
-### ISSUE-04 — Login solo con usuario/contraseña (sin Google)
-- **Módulo**: Autenticación
-- **Descripción**: El sistema actual requiere gestionar contraseñas manualmente. No tiene login con Google.
-- **Planificado para**: Fase 4
+### ✅ ISSUE-04 — Login solo con usuario/contraseña (sin Google) → resuelto en v1.3.0
+- **Versión corregida**: v1.3.0
+- **Solución**: Google OAuth integrado. `AuthController.GoogleLogin` valida `id_token` con `Google.Apis.Auth`. Lista `Google:AllowedEmails` controla qué cuentas tienen acceso. Botón "Continuar con Google" visible en Login cuando Google está configurado.
 
 ---
 
@@ -81,10 +83,9 @@ Los issues marcados ✅ ya están resueltos. Los marcados 🔴/🟡/🟢 están 
 - **Solución propuesta**: Hacer opcionales esas propiedades de navegación, o agregar query filters espejo en las entidades dependientes.
 - **Impacto actual**: Bajo. Los filtros de borrado lógico funcionan correctamente para los casos de uso actuales.
 
-### ISSUE-05 — Diseño del login no alineado con la identidad visual de Tina Store
-- **Módulo**: Login
-- **Descripción**: La pantalla de login es funcional pero tiene un estilo diferente al kawaii/rosado del resto de la aplicación.
-- **Planificado para**: Fase 5
+### ✅ ISSUE-05 — Diseño del login no alineado con la identidad visual → resuelto en v2.7.0
+- **Versión corregida**: v2.7.0
+- **Solución**: Login rediseñado con fondo glassmorphism kawaii, tarjeta con backdrop-filter, logo degradado rosa-morado, animación de entrada. Versión de la app visible (`v2.7.0`) con badge de ambiente (DEV/STAGING) solo en entornos no productivos.
 
 ### ISSUE-06 — Sistema de roles innecesariamente complejo para un solo usuario
 - **Módulo**: Usuarios / Autenticación

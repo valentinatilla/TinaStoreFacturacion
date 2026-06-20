@@ -5,6 +5,61 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [2.7.0] — 2026-06-20 — Fases C + D + E: Versión en login, responsive móvil y documentación
+
+### Tipo de cambio
+Mejora UX / Corrección / Documentación
+
+### Módulos afectados
+Login, Layout, CSS global, Documentación
+
+### Cambios
+
+**Fase C — Versión de la aplicación en el login**
+- La pantalla de login muestra la versión de la app (`v2.7.0`) leída desde `appsettings.json > AppVersion`.
+- Se muestra un badge `DEV` o `STAGING` según el ambiente. En producción no aparece nada.
+- Versión centrada y discreta debajo del subtítulo "Panel Administrativo".
+
+**Fase D — Mejoras responsive para móvil**
+- Sidebar: migrado de manipulación JavaScript directa a estado Blazor (`_sidebarOpen`). El botón hamburguesa es un `@onclick` de Blazor.
+- Backdrop oscuro semitransparente al abrir el sidebar en móvil. Al tocarlo, cierra el sidebar.
+- El sidebar se cierra automáticamente al navegar a una nueva página (`LocationChanged`).
+- Botones e inputs con `min-height` táctil (40-44px) en pantallas ≤ 768px.
+- Modales: `max-height: 92vh; overflow-y: auto` en pantallas ≤ 576px.
+- Tablas: `overflow-x: auto` garantizado. Clase utilitaria `.ts-table-hide-mobile` para ocultar columnas secundarias.
+- Padding del área de contenido reducido en móvil a `.75rem`.
+- Cabeceras de página en columna en pantallas pequeñas.
+
+**Fase E — Documentación actualizada**
+- `docs/KNOWN_ISSUES.md`: ISSUE-01 (sesión), ISSUE-03 (imágenes), ISSUE-04 (Google), ISSUE-05 (login) marcados como resueltos con versión y descripción de la solución real.
+- `docs/ENVIRONMENTS.md`: tabla de bases de datos corregida. Refleja SQLite como motor actual en todos los ambientes. PostgreSQL documentado como opción opcional.
+
+**Fix de tests (incluido en esta versión)**
+- `CustomerServiceTests`: 4 mocks corregidos (`GetAllWithInvoicesAsync`, `GetWithInvoicesAsync`, `Invoices=[]`).
+- `ExpenseServiceTests`: mock corregido (`GetAllWithNavigationAsync`).
+- `InvoiceServiceTests`: asserts actualizados a español (`Pagada`, `Anulada`).
+- `AuthController`: `AllowedEmails` vacío ahora deniega acceso Google explícitamente.
+- **Tests: 30/30 ✅**
+
+### Archivos modificados
+| Archivo | Cambio |
+|---------|--------|
+| `src/TinaStore.Web/appsettings.json` | Campo `AppVersion: "2.7.0"` |
+| `src/TinaStore.Web/Components/Pages/Login.razor` | Versión + badge de ambiente |
+| `src/TinaStore.Web/Components/Layout/MainLayout.razor` | Sidebar Blazor + backdrop + LocationChanged |
+| `src/TinaStore.Web/wwwroot/app.css` | Estilos versión, backdrop, responsive, táctil |
+| `src/TinaStore.Api/Controllers/AuthController.cs` | AllowedEmails vacío = denegar |
+| `tests/TinaStore.Tests.Unit/CustomerServiceTests.cs` | Mocks corregidos |
+| `tests/TinaStore.Tests.Unit/ExpenseServiceTests.cs` | Mock corregido |
+| `tests/TinaStore.Tests.Unit/InvoiceServiceTests.cs` | Asserts en español |
+| `docs/KNOWN_ISSUES.md` | Issues resueltos actualizados |
+| `docs/ENVIRONMENTS.md` | Base de datos actualizada |
+
+### Resultado
+✅ Build exitoso. Tests: 30/30.
+
+---
+
 ## [2.5.0] — 2026-06-19 — Fase A2: Corrección de bugs en Productos y Categorías
 
 ### Tipo de cambio
