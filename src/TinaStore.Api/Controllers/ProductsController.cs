@@ -139,6 +139,19 @@ public sealed class ProductsController : ControllerBase
         return Ok(actualizado);
     }
 
+    /// <summary>Realiza una entrada rápida de stock para un producto.</summary>
+    [HttpPost("{id:int}/ajuste-stock")]
+    public async Task<IActionResult> AjustarStock(int id, [FromBody] AjusteStockDto dto)
+    {
+        if (dto.Cantidad <= 0)
+            return BadRequest(new { mensaje = "La cantidad debe ser mayor a cero." });
+
+        var resultado = await _service.AjustarStockAsync(id, dto);
+        return resultado is null
+            ? NotFound(new { mensaje = $"Producto {id} no encontrado." })
+            : Ok(resultado);
+    }
+
     /// <summary>Elimina la imagen de un producto.</summary>
     [HttpDelete("{id:int}/imagen")]
     public async Task<IActionResult> DeleteImage(int id)

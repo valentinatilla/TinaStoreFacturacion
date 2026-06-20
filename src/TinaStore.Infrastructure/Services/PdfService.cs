@@ -48,8 +48,9 @@ public sealed class PdfService : IPdfService
                             c.Item().Text(storeName).Bold().FontSize(18);
                             c.Item().Text("Factura de Venta").FontSize(12).FontColor("#555555");
                         });
-                        row.ConstantItem(150).Column(c =>
+                        row.ConstantItem(160).Column(c =>
                         {
+                            c.Item().AlignRight().Text("N° Factura").FontSize(8).FontColor("#888888");
                             c.Item().AlignRight().Text(invoice.InvoiceNumber).Bold().FontSize(14);
                             c.Item().AlignRight().Text(invoice.InvoiceDate.ToString("dd/MM/yyyy HH:mm")).FontColor("#555555");
                         });
@@ -157,7 +158,14 @@ public sealed class PdfService : IPdfService
                             {
                                 pagos.Item().Row(r =>
                                 {
-                                    r.RelativeItem().Text($"{p.PaymentDate:dd/MM/yyyy} — {p.PaymentMethod?.Name ?? "—"}").FontColor("#555555");
+                                    r.RelativeItem().Column(c =>
+                                    {
+                                        c.Item().Text($"{p.PaymentDate:dd/MM/yyyy} — {p.PaymentMethod?.Name ?? "—"}").FontColor("#555555");
+                                        if (!string.IsNullOrWhiteSpace(p.Reference))
+                                            c.Item().Text($"Ref: {p.Reference}").FontSize(9).FontColor("#888888");
+                                        if (!string.IsNullOrWhiteSpace(p.Notes))
+                                            c.Item().Text($"Nota: {p.Notes}").FontSize(9).FontColor("#888888");
+                                    });
                                     r.ConstantItem(120).AlignRight().Text($"{currency} {p.Amount:N2}");
                                 });
                             }
@@ -167,15 +175,15 @@ public sealed class PdfService : IPdfService
                     // Estado
                     col.Item().PaddingTop(12).Row(r =>
                     {
-                        var color = invoice.Status switch
+                        var (color, etiqueta) = invoice.Status switch
                         {
-                            Domain.Enums.InvoiceStatus.Paid => "#16A34A",
-                            Domain.Enums.InvoiceStatus.Cancelled => "#DC2626",
-                            Domain.Enums.InvoiceStatus.Partial => "#D97706",
-                            _ => "#2563EB"
+                            Domain.Enums.InvoiceStatus.Paid      => ("#16A34A", "PAGADA"),
+                            Domain.Enums.InvoiceStatus.Cancelled => ("#DC2626", "ANULADA"),
+                            Domain.Enums.InvoiceStatus.Partial   => ("#D97706", "PARCIAL"),
+                            _                                    => ("#2563EB", "PENDIENTE")
                         };
                         r.AutoItem().Background(color).Padding(6)
-                            .Text(invoice.Status.ToString().ToUpper())
+                            .Text(etiqueta)
                             .Bold().FontColor(Colors.White);
                     });
                 });

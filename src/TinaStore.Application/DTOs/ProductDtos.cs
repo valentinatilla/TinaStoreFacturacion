@@ -33,6 +33,7 @@ public record ProductSummaryDto(
     int CurrentStock,
     bool IsLowStock,
     bool IsActive,
+    int CategoryId,
     string CategoryName,
     string? ImagePath
 );
@@ -65,4 +66,10 @@ public record UpdateProductDto(
     int? SupplierId,
     /// <summary>Unidades adicionales compradas en esta edición. Si > 0 se suma al stock y genera egreso automático.</summary>
     int StockEntrada = 0
+);
+
+/// <summary>DTO para registrar una entrada rápida de stock desde cualquier vista.</summary>
+public record AjusteStockDto(
+    int Cantidad,
+    string? Notas = null
 );

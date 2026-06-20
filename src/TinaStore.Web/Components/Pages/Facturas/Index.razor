@@ -61,11 +61,24 @@ else
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
-                        <th>N° Factura</th><th>Cliente</th>
-                        <th class="text-end">Total</th>
-                        <th class="text-end">Pagado</th>
-                        <th class="text-end">Saldo</th>
-                        <th>Estado</th><th>Fecha</th><th></th>
+                        <th style="cursor:pointer" @onclick='() => OrdenarPor("numero")'>
+                            N° Factura <i class="@(SortIconClass("numero")) ms-1 small"></i>
+                        </th>
+                        <th>Cliente</th>
+                        <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("total")'>
+                            Total <i class="@(SortIconClass("total")) ms-1 small"></i>
+                        </th>
+                        <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("pagado")'>
+                            Pagado <i class="@(SortIconClass("pagado")) ms-1 small"></i>
+                        </th>
+                        <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("saldo")'>
+                            Saldo <i class="@(SortIconClass("saldo")) ms-1 small"></i>
+                        </th>
+                        <th>Estado</th>
+                        <th style="cursor:pointer" @onclick='() => OrdenarPor("fecha")'>
+                            Fecha <i class="@(SortIconClass("fecha")) ms-1 small"></i>
+                        </th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -86,11 +99,20 @@ else
                             </td>
                             <td class="text-muted small">@f.InvoiceDate.ToString("dd/MM/yyyy")</td>
                             <td class="text-end">
-                                <button class="btn btn-sm btn-outline-secondary me-1" title="Descargar PDF"
-                                        @onclick="() => DescargarPdf(f.Id)">
-                                    <i class="bi bi-file-earmark-pdf"></i>
-                                </button>
-                                 @if (f.StatusName != "Anulada")
+                                @if (_pdfDescargando.Contains(f.Id))
+                                {
+                                    <button class="btn btn-sm btn-outline-secondary me-1" disabled title="Generando PDF...">
+                                        <span class="spinner-border spinner-border-sm"></span>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-sm btn-outline-secondary me-1" title="Descargar PDF"
+                                            @onclick="() => DescargarPdf(f.Id)">
+                                        <i class="bi bi-file-earmark-pdf"></i>
+                                    </button>
+                                }
+                                @if (f.StatusName != "Anulada")
                                 {
                                     @if (f.Balance > 0)
                                     {
@@ -121,7 +143,7 @@ else
 @if (_mostrarModalAnular)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="bi bi-x-circle text-danger me-2"></i>Anular factura</h5>
@@ -131,7 +153,9 @@ else
                     <p class="text-muted small">Esta acción revertirá el stock y las cuentas por cobrar asociadas.</p>
                     <label class="form-label fw-semibold">Motivo de anulación <span class="text-danger">*</span></label>
                     <textarea class="form-control" rows="3" placeholder="Indique el motivo..."
-                              @bind="_motivoAnulacion" maxlength="300"></textarea>
+                              @bind="_motivoAnulacion" @bind:event="oninput"
+                              @onkeydown="HandleAnulacionKeyDown"
+                              maxlength="300"></textarea>
                     @if (_errorModal is not null)
                     {
                         <div class="text-danger small mt-1">@_errorModal</div>
@@ -153,7 +177,7 @@ else
 @if (_mostrarModalPago)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="bi bi-cash-coin text-success me-2"></i>Registrar pago</h5>
@@ -212,10 +236,13 @@ else
     private bool _loading = true;
     private string? _mensaje;
     private bool _exito;
-    private string _busqueda = "";
-    private string _estadoFiltro = "";
+    private string    _busqueda     = "";
+    private string    _estadoFiltro = "";
     private DateTime? _filtroDesde;
     private DateTime? _filtroHasta;
+    private string    _ordenCampo   = "fecha";
+    private bool      _ordenDesc    = true;
+    private HashSet<int> _pdfDescargando = [];
 
     private bool   _mostrarModalAnular;
     private int    _idFacturaAnular;
@@ -285,11 +312,13 @@ else
 
     private void LimpiarFiltros()
     {
-        _busqueda = "";
+        _busqueda     = "";
         _estadoFiltro = "";
-        _filtroDesde = null;
-        _filtroHasta = null;
-        _filtradas = _facturas;
+        _filtroDesde  = null;
+        _filtroHasta  = null;
+        _ordenCampo   = "fecha";
+        _ordenDesc    = true;
+        AplicarFiltros();
     }
 
     private void AplicarFiltros()
@@ -303,6 +332,7 @@ else
              && (_filtroDesde is null || f.InvoiceDate >= _filtroDesde)
              && (_filtroHasta is null || f.InvoiceDate <= _filtroHasta))
             .ToList();
+        AplicarOrden();
     }
 
     private void AbrirPago(FacturaDto f)
@@ -379,6 +409,8 @@ else
 
     private async Task DescargarPdf(int id)
     {
+        _pdfDescargando.Add(id);
+        _mensaje = null;
         try
         {
             var bytes = await Api.DescargarPdfFacturaAsync(id);
@@ -386,8 +418,60 @@ else
             {
                 var base64 = Convert.ToBase64String(bytes);
                 await JS.InvokeVoidAsync("downloadFileFromBase64", base64, $"factura-{id}.pdf", "application/pdf");
+                _exito   = true;
+                _mensaje = "PDF generado correctamente.";
+            }
+            else
+            {
+                _exito   = false;
+                _mensaje = "No se pudo generar el PDF.";
             }
         }
-        catch { _mensaje = "Error al generar el PDF."; _exito = false; }
+        catch
+        {
+            _exito   = false;
+            _mensaje = "Error al generar el PDF.";
+        }
+        finally
+        {
+            _pdfDescargando.Remove(id);
+        }
+    }
+
+    // ── Ordenamiento de columnas ────────────────────────────────────────────────────
+    private void OrdenarPor(string campo)
+    {
+        if (_ordenCampo == campo)
+            _ordenDesc = !_ordenDesc;
+        else
+        {
+            _ordenCampo = campo;
+            _ordenDesc  = true;
+        }
+        AplicarOrden();
+    }
+
+    private void AplicarOrden()
+    {
+        _filtradas = (_ordenCampo switch
+        {
+            "numero" => _ordenDesc ? _filtradas.OrderByDescending(f => f.InvoiceNumber) : _filtradas.OrderBy(f => f.InvoiceNumber),
+            "total"  => _ordenDesc ? _filtradas.OrderByDescending(f => f.Total)         : _filtradas.OrderBy(f => f.Total),
+            "pagado" => _ordenDesc ? _filtradas.OrderByDescending(f => f.AmountPaid)    : _filtradas.OrderBy(f => f.AmountPaid),
+            "saldo"  => _ordenDesc ? _filtradas.OrderByDescending(f => f.Balance)       : _filtradas.OrderBy(f => f.Balance),
+            "fecha"  => _ordenDesc ? _filtradas.OrderByDescending(f => f.InvoiceDate)   : _filtradas.OrderBy(f => f.InvoiceDate),
+            _        => _filtradas.OrderByDescending(f => f.InvoiceDate)
+        }).ToList();
+    }
+
+    private string SortIconClass(string campo) =>
+        _ordenCampo != campo ? "bi bi-arrow-down-up text-muted" :
+        _ordenDesc            ? "bi bi-sort-down text-purple"   :
+                                "bi bi-sort-up text-purple";
+
+    private async Task HandleAnulacionKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+            await ConfirmarAnulacion();
     }
 }

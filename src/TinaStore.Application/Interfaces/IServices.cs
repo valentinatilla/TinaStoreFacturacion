@@ -31,6 +31,7 @@ public interface IProductService
     Task<ProductDto?> UpdateAsync(int id, UpdateProductDto dto);
     Task<bool> DeleteAsync(int id);
     Task<ProductDto?> UpdateImagePathAsync(int id, string? imagePath);
+    Task<ProductDto?> AjustarStockAsync(int id, AjusteStockDto dto);
 }
 
 public interface ISupplierService

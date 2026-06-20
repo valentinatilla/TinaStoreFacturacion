@@ -17,10 +17,11 @@ public sealed class CreateCustomerValidator : AbstractValidator<CreateCustomerDt
 
         RuleFor(x => x.Phone)
             .MaximumLength(20).WithMessage("El teléfono no puede superar 20 caracteres.")
-            .When(x => x.Phone is not null);
+            .Matches(@"^\+?[\d\s\-]{7,20}$").WithMessage("Ingresa un número de teléfono válido. Para Colombia debe tener 10 dígitos.")
+            .When(x => !string.IsNullOrWhiteSpace(x.Phone));
 
         RuleFor(x => x.Email)
-            .EmailAddress().WithMessage("El correo electrónico no tiene un formato válido.")
+            .EmailAddress().WithMessage("Ingresa un correo válido, por ejemplo: cliente@correo.com.")
             .When(x => !string.IsNullOrWhiteSpace(x.Email));
     }
 }
@@ -33,8 +34,13 @@ public sealed class UpdateCustomerValidator : AbstractValidator<UpdateCustomerDt
             .NotEmpty().WithMessage("El nombre completo es obligatorio.")
             .MaximumLength(200).WithMessage("El nombre no puede superar 200 caracteres.");
 
+        RuleFor(x => x.Phone)
+            .MaximumLength(20).WithMessage("El teléfono no puede superar 20 caracteres.")
+            .Matches(@"^\+?[\d\s\-]{7,20}$").WithMessage("Ingresa un número de teléfono válido. Para Colombia debe tener 10 dígitos.")
+            .When(x => !string.IsNullOrWhiteSpace(x.Phone));
+
         RuleFor(x => x.Email)
-            .EmailAddress().WithMessage("El correo electrónico no tiene un formato válido.")
+            .EmailAddress().WithMessage("Ingresa un correo válido, por ejemplo: cliente@correo.com.")
             .When(x => !string.IsNullOrWhiteSpace(x.Email));
     }
 }
