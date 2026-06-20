@@ -966,3 +966,79 @@ h1:focus {
     color: #E11D48 !important;
     font-weight: 700;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Detalle expandible en módulo Ventas y Cuentas por cobrar
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Fila del panel de detalle */
+tr.detalle-expandido > td {
+    padding: 0 !important;
+    border-top: none !important;
+}
+
+/* Panel interior con fondo suave rosado */
+.detalle-venta-panel {
+    background: linear-gradient(135deg, #FFF5FB 0%, #F9F0FF 100%);
+    border-left: 3px solid var(--ts-primary);
+    animation: slideDown .18s ease-out;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Chip de pago registrado */
+.pago-chip {
+    display: inline-flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid var(--ts-accent);
+    border-radius: 20px;
+    padding: .2rem .7rem;
+    font-size: .82rem;
+    color: var(--ts-text-main);
+    gap: .15rem;
+}
+
+/* ── Edición masiva de productos ─────────────────────────────────────── */
+
+/* Botón outline con color morado de la marca */
+.btn-outline-purple {
+    color: var(--ts-purple);
+    border-color: var(--ts-purple);
+    background-color: transparent;
+}
+.btn-outline-purple:hover {
+    background-color: var(--ts-purple);
+    color: #fff;
+}
+
+/* Fila de la tabla que tiene al menos un campo modificado */
+tr.bulk-row-modified td {
+    background-color: rgba(155, 81, 224, .06) !important;
+}
+tr.bulk-row-modified td:first-child {
+    border-left: 3px solid var(--ts-purple);
+}
+
+/* Tabla interna del modal (bulk) */
+.bulk-table thead th {
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    white-space: nowrap;
+}
+.bulk-table tbody td {
+    vertical-align: middle;
+}
+.bulk-table input[type="number"] {
+    min-width: 80px;
+}
+
+/* Badge de estado en el modal */
+.badge-estado-pendiente {
+    background-color: #f0c75e;
+    color: #5a3d00;
+}

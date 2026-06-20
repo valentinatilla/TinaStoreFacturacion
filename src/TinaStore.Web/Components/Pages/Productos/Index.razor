@@ -11,6 +11,9 @@
         <button class="btn btn-outline-success btn-sm" @onclick="ExportarExcel">
             <i class="bi bi-file-earmark-excel me-1"></i>Exportar Excel
         </button>
+        <button class="btn btn-outline-purple btn-sm" @onclick="AbrirEdicionMasiva">
+            <i class="bi bi-pencil-square me-1"></i>Edición masiva
+        </button>
         <button class="btn bg-purple text-white" @onclick="() => AbrirModal()">
             <i class="bi bi-plus-lg me-1"></i>Nuevo producto
         </button>
@@ -28,6 +31,42 @@
 }
 else
 {
+    <!-- Tarjetas resumen -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6">
+            <div class="card kpi-card p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="kpi-icon" style="background-color:rgba(244,114,182,.12);color:#DB2777;">
+                        <i class="bi bi-box-seam-fill"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="text-muted small">Referencias disponibles</div>
+                        <div class="fw-bold fs-4 text-purple">@_refDisponibles</div>
+                        <div class="text-muted" style="font-size:.75rem;">
+                            productos activos con stock &gt; 0
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="card kpi-card p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="kpi-icon" style="background-color:rgba(192,132,252,.12);color:#7C3AED;">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="text-muted small">Costo total del inventario</div>
+                        <div class="fw-bold fs-4 text-purple">@_costoInventario.ToString("C0")</div>
+                        <div class="text-muted" style="font-size:.75rem;">
+                            suma de costo × stock por producto activo
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Filtros -->
     <div class="card border-0 shadow-sm mb-3 p-3">
         <div class="row g-2 align-items-end">
@@ -122,7 +161,7 @@ else
                                 @(p.ProfitMargin > 0 ? p.ProfitMargin.ToString("0.0") + " %" : "—")
                             </td>
                             <td class="text-center">
-                                <span class="badge @(p.CurrentStock == 0 && p.IsActive ? "badge-sin-stock" : p.IsLowStock && p.IsActive ? "badge-bajo-stock" : "bg-success")">@p.CurrentStock</span>
+                                <span class="badge @(!p.IsActive ? "bg-secondary" : p.CurrentStock == 0 ? "badge-sin-stock" : p.IsLowStock ? "badge-bajo-stock" : "bg-success")">@p.CurrentStock</span>
                             </td>
                             <td>
                                 @if (!p.IsActive)
@@ -324,8 +363,286 @@ else
     </div>
 }
 
+<!-- ═══ Modal edición masiva ═══════════════════════════════════════════════ -->
+@if (_mostrarEdicionMasiva)
+{
+    <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+        <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+
+                <!-- Encabezado -->
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-pencil-square me-2 text-purple"></i>Edición masiva de productos
+                        @if (_bulkPaso == 2)
+                        {
+                            <span class="badge bg-purple ms-2" style="font-size:.75rem;">Paso 2 — Confirmar</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-estado-pendiente ms-2" style="font-size:.75rem;">Paso 1 — Editar</span>
+                        }
+                    </h5>
+                    <button class="btn-close" @onclick="CerrarEdicionMasiva"></button>
+                </div>
+
+                @if (_bulkPaso == 1)
+                {
+                    <!-- ── PASO 1: tabla editable ─────────────────────────────── -->
+                    <div class="modal-body p-0">
+
+                        <!-- Barra de búsqueda -->
+                        <div class="px-3 pt-3 pb-2 border-bottom">
+                            <div class="row g-2 align-items-center">
+                                <div class="col">
+                                    <input class="form-control form-control-sm"
+                                           placeholder="🔍 Filtrar por nombre o SKU..."
+                                           @bind="_bulkFiltro" @bind:event="oninput" />
+                                </div>
+                                <div class="col-auto text-muted small">
+                                    @_bulkFilas.Count(r => r.Modificada) modificada(s) de @_bulkFilas.Count
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tabla -->
+                        <div style="max-height:55vh; overflow-y:auto;">
+                            <table class="table table-sm mb-0 bulk-table">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th class="text-center" style="width:90px;">SKU</th>
+                                        <th class="text-end"   style="width:130px;">Costo</th>
+                                        <th class="text-end"   style="width:130px;">Precio venta</th>
+                                        <th class="text-center" style="width:100px;">Stock</th>
+                                        <th class="text-end"   style="width:140px;">Valor inventario</th>
+                                        <th class="text-center" style="width:110px;">Imagen</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var fila in FilasFiltradas)
+                                    {
+                                        <tr class="@(fila.Modificada ? "bulk-row-modified" : "")">
+                                            <td class="align-middle">
+                                                @fila.Nombre
+                                                @if (fila.Modificada)
+                                                {
+                                                    <span class="badge bg-purple ms-1" style="font-size:.65rem;">Modificado</span>
+                                                }
+                                            </td>
+                                            <td class="text-center text-muted small align-middle">@fila.Sku</td>
+                                            <td class="align-middle">
+                                                <input type="number" class="form-control form-control-sm text-end @(fila.ErrorCosto is not null ? "is-invalid" : "")"
+                                                       min="0" step="0.01"
+                                                       @bind="fila.Costo" @bind:event="oninput"
+                                                       @bind:after="() => fila.Recalcular()" />
+                                                @if (fila.ErrorCosto is not null)
+                                                {
+                                                    <div class="invalid-feedback">@fila.ErrorCosto</div>
+                                                }
+                                            </td>
+                                            <td class="align-middle">
+                                                <input type="number" class="form-control form-control-sm text-end @(fila.ErrorPrecio is not null ? "is-invalid" : "")"
+                                                       min="0" step="0.01"
+                                                       @bind="fila.PrecioVenta" @bind:event="oninput"
+                                                       @bind:after="() => fila.Recalcular()" />
+                                                @if (fila.ErrorPrecio is not null)
+                                                {
+                                                    <div class="invalid-feedback">@fila.ErrorPrecio</div>
+                                                }
+                                            </td>
+                                            <td class="align-middle">
+                                                <input type="number" class="form-control form-control-sm text-center @(fila.ErrorStock is not null ? "is-invalid" : "")"
+                                                       min="0" step="1"
+                                                       @bind="fila.Stock" @bind:event="oninput"
+                                                       @bind:after="() => fila.Recalcular()" />
+                                                @if (fila.ErrorStock is not null)
+                                                {
+                                                    <div class="invalid-feedback">@fila.ErrorStock</div>
+                                                }
+                                            </td>
+                                            <td class="text-end align-middle text-muted small fw-semibold">
+                                                @fila.ValorInventario.ToString("C0")
+                                            </td>
+                                            <td class="text-center align-middle">
+                                                @if (fila.TieneImagenNueva)
+                                                {
+                                                    <div class="d-flex flex-column align-items-center gap-1">
+                                                        <img src="@fila.ImagenPreviewUrl" alt="preview"
+                                                             style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;" />
+                                                        <button type="button" class="btn btn-link btn-sm text-danger p-0"
+                                                                style="font-size:.7rem;" @onclick="() => fila.QuitarImagen()">
+                                                            <i class="bi bi-x-circle me-1"></i>Quitar
+                                                        </button>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <label class="btn btn-outline-secondary btn-sm mb-0" style="cursor:pointer;font-size:.72rem;">
+                                                        @if (!string.IsNullOrEmpty(fila.ImagePathActual))
+                                                        {
+                                                            <i class="bi bi-pencil me-1"></i><span>Cambiar</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <i class="bi bi-image me-1"></i><span>Agregar</span>
+                                                        }
+                                                        <InputFile OnChange="e => SeleccionarImagenBulk(e, fila)"
+                                                                   accept=".jpg,.jpeg,.png,.webp" class="d-none" />
+                                                    </label>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                    @if (!FilasFiltradas.Any())
+                                    {
+                                        <tr><td colspan="7" class="text-center text-muted py-3">Sin productos que coincidan con el filtro.</td></tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @onclick="CerrarEdicionMasiva">Cancelar</button>
+                        <button class="btn bg-purple text-white"
+                                @onclick="IrAPaso2"
+                                disabled="@(!_bulkFilas.Any(r => r.Modificada && !r.TieneError))">
+                            <i class="bi bi-arrow-right me-1"></i>Revisar cambios
+                            @if (_bulkFilas.Any(r => r.Modificada && !r.TieneError))
+                            {
+                                <span class="badge bg-white text-purple ms-1">@_bulkFilas.Count(r => r.Modificada && !r.TieneError)</span>
+                            }
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <!-- ── PASO 2: resumen y confirmación ─────────────────────── -->
+                    <div class="modal-body">
+                        @{
+                            var _resumenNumericos = FilasConCambiosNumericos.ToList();
+                            var _resumenImagenes  = FilasConImagenNueva.ToList();
+                        }
+                        <div class="alert alert-warning py-2 mb-3">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            @if (_resumenNumericos.Count > 0)
+                            {
+                                <span>Se actualizarán <strong>@_resumenNumericos.Count</strong> producto(s) con cambios de precio/stock.</span>
+                            }
+                            @if (_resumenImagenes.Count > 0)
+                            {
+                                <span class="@(_resumenNumericos.Count > 0 ? "ms-2" : "")">Se subirán <strong>@_resumenImagenes.Count</strong> imagen(es).</span>
+                            }
+                        </div>
+
+                        @if (_resumenNumericos.Count > 0)
+                        {
+                            <h6 class="fw-semibold text-purple mb-2"><i class="bi bi-pencil-square me-1"></i>Cambios de precio / stock</h6>
+                            <div class="table-responsive mb-3">
+                                <table class="table table-sm">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th class="text-end">Costo</th>
+                                            <th class="text-end">Precio venta</th>
+                                            <th class="text-center">Stock</th>
+                                            <th class="text-end">Valor inventario</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var fila in _resumenNumericos)
+                                        {
+                                            <tr>
+                                                <td class="fw-semibold">@fila.Nombre</td>
+                                                <td class="text-end">
+                                                    @if (fila.Costo != fila.CostoOriginal)
+                                                    {
+                                                        <span class="text-muted text-decoration-line-through me-1 small">@fila.CostoOriginal.ToString("C0")</span>
+                                                        <span class="text-success fw-semibold">@fila.Costo.ToString("C0")</span>
+                                                    }
+                                                    else { <span class="text-muted">@fila.Costo.ToString("C0")</span> }
+                                                </td>
+                                                <td class="text-end">
+                                                    @if (fila.PrecioVenta != fila.PrecioOriginal)
+                                                    {
+                                                        <span class="text-muted text-decoration-line-through me-1 small">@fila.PrecioOriginal.ToString("C0")</span>
+                                                        <span class="text-success fw-semibold">@fila.PrecioVenta.ToString("C0")</span>
+                                                    }
+                                                    else { <span class="text-muted">@fila.PrecioVenta.ToString("C0")</span> }
+                                                </td>
+                                                <td class="text-center">
+                                                    @if (fila.Stock != fila.StockOriginal)
+                                                    {
+                                                        <span class="text-muted text-decoration-line-through me-1 small">@fila.StockOriginal</span>
+                                                        <span class="text-success fw-semibold">@fila.Stock</span>
+                                                        <i class="bi bi-arrow-right-short text-muted"></i>
+                                                        <span class="badge bg-info text-dark" style="font-size:.7rem;">
+                                                            <i class="bi bi-arrow-clockwise me-1"></i>Movimiento
+                                                        </span>
+                                                    }
+                                                    else { <span class="text-muted">@fila.Stock</span> }
+                                                </td>
+                                                <td class="text-end fw-semibold text-purple">@fila.ValorInventario.ToString("C0")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+
+                        @if (_resumenImagenes.Count > 0)
+                        {
+                            <h6 class="fw-semibold text-purple mb-2"><i class="bi bi-images me-1"></i>Imágenes a subir</h6>
+                            <div class="d-flex flex-wrap gap-3 mb-3">
+                                @foreach (var fila in _resumenImagenes)
+                                {
+                                    <div class="d-flex flex-column align-items-center" style="width:80px;">
+                                        <img src="@fila.ImagenPreviewUrl" alt="@fila.Nombre"
+                                             style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0;" />
+                                        <span class="text-muted mt-1" style="font-size:.65rem;text-align:center;word-break:break-word;">@fila.Nombre</span>
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        @if (_bulkResultado is not null)
+                        {
+                            <div class="alert @(_bulkResultado.TotalErrores == 0 ? "alert-success" : "alert-warning") py-2 mt-2">
+                                <i class="bi @(_bulkResultado.TotalErrores == 0 ? "bi-check-circle" : "bi-exclamation-triangle") me-2"></i>
+                                Actualizados: <strong>@_bulkResultado.TotalActualizados</strong>
+                                @if (_bulkResultado.TotalErrores > 0)
+                                {
+                                    <span> · Errores: <strong class="text-danger">@_bulkResultado.TotalErrores</strong></span>
+                                    @foreach (var e in _bulkResultado.Resultados.Where(r => !r.Ok))
+                                    {
+                                        <div class="small text-danger mt-1">@e.ProductName: @e.Error</div>
+                                    }
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @onclick="() => _bulkPaso = 1" disabled="@_bulkGuardando">
+                            <i class="bi bi-arrow-left me-1"></i>Volver
+                        </button>
+                        <button class="btn bg-purple text-white" @onclick="GuardarEdicionMasiva" disabled="@_bulkGuardando">
+                            @if (_bulkGuardando) { <span class="spinner-border spinner-border-sm me-2"></span> }
+                            <i class="bi bi-check-lg me-1"></i>Guardar cambios
+                        </button>
+                    </div>
+                }
+
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private string _apiBase = string.Empty;
+
+    // ── Tarjetas resumen (calculadas desde _productos) ─────────────────────────────
+    private int     _refDisponibles  => _productos.Count(p => p.IsActive && p.CurrentStock > 0);
+    private decimal _costoInventario => _productos.Where(p => p.IsActive).Sum(p => p.PurchasePrice * p.CurrentStock);
 
     private List<ProductoDto> _productos = [];
     private List<ProductoDto> _filtrados = [];
@@ -439,7 +756,18 @@ else
         {
             var completo = await Api.GetProductoAsync(p.Id);
             _form = completo is null
-                ? new() { Name = p.Name, Sku = p.Sku }
+                ? new()
+                {
+                    Name          = p.Name,
+                    Sku           = p.Sku,
+                    SalePrice     = p.SalePrice,
+                    PurchasePrice = p.PurchasePrice,
+                    CurrentStock  = p.CurrentStock,
+                    MinimumStock  = p.MinimumStock,
+                    CategoryId    = p.CategoryId,
+                    SupplierId    = p.SupplierId,
+                    ImagePathActual = p.ImagePath
+                }
                 : new()
                 {
                     Name             = completo.Name,
@@ -642,5 +970,225 @@ else
         public string? ImagenPreviewUrl { get; set; }
         public bool ImagenEliminada { get; set; }
         public int StockEntrada { get; set; }
+    }
+
+    // ── Edición masiva ─────────────────────────────────────────────────────────
+    private bool               _mostrarEdicionMasiva;
+    private int                _bulkPaso = 1;
+    private string             _bulkFiltro = "";
+    private bool               _bulkGuardando;
+    private BulkUpdateResultDto? _bulkResultado;
+    private List<BulkFila>     _bulkFilas = [];
+
+    private IEnumerable<BulkFila> FilasFiltradas =>
+        string.IsNullOrWhiteSpace(_bulkFiltro)
+            ? _bulkFilas
+            : _bulkFilas.Where(f =>
+                f.Nombre.Contains(_bulkFiltro, StringComparison.OrdinalIgnoreCase) ||
+                (f.Sku?.Contains(_bulkFiltro, StringComparison.OrdinalIgnoreCase) ?? false));
+
+    private IEnumerable<BulkFila> FilasConCambiosNumericos =>
+        _bulkFilas.Where(f => !f.TieneError &&
+            (f.Costo != f.CostoOriginal || f.PrecioVenta != f.PrecioOriginal || f.Stock != f.StockOriginal));
+
+    private IEnumerable<BulkFila> FilasConImagenNueva =>
+        _bulkFilas.Where(f => f.TieneImagenNueva);
+
+    private async Task SeleccionarImagenBulk(InputFileChangeEventArgs e, BulkFila fila)
+    {
+        var archivo = e.File;
+        const long maxBytes = 2 * 1024 * 1024;
+        var ext = Path.GetExtension(archivo.Name).ToLowerInvariant();
+        if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp")) return;
+        if (archivo.Size > maxBytes) return;
+        try
+        {
+            using var ms = new MemoryStream();
+            await using var stream = archivo.OpenReadStream(maxBytes);
+            await stream.CopyToAsync(ms);
+            var bytes = ms.ToArray();
+            var contentType = ext switch { ".png" => "image/png", ".webp" => "image/webp", _ => "image/jpeg" };
+            var previewUrl = $"data:{contentType};base64,{Convert.ToBase64String(bytes)}";
+            fila.SetImagen(bytes, archivo.Name, previewUrl);
+        }
+        catch { /* silencioso; la imagen simplemente no se carga */ }
+    }
+
+    private void AbrirEdicionMasiva()
+    {
+        _bulkFilas = _productos
+            .Where(p => p.IsActive)
+            .Select(p => new BulkFila(p))
+            .ToList();
+        _bulkFiltro    = "";
+        _bulkPaso      = 1;
+        _bulkResultado = null;
+        _mostrarEdicionMasiva = true;
+    }
+
+    private int _bulkImagenesSubidas;
+    private int _bulkImagenesErrores;
+
+    private void CerrarEdicionMasiva()
+    {
+        _mostrarEdicionMasiva = false;
+        _bulkResultado        = null;
+        _bulkImagenesSubidas  = 0;
+        _bulkImagenesErrores  = 0;
+    }
+
+    private void IrAPaso2()
+    {
+        _bulkResultado = null;
+        _bulkPaso = 2;
+    }
+
+    private async Task GuardarEdicionMasiva()
+    {
+        var filasConCambios = FilasConCambiosNumericos.ToList();
+        var filasConImagen  = FilasConImagenNueva.ToList();
+        if (!filasConCambios.Any() && !filasConImagen.Any()) return;
+
+        _bulkGuardando       = true;
+        _bulkImagenesSubidas = 0;
+        _bulkImagenesErrores = 0;
+        try
+        {
+            // 1) Bulk update numérico
+            if (filasConCambios.Any())
+            {
+                var items = filasConCambios.Select(f => new BulkUpdateItemDto(
+                    f.ProductId,
+                    f.Costo != f.CostoOriginal       ? f.Costo       : null,
+                    f.PrecioVenta != f.PrecioOriginal ? f.PrecioVenta : null,
+                    f.Stock != f.StockOriginal        ? f.Stock       : null
+                )).ToList();
+                _bulkResultado = await Api.BulkUpdateProductosAsync(items);
+            }
+
+            // 2) Subida de imágenes
+            foreach (var fila in filasConImagen)
+            {
+                try
+                {
+                    using var ms = new MemoryStream(fila.ImagenBytes!);
+                    await Api.SubirImagenProductoAsync(fila.ProductId, ms, fila.ImagenNombreArchivo!);
+                    _bulkImagenesSubidas++;
+                }
+                catch { _bulkImagenesErrores++; }
+            }
+
+            // 3) Evaluar resultado global
+            var numErrores  = _bulkResultado?.TotalErrores ?? 0;
+            var numActualizados = _bulkResultado?.TotalActualizados ?? 0;
+            var hayErrores  = numErrores > 0 || _bulkImagenesErrores > 0;
+
+            _exito = !hayErrores;
+            var partes = new List<string>();
+            if (numActualizados > 0)
+                partes.Add($"{numActualizados} producto(s) actualizados");
+            if (_bulkImagenesSubidas > 0)
+                partes.Add($"{_bulkImagenesSubidas} imagen(es) subidas");
+            if (_bulkImagenesErrores > 0)
+                partes.Add($"{_bulkImagenesErrores} imagen(es) con error");
+            if (numErrores > 0)
+                partes.Add($"{numErrores} error(es) numérico(s)");
+            _mensaje = "Edición masiva: " + string.Join(" · ", partes) + ".";
+
+            if (!hayErrores)
+            {
+                _mostrarEdicionMasiva = false;
+                await Cargar();
+            }
+        }
+        catch { _mensaje = "Error al comunicarse con la API."; _exito = false; }
+        finally { _bulkGuardando = false; }
+    }
+
+    private class BulkFila
+    {
+        public int     ProductId     { get; }
+        public string  Nombre        { get; }
+        public string? Sku           { get; }
+        public string? ImagePathActual { get; }
+
+        // Valores originales (para detectar cambios y mostrar diff)
+        public decimal CostoOriginal  { get; }
+        public decimal PrecioOriginal { get; }
+        public int     StockOriginal  { get; }
+
+        // Valores editables
+        private decimal _costo;
+        private decimal _precioVenta;
+        private int     _stock;
+
+        public decimal Costo
+        {
+            get => _costo;
+            set { _costo = value; Recalcular(); }
+        }
+        public decimal PrecioVenta
+        {
+            get => _precioVenta;
+            set { _precioVenta = value; Recalcular(); }
+        }
+        public int Stock
+        {
+            get => _stock;
+            set { _stock = value; Recalcular(); }
+        }
+
+        // Imagen nueva
+        public byte[]?  ImagenBytes         { get; private set; }
+        public string?  ImagenNombreArchivo { get; private set; }
+        public string?  ImagenPreviewUrl    { get; private set; }
+        public bool     TieneImagenNueva    => ImagenBytes is not null;
+
+        public void SetImagen(byte[] bytes, string nombre, string previewUrl)
+        {
+            ImagenBytes         = bytes;
+            ImagenNombreArchivo = nombre;
+            ImagenPreviewUrl    = previewUrl;
+        }
+
+        public void QuitarImagen()
+        {
+            ImagenBytes         = null;
+            ImagenNombreArchivo = null;
+            ImagenPreviewUrl    = null;
+        }
+
+        // Calculado
+        public decimal ValorInventario { get; private set; }
+
+        // Estado
+        public bool    Modificada  => Costo != CostoOriginal || PrecioVenta != PrecioOriginal || Stock != StockOriginal || TieneImagenNueva;
+        public string? ErrorCosto  { get; private set; }
+        public string? ErrorPrecio { get; private set; }
+        public string? ErrorStock  { get; private set; }
+        public bool    TieneError  => ErrorCosto is not null || ErrorPrecio is not null || ErrorStock is not null;
+
+        public BulkFila(ProductoDto p)
+        {
+            ProductId       = p.Id;
+            Nombre          = p.Name;
+            Sku             = p.Sku;
+            ImagePathActual = p.ImagePath;
+            CostoOriginal   = p.PurchasePrice;
+            PrecioOriginal  = p.SalePrice;
+            StockOriginal   = p.CurrentStock;
+            _costo          = p.PurchasePrice;
+            _precioVenta    = p.SalePrice;
+            _stock          = p.CurrentStock;
+            Recalcular();
+        }
+
+        public void Recalcular()
+        {
+            ErrorCosto  = _costo < 0       ? "El costo no puede ser negativo."            : null;
+            ErrorPrecio = _precioVenta < 0  ? "El precio de venta no puede ser negativo."  : null;
+            ErrorStock  = _stock < 0        ? "El stock no puede ser negativo."            : null;
+            ValorInventario = _costo * Math.Max(0, _stock);
+        }
     }
 }

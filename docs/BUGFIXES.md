@@ -4,6 +4,36 @@ Registro detallado de todos los bugs corregidos en el proyecto.
 
 ---
 
+## BUG-A2-01 — Badge de stock incorrecto en productos inactivos *(v2.5.0 — 2026-06-19)*
+
+- **Módulo**: Productos
+- **Problema**: El badge numérico de stock mostraba fondo verde (`bg-success`) incluso en productos inactivos, sin reflejar su estado real.
+- **Causa raíz**: El ternario evaluaba primero `CurrentStock == 0` y `IsLowStock` con `IsActive`, pero no tenía rama explícita para `!IsActive`; el caso por defecto era siempre `bg-success`.
+- **Solución**: Priorizar `!p.IsActive → bg-secondary` antes de evaluar las condiciones de stock.
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Productos/Index.razor`
+
+---
+
+## BUG-A2-02 — Categoría vacía al abrir el modal de edición *(v2.5.0 — 2026-06-19)*
+
+- **Módulo**: Productos
+- **Problema**: Al abrir el modal de edición de un producto el selector de categoría quedaba en "Seleccione..." (vacío).
+- **Causa raíz**: El fallback cuando `GetProductoAsync` devuelve null solo copiaba `Name` y `Sku`, dejando `CategoryId = 0` y los demás campos vacíos.
+- **Solución**: Rellenar el fallback con todos los campos disponibles del DTO de listado (`CategoryId`, `SupplierId`, precios, stock, imagen).
+- **Archivos**: `src/TinaStore.Web/Components/Pages/Productos/Index.razor`
+
+---
+
+## BUG-A2-03 — ProductCount siempre 0 en categorías *(v2.5.0 — 2026-06-19)*
+
+- **Módulo**: Categorías
+- **Problema**: La columna "Productos" en la pantalla de Categorías siempre mostraba 0, impidiendo además eliminar categorías que sí tenían productos.
+- **Causa raíz**: `CategoryService.ToDto` filtraba `!p.IsDeleted && p.IsActive`; EF Core ya aplica `HasQueryFilter(e => !e.IsDeleted)` en el `Include`, y el `&& p.IsActive` adicional excluía todos los productos inactivos.
+- **Solución**: Simplificar a `c.Products?.Count ?? 0`; el query filter de EF garantiza que no aparecen registros eliminados.
+- **Archivos**: `src/TinaStore.Application/Services/CategoryService.cs`
+
+---
+
 ## BUG-C8 — Sin indicador de carga al descargar PDF *(v1.5.0 — 2026-06-19)*
 
 - **Módulo**: Facturas

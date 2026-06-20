@@ -1,15 +1,15 @@
-@page "/facturas/nueva"
+@page "/ventas/nueva"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 @inject NavigationManager Nav
 
-<PageTitle>Nueva Factura — Tina Store</PageTitle>
+<PageTitle>Nueva Venta — Tina Store</PageTitle>
 
 <div class="d-flex align-items-center mb-4 gap-3">
-    <NavLink href="/facturas" class="btn btn-outline-secondary btn-sm">
+    <NavLink href="/ventas" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-arrow-left"></i>
     </NavLink>
-    <h4 class="fw-bold mb-0"><i class="bi bi-receipt-cutoff me-2 text-purple"></i>Nueva Factura</h4>
+    <h4 class="fw-bold mb-0"><i class="bi bi-receipt-cutoff me-2 text-purple"></i>Nueva Venta</h4>
 </div>
 
 @if (!string.IsNullOrEmpty(_error))
@@ -194,7 +194,7 @@
             else
             {
                 <p class="text-muted text-center py-3">
-                    <i class="bi bi-box-seam me-2"></i>Busca y agrega productos a la factura
+                    <i class="bi bi-box-seam me-2"></i>Busca y agrega productos a la venta
                 </p>
             }
 
@@ -202,7 +202,7 @@
                 <button class="btn bg-purple text-white px-4" @onclick="CrearFactura"
                         disabled="@(!_detalles.Any() || _clienteId == 0 || _creando || _detalles.Any(d => d.Cantidad > d.StockDisponible))">
                     @if (_creando) { <span class="spinner-border spinner-border-sm me-2"></span> }
-                    <i class="bi bi-check-lg me-1"></i>Emitir Factura
+                    <i class="bi bi-check-lg me-1"></i>Registrar Venta
                 </button>
             </div>
         </div>
@@ -391,12 +391,12 @@
         _error = null;
 
         // ── Validaciones de negocio ───────────────────────────────────────────
-        if (_clienteId == 0)            { _error = "Selecciona un cliente antes de emitir la factura.";      return; }
-        if (!_detalles.Any())           { _error = "Agrega al menos un producto a la factura.";              return; }
+        if (_clienteId == 0)            { _error = "Selecciona un cliente antes de registrar la venta.";      return; }
+        if (!_detalles.Any())           { _error = "Agrega al menos un producto a la venta.";              return; }
         if (_detalles.Any(d => d.Cantidad <= 0))
                                         { _error = "La cantidad de cada producto debe ser mayor a cero.";    return; }
         if (_detalles.Any(d => d.Cantidad > d.StockDisponible))
-                                        { _error = "Una o más líneas superan el stock disponible. Corrija las cantidades antes de emitir."; return; }
+                                        { _error = "Una o más líneas superan el stock disponible. Corrija las cantidades antes de registrar."; return; }
         if (_detalles.Any(d => d.PrecioUnitario < 0))
                                         { _error = "El precio unitario no puede ser negativo.";              return; }
         if (_descuentoPct < 0)         { _error = "El descuento no puede ser negativo.";                    return; }
@@ -426,8 +426,8 @@
                 PagoInicial:    pagoInicial);
 
             var ok = await Api.CreateFacturaAsync(dto);
-            if (ok) Nav.NavigateTo("/facturas");
-            else _error = "Error al crear la factura. Verifique stock y campos requeridos.";
+            if (ok) Nav.NavigateTo("/ventas");
+            else _error = "Error al registrar la venta. Verifique stock y campos requeridos.";
         }
         catch { _error = "Error al comunicarse con la API."; }
         finally { _creando = false; }

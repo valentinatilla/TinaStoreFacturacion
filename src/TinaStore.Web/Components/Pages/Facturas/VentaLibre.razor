@@ -1,0 +1,286 @@
+@page "/ventas/libre"
+@attribute [Authorize]
+@inject TinaStoreApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>Venta Libre — Tina Store</PageTitle>
+
+<div class="d-flex align-items-center mb-4 gap-3">
+    <NavLink href="/ventas" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i>
+    </NavLink>
+    <div>
+        <h4 class="fw-bold mb-0"><i class="bi bi-lightning-charge me-2 text-purple"></i>Venta Libre</h4>
+        <small class="text-muted">Registra productos o servicios sin vincularlos al inventario</small>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(_error))
+{
+    <div class="alert alert-danger py-2">@_error</div>
+}
+
+<div class="row g-4">
+    <!-- Columna izquierda: cliente y pago -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm p-3 mb-3">
+            <h6 class="fw-bold mb-3"><i class="bi bi-person me-1 text-purple"></i>Cliente</h6>
+            <select class="form-select mb-2" @bind="_clienteId">
+                <option value="0">Seleccione un cliente...</option>
+                @foreach (var c in _clientes)
+                {
+                    <option value="@c.Id">@c.FullName</option>
+                }
+            </select>
+        </div>
+
+        <div class="card border-0 shadow-sm p-3">
+            <h6 class="fw-bold mb-3"><i class="bi bi-credit-card me-1 text-purple"></i>Pago</h6>
+            <div class="mb-2">
+                <label class="form-label small fw-semibold">Método de pago</label>
+                <select class="form-select" @bind="_metodoPagoId">
+                    <option value="0">Seleccione...</option>
+                    @foreach (var mp in _metodosPago)
+                    {
+                        <option value="@mp.Id">@mp.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="mb-2">
+                <label class="form-label small fw-semibold">Pago inicial (opcional)</label>
+                <input type="number" class="form-control" @bind="_pagoInicial" min="0" step="0.01" />
+            </div>
+            <div>
+                <label class="form-label small fw-semibold">Notas</label>
+                <textarea class="form-control" rows="2" @bind="_notas"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Columna derecha: líneas libres -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0"><i class="bi bi-list-ul me-1 text-purple"></i>Detalle de la venta</h6>
+                <button class="btn btn-sm btn-outline-purple" @onclick="AgregarLinea">
+                    <i class="bi bi-plus-lg me-1"></i>Agregar línea
+                </button>
+            </div>
+
+            @if (_lineas.Any())
+            {
+                <table class="table table-sm mb-3">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Descripción</th>
+                            <th class="text-center" style="width:90px">Cant.</th>
+                            <th class="text-end" style="width:120px">Precio unit.</th>
+                            <th class="text-end" style="width:100px">Subtotal</th>
+                            <th style="width:36px"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var l in _lineas)
+                        {
+                            <tr>
+                                <td>
+                                    <input type="text"
+                                           class="form-control form-control-sm @(string.IsNullOrWhiteSpace(l.Descripcion) && _intentoGuardar ? "is-invalid" : "")"
+                                           placeholder="Ej.: Servicio de costura, pieza importada..."
+                                           @bind="l.Descripcion" />
+                                </td>
+                                <td>
+                                    <input type="number"
+                                           class="form-control form-control-sm text-center @(l.Cantidad <= 0 && _intentoGuardar ? "is-invalid" : "")"
+                                           min="1" @bind="l.Cantidad"
+                                           @bind:after="RecalcularTotales" />
+                                </td>
+                                <td>
+                                    <input type="number"
+                                           class="form-control form-control-sm text-end @(l.PrecioUnitario < 0 && _intentoGuardar ? "is-invalid" : "")"
+                                           min="0" step="0.01"
+                                           @bind="l.PrecioUnitario"
+                                           @bind:after="RecalcularTotales" />
+                                </td>
+                                <td class="text-end fw-semibold align-middle">
+                                    @((l.Cantidad * l.PrecioUnitario).ToString("C0"))
+                                </td>
+                                <td class="align-middle">
+                                    <button class="btn btn-sm btn-link text-danger p-0" @onclick="() => QuitarLinea(l)">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <td colspan="3" class="text-end text-muted small">Subtotal:</td>
+                            <td class="text-end text-muted small">@_subtotal.ToString("C0")</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" class="text-end text-muted small">Descuento (%):</td>
+                            <td class="text-end text-muted small">
+                                <div class="d-flex align-items-center justify-content-end gap-2">
+                                    <input type="number" class="form-control form-control-sm text-end"
+                                           style="width:80px;display:inline-block"
+                                           min="0" max="100" step="0.01"
+                                           @bind="_descuentoPct" @bind:after="RecalcularTotales" />
+                                    @if (_descuento > 0)
+                                    {
+                                        <span class="text-muted small text-nowrap">-@_descuento.ToString("C0")</span>
+                                    }
+                                </div>
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" class="text-end text-muted small">Impuesto (%):</td>
+                            <td class="text-end text-muted small">
+                                <input type="number" class="form-control form-control-sm text-end"
+                                       style="width:80px;display:inline-block"
+                                       min="0" max="100" step="0.01"
+                                       @bind="_impuestoPct" @bind:after="RecalcularTotales" />
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr class="fw-bold border-top">
+                            <td colspan="3" class="text-end fw-bold">Total:</td>
+                            <td class="text-end fw-bold fs-5 text-purple">@_total.ToString("C0")</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            }
+            else
+            {
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-plus-circle fs-2 d-block mb-2 text-purple opacity-50"></i>
+                    Pulsa <strong>Agregar línea</strong> para ingresar los productos o servicios de esta venta
+                </div>
+            }
+
+            <div class="d-flex justify-content-end">
+                <button class="btn bg-purple text-white px-4"
+                        @onclick="CrearVentaLibre"
+                        disabled="@(!_lineas.Any() || _clienteId == 0 || _creando)">
+                    @if (_creando) { <span class="spinner-border spinner-border-sm me-2"></span> }
+                    <i class="bi bi-check-lg me-1"></i>Registrar Venta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<ClienteDto> _clientes = [];
+    private List<MetodoPagoDto> _metodosPago = [];
+
+    private int _clienteId;
+    private int _metodoPagoId;
+    private decimal? _pagoInicial;
+    private string? _notas;
+    private decimal _subtotal;
+    private decimal _descuentoPct;
+    private decimal _descuento;
+    private decimal _impuestoPct;
+    private decimal _total;
+    private bool _creando;
+    private bool _intentoGuardar;
+    private string? _error;
+
+    private List<LineaLibre> _lineas = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var t1 = Api.GetClientesAsync();
+        var t2 = Api.GetMetodosPagoAsync();
+        await Task.WhenAll(t1, t2);
+        _clientes    = t1.Result ?? [];
+        _metodosPago = t2.Result ?? [];
+        AgregarLinea(); // Una línea vacía de inicio
+    }
+
+    private void AgregarLinea()
+        => _lineas.Add(new LineaLibre());
+
+    private void QuitarLinea(LineaLibre l)
+    {
+        _lineas.Remove(l);
+        RecalcularTotales();
+    }
+
+    private void RecalcularTotales()
+    {
+        _subtotal = _lineas.Sum(l => l.Cantidad * l.PrecioUnitario);
+
+        if (_descuentoPct < 0) _descuentoPct = 0;
+        if (_descuentoPct > 100) _descuentoPct = 100;
+
+        _descuento = Math.Round(_subtotal * (_descuentoPct / 100m), 2);
+        var baseImponible = Math.Max(0, _subtotal - _descuento);
+        var impuesto = Math.Round(baseImponible * (_impuestoPct / 100m), 2);
+        _total = baseImponible + impuesto;
+    }
+
+    private async Task CrearVentaLibre()
+    {
+        _intentoGuardar = true;
+        _error = null;
+
+        if (_clienteId == 0)
+            { _error = "Selecciona un cliente antes de registrar la venta."; return; }
+        if (!_lineas.Any())
+            { _error = "Agrega al menos una línea a la venta."; return; }
+        if (_lineas.Any(l => string.IsNullOrWhiteSpace(l.Descripcion)))
+            { _error = "Todas las líneas deben tener descripción."; return; }
+        if (_lineas.Any(l => l.Cantidad <= 0))
+            { _error = "La cantidad de cada línea debe ser mayor a cero."; return; }
+        if (_lineas.Any(l => l.PrecioUnitario < 0))
+            { _error = "El precio unitario no puede ser negativo."; return; }
+        if (_descuentoPct is < 0 or > 100)
+            { _error = "El descuento debe estar entre 0% y 100%."; return; }
+        if (_pagoInicial.HasValue && _pagoInicial.Value < 0)
+            { _error = "El pago inicial no puede ser negativo."; return; }
+        if (_pagoInicial.HasValue && _pagoInicial.Value > _total)
+            { _error = "El pago inicial no puede ser mayor al total."; return; }
+
+        _creando = true;
+        try
+        {
+            CreatePagoInicialDto? pagoInicial = null;
+            if (_metodoPagoId > 0 && _pagoInicial.HasValue && _pagoInicial.Value > 0)
+                pagoInicial = new CreatePagoInicialDto(_metodoPagoId, _pagoInicial.Value, null, null);
+
+            var baseImponible = Math.Max(0, _subtotal - _descuento);
+            var taxAmount = Math.Round(baseImponible * (_impuestoPct / 100m), 2);
+
+            var dto = new CreateFacturaDto(
+                CustomerId:     _clienteId,
+                DiscountAmount: _descuento,
+                TaxAmount:      taxAmount,
+                Notes:          _notas,
+                Details: _lineas.Select(l => new CreateDetalleFacturaDto(
+                    ProductId:       null,
+                    Quantity:        l.Cantidad,
+                    UnitPrice:       l.PrecioUnitario,
+                    DiscountAmount:  0,
+                    FreeDescription: l.Descripcion)).ToList(),
+                PagoInicial: pagoInicial);
+
+            var ok = await Api.CreateFacturaAsync(dto);
+            if (ok) Nav.NavigateTo("/ventas");
+            else _error = "Error al registrar la venta. Verifique los campos requeridos.";
+        }
+        catch { _error = "Error al comunicarse con la API."; }
+        finally { _creando = false; }
+    }
+
+    private sealed class LineaLibre
+    {
+        public string Descripcion { get; set; } = "";
+        public int Cantidad { get; set; } = 1;
+        public decimal PrecioUnitario { get; set; } = 0;
+    }
+}

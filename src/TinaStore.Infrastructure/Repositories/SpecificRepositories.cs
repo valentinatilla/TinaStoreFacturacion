@@ -241,6 +241,47 @@ public class DashboardRepository(AppDbContext context) : IDashboardRepository
             .OrderByDescending(a => a.TotalDebt - a.TotalPaid)
             .Take(top)
             .ToListAsync(ct);
+
+    public async Task<(int ProductId, string ProductName, string? Sku, int Units, decimal Revenue)?> GetTopProductThisMonthAsync(
+        DateTime mesInicio, CancellationToken ct = default)
+    {
+        var result = await _db.InvoiceDetails
+            .Include(d => d.Invoice)
+            .Include(d => d.Product)
+            .Where(d => d.ProductId.HasValue
+                     && d.Invoice!.Status != Domain.Enums.InvoiceStatus.Cancelled
+                     && d.Invoice.InvoiceDate >= mesInicio)
+            .GroupBy(d => new { d.ProductId, d.ProductName, Sku = d.Product != null ? d.Product.Sku : null })
+            .Select(g => new
+            {
+                g.Key.ProductId,
+                g.Key.ProductName,
+                g.Key.Sku,
+                Units = g.Sum(d => d.Quantity),
+                Revenue = g.Sum(d => d.UnitPrice * d.Quantity - d.DiscountAmount)
+            })
+            .OrderByDescending(x => x.Units)
+            .FirstOrDefaultAsync(ct);
+
+        if (result is null) return null;
+        return (result.ProductId!.Value, result.ProductName, result.Sku, result.Units, result.Revenue);
+    }
+
+    public async Task<IReadOnlyList<(DateTime Fecha, decimal Total)>> GetSalesLast7DaysAsync(
+        DateTime desde, CancellationToken ct = default)
+    {
+        var raw = await _db.Invoices
+            .Where(i => i.Status != Domain.Enums.InvoiceStatus.Cancelled && i.InvoiceDate >= desde)
+            .GroupBy(i => i.InvoiceDate.Date)
+            .Select(g => new { Fecha = g.Key, Total = g.Sum(i => i.Total) })
+            .ToListAsync(ct);
+
+        // Asegurar 7 entradas aunque un día no tenga ventas
+        return Enumerable.Range(0, 7)
+            .Select(offset => desde.Date.AddDays(offset))
+            .Select(d => (Fecha: d, Total: raw.FirstOrDefault(r => r.Fecha == d)?.Total ?? 0m))
+            .ToList();
+    }
 }
 
 public class ReportRepository(AppDbContext context) : IReportRepository

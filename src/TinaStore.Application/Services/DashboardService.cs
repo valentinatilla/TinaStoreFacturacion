@@ -31,6 +31,7 @@ public sealed class DashboardService : IDashboardService
         var hoyFin = hoyInicio.AddDays(1).AddTicks(-1);
         var semanaInicio = hoyInicio.AddDays(-6);
         var mesInicio = new DateTime(ahora.Year, ahora.Month, 1);
+        var hace7Dias = hoyInicio.AddDays(-6);
 
         var ventasHoy = await _repo.GetSalesTodayAsync(hoyInicio, hoyFin);
         var cantidadHoy = await _repo.GetInvoiceCountTodayAsync(hoyInicio, hoyFin);
@@ -58,12 +59,27 @@ public sealed class DashboardService : IDashboardService
                 a.Balance))
             .ToList();
 
+        var topRaw = await _repo.GetTopProductThisMonthAsync(mesInicio);
+        ProductoEstrellaDto? productoEstrella = topRaw.HasValue
+            ? new ProductoEstrellaDto(
+                topRaw.Value.ProductId,
+                topRaw.Value.ProductName,
+                topRaw.Value.Sku,
+                topRaw.Value.Units,
+                topRaw.Value.Revenue)
+            : null;
+
+        var tendencia = (await _repo.GetSalesLast7DaysAsync(hace7Dias))
+            .Select(t => new VentaDiariaDto(t.Fecha, t.Total))
+            .ToList();
+
         return new DashboardDto(
             ventasHoy, cantidadHoy, ventasSemana, ventasMes,
             totalPorCobrar, clientesConDeuda,
             gastosHoy, gastosMes,
             productosStockBajo, totalProductosActivos,
-            ultimasFacturas, topDeudores);
+            ultimasFacturas, topDeudores,
+            productoEstrella, tendencia);
     }
 }
 

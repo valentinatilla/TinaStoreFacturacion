@@ -24,7 +24,13 @@ public record DashboardDto(
     List<InvoiceSummaryDto> UltimasFacturas,
 
     // ─── Deudores con mayor saldo ─────────────────────────────────────────────
-    List<DeudorResumenDto> TopDeudores
+    List<DeudorResumenDto> TopDeudores,
+
+    // ─── Producto estrella del mes ────────────────────────────────────────────
+    ProductoEstrellaDto? ProductoEstrella,
+
+    // ─── Tendencia de ventas: últimos 7 días (día 0 = hace 6 días, día 6 = hoy)
+    List<VentaDiariaDto> VentasUltimos7Dias
 );
 
 /// <summary>Resumen de deudor para el widget del dashboard.</summary>
@@ -33,4 +39,19 @@ public record DeudorResumenDto(
     string CustomerName,
     string? Phone,
     decimal Saldo
+);
+
+/// <summary>Producto más vendido en el mes actual.</summary>
+public record ProductoEstrellaDto(
+    int ProductId,
+    string ProductName,
+    string? Sku,
+    int UnidadesVendidas,
+    decimal TotalIngresos
+);
+
+/// <summary>Venta total de un día específico para el mini gráfico de tendencia.</summary>
+public record VentaDiariaDto(
+    DateTime Fecha,
+    decimal Total
 );
