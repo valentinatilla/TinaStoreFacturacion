@@ -104,6 +104,11 @@ if (app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
+
+// UseStaticFiles sirve los archivos físicos de wwwroot (incluyendo _framework/blazor.web.js).
+// MapStaticAssets (más abajo) añade fingerprinting encima. Ambos son necesarios en producción.
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
