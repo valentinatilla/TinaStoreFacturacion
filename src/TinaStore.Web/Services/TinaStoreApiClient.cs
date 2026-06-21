@@ -124,10 +124,22 @@ public class TinaStoreApiClient
     private readonly HttpClient _http;
     private readonly SessionStateService _session;
 
-    public TinaStoreApiClient(HttpClient http, SessionStateService session)
+    /// <summary>
+    /// URL base de la API para llamadas servidor-a-servidor (puede ser URL interna en producción).
+    /// </summary>
+    public string BaseUrl => _http.BaseAddress?.ToString().TrimEnd('/') ?? string.Empty;
+
+    /// <summary>
+    /// URL pública de la API que el BROWSER puede usar para cargar imágenes (logo, fotos de productos).
+    /// Se configura en appsettings como PublicApiUrl. Si no está configurada, cae al BaseUrl.
+    /// </summary>
+    public string PublicBaseUrl { get; init; } = string.Empty;
+
+    public TinaStoreApiClient(HttpClient http, SessionStateService session, string publicBaseUrl = "")
     {
         _http = http;
         _session = session;
+        PublicBaseUrl = string.IsNullOrWhiteSpace(publicBaseUrl) ? BaseUrl : publicBaseUrl.TrimEnd('/');
     }
 
     private void SetAuthHeader()
@@ -435,7 +447,6 @@ public class TinaStoreApiClient
     }
 
     // ── Configuración de tienda ───────────────────────────────────────────────
-    public string BaseUrl => _http.BaseAddress?.ToString() ?? string.Empty;
 
     public Task<ConfiguracionTiendaDto?> GetConfiguracionAsync() =>
         GetSafeAsync<ConfiguracionTiendaDto>("/api/settings");

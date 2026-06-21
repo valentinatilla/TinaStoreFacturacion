@@ -4,7 +4,7 @@
 
 <PageTitle>Clientes — Tina Store</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h4 class="fw-bold mb-0"><i class="bi bi-people me-2 text-purple"></i>Clientes</h4>
     <button class="btn bg-purple text-white" @onclick="() => AbrirModal()">
         <i class="bi bi-plus-lg me-1"></i>Nuevo cliente
@@ -62,14 +62,49 @@ else
                 </button>
             </div>
         </div>
+        <!-- Filtros avanzados: saldo y días sin comprar -->
+        <div class="row g-2 align-items-end mt-1 pt-2 border-top">
+            <div class="col-12">
+                <span class="text-muted small fw-semibold"><i class="bi bi-funnel me-1"></i>Filtros avanzados</span>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <label class="form-label small fw-semibold mb-1">Saldo pendiente mayor que</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text">$</span>
+                    <input type="number" class="form-control form-control-sm" placeholder="0" min="0" step="1000"
+                           @oninput="e => { _filtroSaldoMin = decimal.TryParse(e.Value?.ToString(), out var v) ? v : (decimal?)null; Filtrar(); }" />
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <label class="form-label small fw-semibold mb-1">Saldo pendiente menor que</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text">$</span>
+                    <input type="number" class="form-control form-control-sm" placeholder="Sin límite" min="0" step="1000"
+                           @oninput="e => { _filtroSaldoMax = decimal.TryParse(e.Value?.ToString(), out var v) ? v : (decimal?)null; Filtrar(); }" />
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <label class="form-label small fw-semibold mb-1">Días sin comprar mayor que</label>
+                <div class="input-group input-group-sm">
+                    <input type="number" class="form-control form-control-sm" placeholder="Ej: 30" min="0" step="1"
+                           @oninput="e => { _filtroDiasSinComprar = int.TryParse(e.Value?.ToString(), out var v) ? v : (int?)null; Filtrar(); }" />
+                    <span class="input-group-text">días</span>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="card ts-table border-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
-                        <th>Nombre</th><th>Documento</th><th>Teléfono</th><th>Email</th>
-                        <th>Estado</th><th>Últ. compra</th><th></th>
+                        <th>Nombre</th>
+                        <th class="ts-table-hide-mobile">Documento</th>
+                        <th class="ts-table-hide-mobile">Teléfono</th>
+                        <th class="ts-table-hide-mobile">Email</th>
+                        <th>Estado</th>
+                        <th class="ts-table-hide-mobile">Últ. compra</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -77,9 +112,9 @@ else
                     {
                         <tr>
                             <td class="fw-semibold">@c.FullName</td>
-                            <td>@c.DocumentNumber</td>
-                            <td>@c.Phone</td>
-                            <td>@c.Email</td>
+                            <td class="ts-table-hide-mobile">@c.DocumentNumber</td>
+                            <td class="ts-table-hide-mobile">@c.Phone</td>
+                            <td class="ts-table-hide-mobile">@c.Email</td>
                             <td>
                                 @if (!c.IsActive)
                                 {
@@ -92,7 +127,7 @@ else
                                     </span>
                                 }
                             </td>
-                            <td class="text-muted small">
+                            <td class="text-muted small ts-table-hide-mobile">
                                 @(c.LastPurchaseDate.HasValue
                                     ? c.LastPurchaseDate.Value.ToLocalTime().ToString("dd/MM/yyyy")
                                     : "—")
@@ -251,11 +286,15 @@ else
     private List<string> _erroresModal = [];
 
     // ── Filtros ────────────────────────────────────────────────────────────────────
-    private string    _filtroTexto  = string.Empty;
-    private string    _filtroEstado = string.Empty;
-    private string    _filtroEmail  = string.Empty;
+    private string    _filtroTexto         = string.Empty;
+    private string    _filtroEstado        = string.Empty;
+    private string    _filtroEmail         = string.Empty;
     private DateOnly? _filtroDesde;
     private DateOnly? _filtroHasta;
+    // Filtros avanzados
+    private decimal?  _filtroSaldoMin;
+    private decimal?  _filtroSaldoMax;
+    private int?      _filtroDiasSinComprar;
 
     protected override async Task OnInitializedAsync()
     {
@@ -295,17 +334,29 @@ else
                 if (_filtroHasta.HasValue && fecha > _filtroHasta.Value) return false;
                 return true;
             })
+            .Where(c => _filtroSaldoMin is null || c.PendingBalance >= _filtroSaldoMin.Value)
+            .Where(c => _filtroSaldoMax is null || c.PendingBalance <= _filtroSaldoMax.Value)
+            .Where(c =>
+            {
+                if (_filtroDiasSinComprar is null) return true;
+                if (!c.LastPurchaseDate.HasValue) return true; // Nunca compró → siempre pasa
+                var dias = (DateTime.UtcNow - c.LastPurchaseDate.Value.ToUniversalTime()).TotalDays;
+                return dias >= _filtroDiasSinComprar.Value;
+            })
             .ToList();
     }
 
     private void LimpiarFiltros()
     {
-        _filtroTexto  = string.Empty;
-        _filtroEstado = string.Empty;
-        _filtroEmail  = string.Empty;
-        _filtroDesde  = null;
-        _filtroHasta  = null;
-        _filtrados    = _clientes;
+        _filtroTexto          = string.Empty;
+        _filtroEstado         = string.Empty;
+        _filtroEmail          = string.Empty;
+        _filtroDesde          = null;
+        _filtroHasta          = null;
+        _filtroSaldoMin       = null;
+        _filtroSaldoMax       = null;
+        _filtroDiasSinComprar = null;
+        _filtrados            = _clientes;
     }
 
     private void AbrirModal(ClienteDto? c = null)

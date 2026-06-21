@@ -138,7 +138,7 @@ else if (_cargado)
                 _modelo.AllowNegativeStock   = cfg.AllowNegativeStock;
                 _logoUrl = string.IsNullOrEmpty(cfg.LogoPath)
                     ? null
-                    : $"{Api.BaseUrl.TrimEnd('/')}{cfg.LogoPath}";
+                    : $"{Api.PublicBaseUrl.TrimEnd('/')}{cfg.LogoPath}";
                 _cargado = true;
             }
         }
@@ -159,7 +159,7 @@ else if (_cargado)
             {
                 var url = string.IsNullOrEmpty(cfg.LogoPath)
                     ? null
-                    : $"{Api.BaseUrl.TrimEnd('/')}{cfg.LogoPath}";
+                    : $"{Api.PublicBaseUrl.TrimEnd('/')}{cfg.LogoPath}";
                 _logoUrl = url;
                 LogoState.SetLogo(url);
                 _exito = true;

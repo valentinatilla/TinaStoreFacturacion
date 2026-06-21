@@ -31,11 +31,11 @@ else if (_data is not null)
                     <tr>
                         <th style="width:32px"></th>
                         <th>Cliente</th>
-                        <th>Documento</th>
-                        <th>Teléfono</th>
-                        <th class="text-center">Ventas pend.</th>
+                        <th class="ts-table-hide-mobile">Documento</th>
+                        <th class="ts-table-hide-mobile">Teléfono</th>
+                        <th class="text-center ts-table-hide-mobile">Ventas pend.</th>
                         <th class="text-end">Saldo</th>
-                        <th>Última venta</th>
+                        <th class="ts-table-hide-mobile">Última venta</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -49,13 +49,13 @@ else if (_data is not null)
                                 <i class="bi @(expandido ? "bi-chevron-down" : "bi-chevron-right") text-purple small"></i>
                             </td>
                             <td class="fw-semibold align-middle">@cxc.CustomerName</td>
-                            <td class="text-muted align-middle">@cxc.DocumentNumber</td>
-                            <td class="text-muted small align-middle">@cxc.Phone</td>
-                            <td class="text-center align-middle">
+                            <td class="text-muted align-middle ts-table-hide-mobile">@cxc.DocumentNumber</td>
+                            <td class="text-muted small align-middle ts-table-hide-mobile">@cxc.Phone</td>
+                            <td class="text-center align-middle ts-table-hide-mobile">
                                 <span class="badge bg-warning text-dark">@cxc.FacturasPendientes</span>
                             </td>
                             <td class="text-end fw-bold text-danger fs-6 align-middle">@cxc.SaldoPendiente.ToString("C0")</td>
-                            <td class="text-muted small align-middle">@cxc.UltimaFacturaFecha?.ToString("dd/MM/yyyy")</td>
+                            <td class="text-muted small align-middle ts-table-hide-mobile">@cxc.UltimaFacturaFecha?.ToString("dd/MM/yyyy")</td>
                             <td class="text-end align-middle" @onclick:stopPropagation="true">
                                 @if (!string.IsNullOrWhiteSpace(cxc.Phone))
                                 {

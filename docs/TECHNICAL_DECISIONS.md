@@ -5,6 +5,45 @@ Esto sirve para entender *por qué* se hizo algo de cierta manera, y cómo rever
 
 ---
 
+## TD-v2.8.0 — Decisiones técnicas v2.8.0 (2025-07-14)
+
+### TD-2.8-01 — Separación de `ApiBaseUrl` y `PublicApiUrl`
+
+**Decisión**: Se introdujo la clave `PublicApiUrl` en `appsettings.json` independiente de `ApiBaseUrl`. `TinaStoreApiClient` expone `PublicBaseUrl` para que los componentes Blazor construyan URLs de imágenes/logo accesibles por el navegador.
+
+**Justificación**:
+1. En Railway (y en general en despliegues en contenedores), la URL interna de la API (`ApiBaseUrl`) solo es accesible desde el servidor Blazor, no desde el navegador del usuario.
+2. Usar una sola URL causaba imágenes rotas en producción aunque funcionara en desarrollo local.
+3. El patrón de dos URLs es estándar para aplicaciones Blazor Server que consumen una API separada.
+
+**Cómo cambiarlo**: Si el frontend y la API comparten el mismo origen (mismo dominio y puerto), `PublicApiUrl` puede apuntar a la misma dirección que `ApiBaseUrl`.
+
+---
+
+### TD-2.8-02 — Filtros avanzados de Clientes 100 % en frontend
+
+**Decisión**: Los filtros de saldo pendiente (mayor/menor que) y días sin comprar se aplican en el cliente Blazor sobre la lista ya cargada, sin cambios en la API.
+
+**Justificación**:
+1. El módulo de clientes ya cargaba todos los clientes en memoria para los filtros existentes.
+2. Agregar endpoints de filtrado en API requeriría cambios en `CustomersController`, `ICustomerRepository` y DTOs.
+3. Para el volumen esperado de clientes de una tienda pequeña, el filtrado en memoria es suficientemente eficiente.
+
+**Cuándo revisarlo**: Si la lista de clientes supera los 500–1000 registros, considerar filtrado paginado en API.
+
+---
+
+### TD-2.8-03 — PWA con manifest estático sin Service Worker
+
+**Decisión**: Se añadió `manifest.webmanifest` para permitir "Agregar a inicio" en móviles, pero **sin** Service Worker ni caché offline.
+
+**Justificación**:
+1. Blazor Server requiere conexión al servidor para funcionar; un Service Worker de caché offline daría falsa sensación de que la app funciona sin internet.
+2. El benefit inmediato (ícono en pantalla de inicio, título correcto, barra de estado del color del tema) se obtiene solo con el manifest.
+3. Los íconos 192×192 y 512×512 aún no han sido generados; están documentados en `wwwroot/icons/README.md`.
+
+---
+
 ## TD-Fase-A — Decisiones técnicas Fase A (v2.0.0 — 2026-06-19)
 
 ### TD-A-01 — Mantener nombres internos `Invoice` aunque la UI muestre "Ventas"

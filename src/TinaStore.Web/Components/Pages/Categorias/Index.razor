@@ -1,10 +1,11 @@
 @page "/categorias"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
+@using System.Globalization
 
 <PageTitle>Categorías — Tina Store</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h4 class="fw-bold mb-0"><i class="bi bi-tags me-2 text-purple"></i>Categorías de Productos</h4>
     <button class="btn bg-purple text-white" @onclick="() => AbrirModal()">
         <i class="bi bi-plus-lg me-1"></i>Nueva categoría
@@ -24,16 +25,46 @@
 }
 else
 {
+    <!-- Barra de orden -->
+    <div class="card border-0 shadow-sm mb-3 p-3">
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-sm-auto">
+                <label class="form-label small fw-semibold mb-1">Ordenar por nombre</label>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-sm @(_orden == "az" ? "bg-purple text-white" : "btn-outline-secondary")"
+                            @onclick='() => SetOrden("az")'>
+                        <i class="bi bi-sort-alpha-down me-1"></i>A → Z
+                    </button>
+                    <button class="btn btn-sm @(_orden == "za" ? "bg-purple text-white" : "btn-outline-secondary")"
+                            @onclick='() => SetOrden("za")'>
+                        <i class="bi bi-sort-alpha-up me-1"></i>Z → A
+                    </button>
+                    @if (!string.IsNullOrEmpty(_orden))
+                    {
+                        <button class="btn btn-sm btn-outline-secondary" @onclick='() => SetOrden("")' title="Quitar orden">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    }
+                </div>
+            </div>
+            <div class="col-12 col-sm">
+                <label class="form-label small fw-semibold mb-1">Buscar</label>
+                <input class="form-control form-control-sm" placeholder="Nombre de categoría..."
+                       @oninput="e => { _busqueda = e.Value?.ToString() ?? string.Empty; }" />
+            </div>
+        </div>
+    </div>
+
     <div class="card ts-table border-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
-                <thead><tr><th>Nombre</th><th>Descripción</th><th>Productos</th><th></th></tr></thead>
+                <thead><tr><th>Nombre</th><th class="ts-table-hide-mobile">Descripción</th><th>Productos</th><th></th></tr></thead>
                 <tbody>
-                    @foreach (var cat in _categorias)
+                    @foreach (var cat in CategoriasOrdenadas)
                     {
                         <tr>
                             <td class="fw-semibold">@cat.Name</td>
-                            <td class="text-muted">@cat.Description</td>
+                            <td class="text-muted ts-table-hide-mobile">@cat.Description</td>
                             <td><span class="badge bg-secondary">@cat.ProductCount</span></td>
                             <td class="text-end">
                                 <button class="btn btn-sm btn-outline-danger" @onclick="() => Eliminar(cat.Id)"
@@ -42,6 +73,10 @@ else
                                 </button>
                             </td>
                         </tr>
+                    }
+                    @if (!CategoriasOrdenadas.Any())
+                    {
+                        <tr><td colspan="4" class="text-center text-muted py-4">Sin categorías</td></tr>
                     }
                 </tbody>
             </table>
@@ -85,6 +120,29 @@ else
     private string? _descripcion;
     private string? _mensaje;
     private bool _exito;
+    private string _orden = "";
+    private string _busqueda = "";
+
+    // Categorías filtradas y ordenadas según búsqueda y orden seleccionado
+    private IEnumerable<CategoriaDto> CategoriasOrdenadas
+    {
+        get
+        {
+            var comparer = StringComparer.Create(new CultureInfo("es-CO"), ignoreCase: true);
+            var lista = string.IsNullOrWhiteSpace(_busqueda)
+                ? _categorias
+                : _categorias.Where(c => c.Name.Contains(_busqueda, StringComparison.OrdinalIgnoreCase)
+                                      || (c.Description?.Contains(_busqueda, StringComparison.OrdinalIgnoreCase) ?? false));
+            return _orden switch
+            {
+                "az" => lista.OrderBy(c => c.Name, comparer),
+                "za" => lista.OrderByDescending(c => c.Name, comparer),
+                _    => lista
+            };
+        }
+    }
+
+    private void SetOrden(string orden) { _orden = orden; }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

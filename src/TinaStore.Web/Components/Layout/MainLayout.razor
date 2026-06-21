@@ -3,7 +3,6 @@
 @inject SessionStateService Session
 @inject IJSRuntime JS
 @inject TinaStoreApiClient Api
-@inject IConfiguration Config
 @inject LogoStateService LogoState
 @implements IDisposable
 
@@ -76,8 +75,7 @@
                 var cfg = await Api.GetConfiguracionAsync();
                 if (cfg is not null && !string.IsNullOrEmpty(cfg.LogoPath))
                 {
-                    var apiBase = Config["ApiBaseUrl"]?.TrimEnd('/') ?? string.Empty;
-                    LogoState.SetLogo($"{apiBase}{cfg.LogoPath}");
+                    LogoState.SetLogo($"{Api.PublicBaseUrl.TrimEnd('/')}{cfg.LogoPath}");
                 }
             }
             catch { /* Si falla, usar emoji predeterminado */ }

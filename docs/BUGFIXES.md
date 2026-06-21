@@ -4,6 +4,37 @@ Registro detallado de todos los bugs corregidos en el proyecto.
 
 ---
 
+## BUG-C1-01 — Logo roto en sidebar y configuración *(v2.8.0 — 2025-07-14)*
+
+- **Módulo**: Configuración, Layout (MainLayout)
+- **Problema**: Al subir un logo nuevo, el sidebar mostraba una imagen rota (icono de "?") y el mismo problema ocurría en la pantalla de Configuración.
+- **Causa raíz**: La URL del logo se construía usando `ApiBaseUrl` (URL interna del servidor, por ejemplo `http://localhost:5000`), que **no es accesible desde el navegador** en Railway (donde el frontend y el backend corren en contenedores separados).
+- **Solución**: Se introdujo `PublicApiUrl` en `appsettings.json` (URL pública accesible por el browser) y se separó de `ApiBaseUrl` (uso interno backend→backend). `TinaStoreApiClient` expone `PublicBaseUrl` y todos los componentes que construyen URLs de imágenes lo usan.
+- **Archivos afectados**:
+  - `src/TinaStore.Web/Services/TinaStoreApiClient.cs`
+  - `src/TinaStore.Web/Program.cs`
+  - `src/TinaStore.Web/Components/Pages/Configuracion/StoreSettings.razor`
+  - `src/TinaStore.Web/Components/Layout/MainLayout.razor`
+  - `src/TinaStore.Web/Components/Pages/Facturas/Index.razor`
+  - `src/TinaStore.Web/Components/Pages/Productos/Index.razor`
+  - `src/TinaStore.Web/appsettings.json`
+  - `src/TinaStore.Web/appsettings.Development.json`
+  - `src/TinaStore.Web/appsettings.Production.json`
+
+---
+
+## BUG-C1-02 — Imágenes de productos rotas en detalle de venta *(v2.8.0 — 2025-07-14)*
+
+- **Módulo**: Ventas/Facturas
+- **Problema**: Las miniaturas de producto en el detalle expandible de una factura mostraban imagen rota en entornos distintos a desarrollo local.
+- **Causa raíz**: Se usaba `Config["ApiBaseUrl"]` (inyección directa de `IConfiguration`) para construir la URL; en Railway la URL interna no resuelve desde el navegador.
+- **Solución**: Se eliminó la inyección de `IConfiguration` en `Facturas/Index.razor` y `Productos/Index.razor`; ahora usan `Api.PublicBaseUrl`.
+- **Archivos afectados**:
+  - `src/TinaStore.Web/Components/Pages/Facturas/Index.razor`
+  - `src/TinaStore.Web/Components/Pages/Productos/Index.razor`
+
+---
+
 ## BUG-A2-01 — Badge de stock incorrecto en productos inactivos *(v2.5.0 — 2026-06-19)*
 
 - **Módulo**: Productos

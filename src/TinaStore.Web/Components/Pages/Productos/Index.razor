@@ -5,9 +5,9 @@
 
 <PageTitle>Productos — Tina Store</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h4 class="fw-bold mb-0"><i class="bi bi-box-seam me-2 text-purple"></i>Productos</h4>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
         <button class="btn btn-outline-success btn-sm" @onclick="ExportarExcel">
             <i class="bi bi-file-earmark-excel me-1"></i>Exportar Excel
         </button>
@@ -128,14 +128,14 @@ else
                 <thead>
                     <tr>
                         <th></th>
-                        <th style="cursor:pointer" @onclick='() => OrdenarPor("sku")'>SKU <i class="@(SortIconClass("sku")) ms-1 small"></i></th>
+                        <th class="ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("sku")'>SKU <i class="@(SortIconClass("sku")) ms-1 small"></i></th>
                         <th style="cursor:pointer" @onclick='() => OrdenarPor("nombre")'>Producto <i class="@(SortIconClass("nombre")) ms-1 small"></i></th>
-                        <th>Categoría</th>
-                        <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("costo")'>Costo <i class="@(SortIconClass("costo")) ms-1 small"></i></th>
+                        <th class="ts-table-hide-mobile">Categoría</th>
+                        <th class="text-end ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("costo")'>Costo <i class="@(SortIconClass("costo")) ms-1 small"></i></th>
                         <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("precio")'>Precio venta <i class="@(SortIconClass("precio")) ms-1 small"></i></th>
-                        <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("ganancia")'>% Ganancia <i class="@(SortIconClass("ganancia")) ms-1 small"></i></th>
+                        <th class="text-end ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("ganancia")'>% Ganancia <i class="@(SortIconClass("ganancia")) ms-1 small"></i></th>
                         <th class="text-center" style="cursor:pointer" @onclick='() => OrdenarPor("stock")'>Stock <i class="@(SortIconClass("stock")) ms-1 small"></i></th>
-                        <th>Estado</th><th></th>
+                        <th class="ts-table-hide-mobile">Estado</th><th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -152,18 +152,18 @@ else
                                     <span class="ts-thumb-placeholder"><i class="bi bi-image"></i></span>
                                 }
                             </td>
-                            <td class="text-muted small">@p.Sku</td>
+                            <td class="text-muted small ts-table-hide-mobile">@p.Sku</td>
                             <td class="fw-semibold">@p.Name</td>
-                            <td>@p.CategoryName</td>
-                            <td class="text-end text-muted">@(p.PurchasePrice > 0 ? p.PurchasePrice.ToString("C0") : "—")</td>
+                            <td class="ts-table-hide-mobile">@p.CategoryName</td>
+                            <td class="text-end text-muted ts-table-hide-mobile">@(p.PurchasePrice > 0 ? p.PurchasePrice.ToString("C0") : "—")</td>
                             <td class="text-end">@p.SalePrice.ToString("C0")</td>
-                            <td class="text-end small @(p.ProfitMargin > 0 ? "text-success fw-semibold" : "text-muted")">
+                            <td class="text-end small ts-table-hide-mobile @(p.ProfitMargin > 0 ? "text-success fw-semibold" : "text-muted")">
                                 @(p.ProfitMargin > 0 ? p.ProfitMargin.ToString("0.0") + " %" : "—")
                             </td>
                             <td class="text-center">
                                 <span class="badge @(!p.IsActive ? "bg-secondary" : p.CurrentStock == 0 ? "badge-sin-stock" : p.IsLowStock ? "badge-bajo-stock" : "bg-success")">@p.CurrentStock</span>
                             </td>
-                            <td>
+                            <td class="ts-table-hide-mobile">
                                 @if (!p.IsActive)
                                 {
                                     <span class="badge badge-estado-inactivo">Inactivo</span>
@@ -667,11 +667,9 @@ else
     private string _ordenCampo        = string.Empty;
     private bool   _ordenDesc;
 
-    [Inject] private IConfiguration Config { get; set; } = default!;
-
     protected override async Task OnInitializedAsync()
     {
-        _apiBase = Config["ApiBaseUrl"] ?? string.Empty;
+        _apiBase = Api.PublicBaseUrl;
         await Task.WhenAll(Cargar(), CargarCatalogos());
     }
 

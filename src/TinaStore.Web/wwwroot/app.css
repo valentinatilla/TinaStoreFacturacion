@@ -44,6 +44,11 @@
     --ts-shadow-soft:      0 2px 12px rgba(244, 114, 182, 0.12);
     --ts-shadow-card:      0 4px 20px rgba(219, 39, 119, 0.08);
     --ts-shadow-hover:     0 8px 28px rgba(219, 39, 119, 0.15);
+
+    /* Morado de marca (reutilizable) */
+    --ts-purple:           #7C3AED;
+    --ts-purple-dark:      #6D28D9;
+    --ts-purple-light:     #EDE9FE;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -1009,9 +1014,13 @@ tr.detalle-expandido > td {
     color: var(--ts-purple);
     border-color: var(--ts-purple);
     background-color: transparent;
+    border-radius: 999px;
+    font-weight: 700;
+    transition: all .2s;
 }
 .btn-outline-purple:hover {
     background-color: var(--ts-purple);
+    border-color: var(--ts-purple);
     color: #fff;
 }
 
@@ -1219,4 +1228,130 @@ tr.bulk-row-modified td:first-child {
     .d-flex.justify-content-between.align-items-center.mb-4 .d-flex.gap-2 {
         width: 100%;
     }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FASE D — Sistema de botones Tina Store (.btn-*-tina)
+   Clases semánticas alias de las clases globales. Permiten migración
+   gradual sin romper el HTML existente que ya usa las clases Bootstrap.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Primario — rosado principal */
+.btn-primary-tina {
+    background-color: var(--ts-primary);
+    border-color: var(--ts-primary);
+    color: #fff;
+    border-radius: 999px;
+    font-weight: 700;
+    padding: .5rem 1.5rem;
+    transition: background .2s, transform .1s, box-shadow .2s;
+    box-shadow: 0 2px 8px rgba(244,114,182,.35);
+}
+.btn-primary-tina:hover, .btn-primary-tina:focus {
+    background-color: var(--ts-primary-dark);
+    border-color: var(--ts-primary-dark);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(219,39,119,.4);
+}
+.btn-primary-tina:active  { transform: translateY(0); }
+.btn-primary-tina:disabled,
+.btn-primary-tina[disabled] { opacity: .65; cursor: not-allowed; transform: none; }
+
+/* Secundario — lila suave */
+.btn-secondary-tina {
+    background-color: var(--ts-purple-light);
+    border-color: var(--ts-purple-light);
+    color: var(--ts-purple);
+    border-radius: 999px;
+    font-weight: 700;
+    padding: .5rem 1.5rem;
+    transition: background .2s, transform .1s, box-shadow .2s;
+}
+.btn-secondary-tina:hover, .btn-secondary-tina:focus {
+    background-color: var(--ts-secondary);
+    border-color: var(--ts-secondary);
+    color: #fff;
+    transform: translateY(-1px);
+}
+.btn-secondary-tina:disabled,
+.btn-secondary-tina[disabled] { opacity: .65; cursor: not-allowed; transform: none; }
+
+/* Peligroso — rojo salmón (eliminar, anular) */
+.btn-danger-tina {
+    background-color: #FB7185;
+    border-color: #FB7185;
+    color: #fff;
+    border-radius: 999px;
+    font-weight: 700;
+    padding: .5rem 1.5rem;
+    transition: background .2s, transform .1s, box-shadow .2s;
+}
+.btn-danger-tina:hover, .btn-danger-tina:focus {
+    background-color: #E11D48;
+    border-color: #E11D48;
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(225,29,72,.35);
+}
+.btn-danger-tina:disabled,
+.btn-danger-tina[disabled] { opacity: .65; cursor: not-allowed; transform: none; }
+
+/* Ícono — botón cuadrado compacto para acciones de tabla */
+.btn-icon-tina {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: 8px;
+    font-size: .95rem;
+    border: 1.5px solid var(--ts-accent);
+    background: var(--ts-surface);
+    color: var(--ts-text-main);
+    transition: background .15s, border-color .15s, color .15s;
+}
+.btn-icon-tina:hover {
+    background: var(--ts-primary-light);
+    border-color: var(--ts-primary);
+    color: var(--ts-primary-dark);
+}
+
+/* Fantasma — sin fondo, solo borde y texto */
+.btn-ghost-tina {
+    background: transparent;
+    border: 1.5px solid var(--ts-accent);
+    color: var(--ts-text-soft);
+    border-radius: 999px;
+    font-weight: 600;
+    padding: .45rem 1.2rem;
+    transition: all .2s;
+}
+.btn-ghost-tina:hover {
+    background: var(--ts-primary-light);
+    border-color: var(--ts-primary);
+    color: var(--ts-primary-dark);
+}
+
+/* Loading — botón con spinner integrado */
+.btn-loading-tina {
+    position: relative;
+    pointer-events: none;
+    opacity: .8;
+}
+.btn-loading-tina::after {
+    content: "";
+    display: inline-block;
+    width: .9rem;
+    height: .9rem;
+    border: 2px solid rgba(255,255,255,.5);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: btnSpin .65s linear infinite;
+    margin-left: .5rem;
+    vertical-align: middle;
+}
+@keyframes btnSpin {
+    to { transform: rotate(360deg); }
 }

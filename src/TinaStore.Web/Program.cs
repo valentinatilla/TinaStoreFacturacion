@@ -74,11 +74,15 @@ builder.Services.AddSingleton(new GoogleAuthConfig(googleEnabled));
 builder.Services.AddSingleton<LogoStateService>();
 
 // ─── HttpClient apuntando a la API ───────────────────────────────────────────
-var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5172";
+var apiBaseUrl    = builder.Configuration["ApiBaseUrl"]   ?? "http://localhost:5172";
+var publicApiUrl  = builder.Configuration["PublicApiUrl"] ?? apiBaseUrl;
 builder.Services.AddScoped(sp =>
 {
     var session = sp.GetRequiredService<SessionStateService>();
-    return new TinaStoreApiClient(new HttpClient { BaseAddress = new Uri(apiBaseUrl) }, session);
+    return new TinaStoreApiClient(
+        new HttpClient { BaseAddress = new Uri(apiBaseUrl) },
+        session,
+        publicApiUrl);
 });
 
 // ─── ForwardedHeaders (Railway termina TLS en el edge) ─────────────────────

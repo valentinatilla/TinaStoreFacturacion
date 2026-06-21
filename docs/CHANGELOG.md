@@ -5,6 +5,47 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [2.8.0] — 2025-07-14 — Fases A–F: Responsive global, botones, logo, orden, filtros avanzados y PWA
+
+### Tipo de cambio
+Mejora UX / Corrección de bug / Nueva funcionalidad / PWA
+
+### Módulos afectados
+Categorías, Clientes, Ventas/Facturas, Productos, Usuarios, Cuentas por cobrar, Configuración, Layout, CSS global, App.razor
+
+### Cambios
+
+**Fase A — Ordenamiento en Categorías**
+- Barra de orden A→Z / Z→A con soporte para tildes y ñ (cultura `es-CO`).
+- Búsqueda local en tiempo real por nombre.
+- La columna Descripción se oculta en móvil con `ts-table-hide-mobile`.
+
+**Fase B — Responsive en módulos anchos**
+- `flex-wrap` aplicado en las barras de filtros de todos los módulos clave.
+- Columnas secundarias de las tablas marcadas con `ts-table-hide-mobile` para no desbordarse en pantallas pequeñas.
+
+**Fase C — Corrección del logo roto**
+- El logo subido en Configuración aparecía roto en el sidebar porque la URL de la API interna no es accesible por el navegador en Railway.
+- Se introdujo `PublicApiUrl`/`PublicBaseUrl` (separado de `ApiBaseUrl`) para que el navegador use la URL pública correcta.
+- `Program.cs` inyecta `publicApiUrl` al constructor de `TinaStoreApiClient`.
+- `appsettings.json`, `appsettings.Development.json` y `appsettings.Production.json` actualizados con la nueva clave.
+
+**Fase D — Sistema global de botones**
+- Variables CSS `--ts-purple`, `--ts-purple-dark`, `--ts-purple-light` añadidas a `:root`.
+- Clases semánticas `.btn-primary-tina`, `.btn-secondary-tina`, `.btn-danger-tina`, `.btn-icon-tina`, `.btn-ghost-tina`, `.btn-loading-tina`.
+- `@keyframes btnSpin` para el spinner de carga en botones.
+
+**Fase E — Filtros avanzados en Clientes**
+- Nuevos controles: "Saldo pendiente mayor que", "Saldo pendiente menor que", "Días sin comprar mayor que".
+- Lógica completamente en frontend; `Filtrar()` y `LimpiarFiltros()` actualizados.
+
+**Fase F — PWA y logo móvil**
+- `wwwroot/manifest.webmanifest` creado con nombre, short_name, colores del tema y referencias a íconos PWA.
+- `App.razor` actualizado con `<link rel="manifest">`, `apple-touch-icon` y meta tags `apple-mobile-web-app-capable`.
+- Carpeta `wwwroot/icons/` creada con README explicando cómo generar los íconos 192×192 y 512×512.
+
+---
+
 ## [2.7.0] — 2026-06-20 — Fases C + D + E: Versión en login, responsive móvil y documentación
 
 ### Tipo de cambio
