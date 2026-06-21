@@ -24,23 +24,60 @@ else if (_data is not null)
         </div>
     }
 
+    <div class="card border-0 shadow-sm mb-3 p-3">
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input class="form-control form-control-sm" placeholder="Buscar cliente..."
+                           @oninput="e => { _filtroTexto = e.Value?.ToString() ?? string.Empty; AplicarFiltros(); }" />
+                </div>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-sm btn-outline-secondary" @onclick="LimpiarFiltros">
+                    <i class="bi bi-x-circle me-1"></i>Limpiar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="card ts-table border-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
                         <th style="width:32px"></th>
-                        <th>Cliente</th>
+                        <th>
+                            <span style="cursor:pointer" @onclick='() => OrdenarPor("cliente")'>Cliente <i class="@SortIconClass("cliente") ms-1 small"></i></span>
+                        </th>
                         <th class="ts-table-hide-mobile">Documento</th>
                         <th class="ts-table-hide-mobile">Teléfono</th>
-                        <th class="text-center ts-table-hide-mobile">Ventas pend.</th>
-                        <th class="text-end">Saldo</th>
-                        <th class="ts-table-hide-mobile">Última venta</th>
+                        <th class="text-center ts-table-hide-mobile">
+                            <span style="cursor:pointer" @onclick='() => OrdenarPor("facturas")'>Ventas pend. <i class="@SortIconClass("facturas") ms-1 small"></i></span>
+                            <div class="d-flex gap-1 mt-1 justify-content-center">
+                                <input type="number" class="form-control form-control-sm text-center" style="width:50px;font-size:.7rem" placeholder="≥"
+                                       @oninput="e => { _filtroFacturasMin = int.TryParse(e.Value?.ToString(), out var v) ? v : (int?)null; AplicarFiltros(); }" />
+                                <input type="number" class="form-control form-control-sm text-center" style="width:50px;font-size:.7rem" placeholder="≤"
+                                       @oninput="e => { _filtroFacturasMax = int.TryParse(e.Value?.ToString(), out var v) ? v : (int?)null; AplicarFiltros(); }" />
+                            </div>
+                        </th>
+                        <th class="text-end">
+                            <span style="cursor:pointer" @onclick='() => OrdenarPor("saldo")'>Saldo <i class="@SortIconClass("saldo") ms-1 small"></i></span>
+                            <div class="d-flex gap-1 mt-1 justify-content-end">
+                                <input type="number" class="form-control form-control-sm text-center" style="width:70px;font-size:.7rem" placeholder="≥"
+                                       @oninput="e => { _filtroSaldoMin = decimal.TryParse(e.Value?.ToString(), out var v) ? v : (decimal?)null; AplicarFiltros(); }" />
+                                <input type="number" class="form-control form-control-sm text-center" style="width:70px;font-size:.7rem" placeholder="≤"
+                                       @oninput="e => { _filtroSaldoMax = decimal.TryParse(e.Value?.ToString(), out var v) ? v : (decimal?)null; AplicarFiltros(); }" />
+                            </div>
+                        </th>
+                        <th class="ts-table-hide-mobile">
+                            <span style="cursor:pointer" @onclick='() => OrdenarPor("fecha")'>Última venta <i class="@SortIconClass("fecha") ms-1 small"></i></span>
+                        </th>
                         <th></th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var cxc in _data.Deudores.OrderByDescending(c => c.SaldoPendiente))
+                    @foreach (var cxc in _deudoresFiltrados)
                     {
                         var expandido = _expandidos.Contains(cxc.CustomerId);
                         <tr class="@(expandido ? "detalle-expandido" : "")" style="cursor:pointer"
@@ -149,12 +186,20 @@ else if (_data is not null)
 
 @code {
     private ReporteCuentasPorCobrarDto? _data;
-    private bool _loading = true;
+    private List<DeudorCXCDto>          _deudoresFiltrados = [];
+    private bool    _loading = true;
     private string? _reminderMessage;
+    private string  _filtroTexto    = string.Empty;
+    private decimal? _filtroSaldoMin;
+    private decimal? _filtroSaldoMax;
+    private int?     _filtroFacturasMin;
+    private int?     _filtroFacturasMax;
+    private string  _ordenCampo = "saldo";
+    private bool    _ordenDesc  = true;
 
-    private readonly HashSet<int> _expandidos = [];
-    private readonly HashSet<int> _cargandoDetalle = [];
-    private readonly Dictionary<int, List<FacturaDto>> _detallesCache = [];
+    private readonly HashSet<int>                       _expandidos      = [];
+    private readonly HashSet<int>                       _cargandoDetalle = [];
+    private readonly Dictionary<int, List<FacturaDto>>  _detallesCache   = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -165,8 +210,54 @@ else if (_data is not null)
             _data = await t1;
             var cfg = await t2;
             _reminderMessage = cfg?.ReminderMessage;
+            AplicarFiltros();
         }
         finally { _loading = false; }
+    }
+
+    private void AplicarFiltros()
+    {
+        if (_data is null) return;
+        var q = _data.Deudores
+            .Where(c => string.IsNullOrWhiteSpace(_filtroTexto) ||
+                        c.CustomerName.Contains(_filtroTexto, StringComparison.OrdinalIgnoreCase) ||
+                        (c.DocumentNumber?.Contains(_filtroTexto, StringComparison.OrdinalIgnoreCase) ?? false))
+            .Where(c => _filtroSaldoMin    is null || c.SaldoPendiente    >= _filtroSaldoMin.Value)
+            .Where(c => _filtroSaldoMax    is null || c.SaldoPendiente    <= _filtroSaldoMax.Value)
+            .Where(c => _filtroFacturasMin is null || c.FacturasPendientes >= _filtroFacturasMin.Value)
+            .Where(c => _filtroFacturasMax is null || c.FacturasPendientes <= _filtroFacturasMax.Value);
+
+        _deudoresFiltrados = (_ordenCampo switch
+        {
+            "cliente"  => _ordenDesc ? q.OrderByDescending(c => c.CustomerName).ToList()        : q.OrderBy(c => c.CustomerName).ToList(),
+            "facturas" => _ordenDesc ? q.OrderByDescending(c => c.FacturasPendientes).ToList()  : q.OrderBy(c => c.FacturasPendientes).ToList(),
+            "fecha"    => _ordenDesc ? q.OrderByDescending(c => c.UltimaFacturaFecha).ToList()  : q.OrderBy(c => c.UltimaFacturaFecha).ToList(),
+            _          => _ordenDesc ? q.OrderByDescending(c => c.SaldoPendiente).ToList()      : q.OrderBy(c => c.SaldoPendiente).ToList()
+        });
+    }
+
+    private void OrdenarPor(string campo)
+    {
+        if (_ordenCampo == campo) _ordenDesc = !_ordenDesc;
+        else { _ordenCampo = campo; _ordenDesc = true; }
+        AplicarFiltros();
+    }
+
+    private string SortIconClass(string campo) =>
+        _ordenCampo != campo ? "bi bi-arrow-down-up text-muted" :
+        _ordenDesc            ? "bi bi-sort-down text-purple"   :
+                                "bi bi-sort-up text-purple";
+
+    private void LimpiarFiltros()
+    {
+        _filtroTexto       = string.Empty;
+        _filtroSaldoMin    = null;
+        _filtroSaldoMax    = null;
+        _filtroFacturasMin = null;
+        _filtroFacturasMax = null;
+        _ordenCampo        = "saldo";
+        _ordenDesc         = true;
+        AplicarFiltros();
     }
 
     private async Task ToggleDetalle(int customerId)
