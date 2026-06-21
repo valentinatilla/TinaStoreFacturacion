@@ -18,7 +18,7 @@ WORKDIR /source
 
 # ARG para invalidar cache de Railway cuando sea necesario
 # Cambia el valor de CACHE_BUST para forzar rebuild completo
-ARG CACHE_BUST=1
+ARG CACHE_BUST=3
 RUN echo "Cache bust: $CACHE_BUST"
 
 # Copiar archivos de proyecto
@@ -36,6 +36,9 @@ RUN dotnet publish src/TinaStore.Web/TinaStore.Web.csproj \
 	-o /app/publish \
 	--no-restore \
 	/p:BlazorWebAssemblyEnableLinking=false
+
+# Diagnóstico: listar _framework para confirmar que existe
+RUN echo "=== VERIFICANDO _framework ===" && ls /app/publish/wwwroot/_framework/ && echo "=== OK ==="
 
 # ── Etapa 2: Runtime ─────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
