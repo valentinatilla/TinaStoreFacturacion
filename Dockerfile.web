@@ -16,6 +16,11 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /source
 
+# ARG para invalidar cache de Railway cuando sea necesario
+# Cambia el valor de CACHE_BUST para forzar rebuild completo
+ARG CACHE_BUST=1
+RUN echo "Cache bust: $CACHE_BUST"
+
 # Copiar archivos de proyecto
 COPY src/TinaStore.Web/TinaStore.Web.csproj src/TinaStore.Web/
 
