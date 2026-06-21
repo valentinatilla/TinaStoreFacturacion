@@ -16,12 +16,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /source
 
-# Instalar workload wasm-tools: necesario para que dotnet publish
-# genere _framework/blazor.web.js en Linux
-RUN dotnet workload install wasm-tools
-
 # ARG para invalidar cache de Railway cuando sea necesario
-ARG CACHE_BUST=4
+ARG CACHE_BUST=5
 RUN echo "Cache bust: $CACHE_BUST"
 
 # Copiar archivos de proyecto
@@ -39,8 +35,8 @@ RUN dotnet publish src/TinaStore.Web/TinaStore.Web.csproj \
 	-o /app/publish \
 	--no-restore
 
-# Verificar que _framework se generó correctamente
-RUN ls /app/publish/wwwroot/_framework/
+# Diagnóstico: listar todos los .js publicados
+RUN find /app/publish -name "*.js" | sort | head -30 || true
 
 # ── Etapa 2: Runtime ─────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
