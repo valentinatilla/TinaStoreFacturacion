@@ -29,7 +29,8 @@ COPY src/TinaStore.Web/ src/TinaStore.Web/
 RUN dotnet publish src/TinaStore.Web/TinaStore.Web.csproj \
 	-c Release \
 	-o /app/publish \
-	--no-restore
+	--no-restore \
+	/p:BlazorWebAssemblyEnableLinking=false
 
 # ── Etapa 2: Runtime ─────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
