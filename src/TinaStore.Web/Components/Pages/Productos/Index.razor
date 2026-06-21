@@ -95,36 +95,24 @@ else
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
-                    <tr>
+                    <tr class="align-middle">
                         <th></th>
-                        <th class="ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("sku")'>
-                            SKU <i class="@SortIconClass("sku") ms-1 small"></i>
-                        </th>
-                        <th style="cursor:pointer" @onclick='() => OrdenarPor("nombre")'>
-                            Producto <i class="@SortIconClass("nombre") ms-1 small"></i>
-                        </th>
+                        <th class="ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("sku")'>SKU <i class="@SortIconClass("sku") ms-1 small"></i></th>
+                        <th style="cursor:pointer" @onclick='() => OrdenarPor("nombre")'>Producto <i class="@SortIconClass("nombre") ms-1 small"></i></th>
                         <th class="ts-table-hide-mobile">Categoría</th>
                         <th class="ts-table-hide-mobile">Proveedor</th>
-                        <th class="text-end ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("costo")'>
-                            Costo <i class="@SortIconClass("costo") ms-1 small"></i>
-                        </th>
-                        <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("precio")'>
-                            Precio venta <i class="@SortIconClass("precio") ms-1 small"></i>
-                        </th>
-                        <th class="text-end ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("ganancia")'>
-                            % Ganancia <i class="@SortIconClass("ganancia") ms-1 small"></i>
-                        </th>
-                        <th class="text-center" style="cursor:pointer" @onclick='() => OrdenarPor("stock")'>
-                            Stock <i class="@SortIconClass("stock") ms-1 small"></i>
-                        </th>
+                        <th class="text-end ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("costo")'>Costo <i class="@SortIconClass("costo") ms-1 small"></i></th>
+                        <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("precio")'>Precio venta <i class="@SortIconClass("precio") ms-1 small"></i></th>
+                        <th class="text-end ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("ganancia")'>% Ganancia <i class="@SortIconClass("ganancia") ms-1 small"></i></th>
+                        <th class="text-center" style="cursor:pointer" @onclick='() => OrdenarPor("stock")'>Stock <i class="@SortIconClass("stock") ms-1 small"></i></th>
                         <th class="ts-table-hide-mobile">Estado</th>
                         <th></th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var p in _filtrados)
-                    {
-                        <tr>
+                   @foreach (var p in _filtrados)
+                   {
+                       <tr class="align-middle">
                             <td class="ts-thumb-cell">
                                 @if (!string.IsNullOrEmpty(p.ImagePath))
                                 {
