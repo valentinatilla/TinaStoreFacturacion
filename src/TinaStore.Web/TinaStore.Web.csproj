@@ -12,6 +12,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.9.0" />
+    <!-- Necesario para que dotnet publish genere _framework/blazor.web.js en Linux/Docker -->
+    <PackageReference Include="Microsoft.AspNetCore.App.Internal.Assets" Version="10.0.8" />
   </ItemGroup>
 
 </Project>

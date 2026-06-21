@@ -19,8 +19,8 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /source
 
 # ARG para invalidar cache de Railway cuando sea necesario
-ARG CACHE_BUST=8
-RUN echo "Cache bust: $CACHE_BUST" && dotnet --version
+ARG CACHE_BUST=9
+RUN echo "Cache bust: $CACHE_BUST"
 
 # Copiar archivos de proyecto
 COPY src/TinaStore.Web/TinaStore.Web.csproj src/TinaStore.Web/
@@ -38,22 +38,8 @@ RUN dotnet publish src/TinaStore.Web/TinaStore.Web.csproj \
 	-o /app/publish \
 	--no-restore
 
-# Verificar si _framework se generó; si no, buscarlo en el SDK
-RUN if [ ! -d /app/publish/wwwroot/_framework ]; then \
-	  echo "WARNING: _framework no generado por publish, buscando en SDK..."; \
-	  BLAZOR_JS=$(find /usr/share/dotnet -name "blazor.web.js" 2>/dev/null | head -1); \
-	  if [ -n "$BLAZOR_JS" ]; then \
-		mkdir -p /app/publish/wwwroot/_framework; \
-		cp "$(dirname $BLAZOR_JS)"/* /app/publish/wwwroot/_framework/ 2>/dev/null || true; \
-		echo "Copiado desde: $BLAZOR_JS"; \
-	  else \
-		echo "blazor.web.js no encontrado en SDK"; \
-		find /usr/share/dotnet -name "blazor*" 2>/dev/null | head -10; \
-	  fi; \
-	else \
-	  echo "OK: _framework generado correctamente"; \
-	  ls /app/publish/wwwroot/_framework/; \
-	fi
+# Verificar que _framework se generó (falla el build si no existe)
+RUN test -f /app/publish/wwwroot/_framework/blazor.web.js && echo "OK: blazor.web.js existe" || (echo "ERROR: blazor.web.js no encontrado" && exit 1)
 
 # ── Etapa 2: Runtime ─────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
