@@ -97,81 +97,27 @@ else
                 <thead>
                     <tr>
                         <th></th>
-                        <th class="ts-table-hide-mobile">
-                            <span style="cursor:pointer" @onclick='() => OrdenarPor("sku")'>SKU <i class="@SortIconClass("sku") ms-1 small"></i></span>
+                        <th class="ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("sku")'>
+                            SKU <i class="@SortIconClass("sku") ms-1 small"></i>
                         </th>
-                        <th>
-                            <span style="cursor:pointer" @onclick='() => OrdenarPor("nombre")'>Producto <i class="@SortIconClass("nombre") ms-1 small"></i></span>
+                        <th style="cursor:pointer" @onclick='() => OrdenarPor("nombre")'>
+                            Producto <i class="@SortIconClass("nombre") ms-1 small"></i>
                         </th>
-                        <th class="ts-table-hide-mobile">
-                            Categoría
-                            <select class="form-select form-select-sm mt-1" style="font-size:.72rem"
-                                    @onchange="e => { _filtroCategoriaId = int.TryParse(e.Value?.ToString(), out var v) ? v : 0; Filtrar(); }">
-                                <option value="0">Todas</option>
-                                @foreach (var c in _categorias)
-                                {
-                                    <option value="@c.Id" selected="@(_filtroCategoriaId == c.Id)">@c.Name</option>
-                                }
-                            </select>
+                        <th class="ts-table-hide-mobile">Categoría</th>
+                        <th class="ts-table-hide-mobile">Proveedor</th>
+                        <th class="text-end ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("costo")'>
+                            Costo <i class="@SortIconClass("costo") ms-1 small"></i>
                         </th>
-                        <th class="ts-table-hide-mobile">
-                            Proveedor
-                            <select class="form-select form-select-sm mt-1" style="font-size:.72rem"
-                                    @onchange="e => { _filtroProveedorId = int.TryParse(e.Value?.ToString(), out var v) ? v : 0; Filtrar(); }">
-                                <option value="0">Todos</option>
-                                @foreach (var s in _proveedores)
-                                {
-                                    <option value="@s.Id" selected="@(_filtroProveedorId == s.Id)">@s.Name</option>
-                                }
-                            </select>
+                        <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("precio")'>
+                            Precio venta <i class="@SortIconClass("precio") ms-1 small"></i>
                         </th>
-                        <th class="text-end ts-table-hide-mobile">
-                            <span style="cursor:pointer" @onclick='() => OrdenarPor("costo")'>Costo <i class="@SortIconClass("costo") ms-1 small"></i></span>
-                            <div class="d-flex gap-1 mt-1 justify-content-end">
-                                <input type="number" class="form-control form-control-sm text-center" style="width:58px;font-size:.7rem" placeholder="≥"
-                                       @oninput="e => { _filtroCostoMin = decimal.TryParse(e.Value?.ToString(), out var v) ? v : (decimal?)null; Filtrar(); }" />
-                                <input type="number" class="form-control form-control-sm text-center" style="width:58px;font-size:.7rem" placeholder="≤"
-                                       @oninput="e => { _filtroCostoMax = decimal.TryParse(e.Value?.ToString(), out var v) ? v : (decimal?)null; Filtrar(); }" />
-                            </div>
+                        <th class="text-end ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("ganancia")'>
+                            % Ganancia <i class="@SortIconClass("ganancia") ms-1 small"></i>
                         </th>
-                        <th class="text-end">
-                            <span style="cursor:pointer" @onclick='() => OrdenarPor("precio")'>Precio venta <i class="@SortIconClass("precio") ms-1 small"></i></span>
-                            <div class="d-flex gap-1 mt-1 justify-content-end">
-                                <input type="number" class="form-control form-control-sm text-center" style="width:58px;font-size:.7rem" placeholder="≥"
-                                       @oninput="e => { _filtroPrecioMin = decimal.TryParse(e.Value?.ToString(), out var v) ? v : (decimal?)null; Filtrar(); }" />
-                                <input type="number" class="form-control form-control-sm text-center" style="width:58px;font-size:.7rem" placeholder="≤"
-                                       @oninput="e => { _filtroPrecioMax = decimal.TryParse(e.Value?.ToString(), out var v) ? v : (decimal?)null; Filtrar(); }" />
-                            </div>
+                        <th class="text-center" style="cursor:pointer" @onclick='() => OrdenarPor("stock")'>
+                            Stock <i class="@SortIconClass("stock") ms-1 small"></i>
                         </th>
-                        <th class="text-end ts-table-hide-mobile">
-                            <span style="cursor:pointer" @onclick='() => OrdenarPor("ganancia")'>% Ganancia <i class="@SortIconClass("ganancia") ms-1 small"></i></span>
-                            <div class="d-flex gap-1 mt-1 justify-content-end">
-                                <input type="number" class="form-control form-control-sm text-center" style="width:58px;font-size:.7rem" placeholder="≥"
-                                       @oninput="e => { _filtroGananciaMin = decimal.TryParse(e.Value?.ToString(), out var v) ? v : (decimal?)null; Filtrar(); }" />
-                                <input type="number" class="form-control form-control-sm text-center" style="width:58px;font-size:.7rem" placeholder="≤"
-                                       @oninput="e => { _filtroGananciaMax = decimal.TryParse(e.Value?.ToString(), out var v) ? v : (decimal?)null; Filtrar(); }" />
-                            </div>
-                        </th>
-                        <th class="text-center">
-                            <span style="cursor:pointer" @onclick='() => OrdenarPor("stock")'>Stock <i class="@SortIconClass("stock") ms-1 small"></i></span>
-                            <div class="d-flex gap-1 mt-1 justify-content-center">
-                                <input type="number" class="form-control form-control-sm text-center" style="width:55px;font-size:.7rem" placeholder="≥"
-                                       @oninput="e => { _filtroStockMin = int.TryParse(e.Value?.ToString(), out var v) ? v : (int?)null; Filtrar(); }" />
-                                <input type="number" class="form-control form-control-sm text-center" style="width:55px;font-size:.7rem" placeholder="≤"
-                                       @oninput="e => { _filtroStockMax = int.TryParse(e.Value?.ToString(), out var v) ? v : (int?)null; Filtrar(); }" />
-                            </div>
-                        </th>
-                        <th class="ts-table-hide-mobile">
-                            Estado
-                            <select class="form-select form-select-sm mt-1" style="font-size:.72rem"
-                                    @onchange="e => { _filtroEstado = e.Value?.ToString() ?? string.Empty; Filtrar(); }">
-                                <option value="">Todos</option>
-                                <option value="activo">En stock</option>
-                                <option value="bajo">Bajo stock</option>
-                                <option value="agotado">Agotado</option>
-                                <option value="inactivo">Inactivo</option>
-                            </select>
-                        </th>
+                        <th class="ts-table-hide-mobile">Estado</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -702,14 +648,6 @@ else
     private int      _filtroCategoriaId;
     private int      _filtroProveedorId;
     private string   _filtroEstado      = string.Empty;
-    private decimal? _filtroCostoMin;
-    private decimal? _filtroCostoMax;
-    private decimal? _filtroPrecioMin;
-    private decimal? _filtroPrecioMax;
-    private decimal? _filtroGananciaMin;
-    private decimal? _filtroGananciaMax;
-    private int?     _filtroStockMin;
-    private int?     _filtroStockMax;
     private string   _ordenCampo        = string.Empty;
     private bool     _ordenDesc;
 
@@ -748,15 +686,7 @@ else
                 "agotado"  => p.IsActive && p.CurrentStock == 0,
                 "inactivo" => !p.IsActive,
                 _          => true
-            })
-            .Where(p => _filtroCostoMin    is null || p.PurchasePrice  >= _filtroCostoMin.Value)
-            .Where(p => _filtroCostoMax    is null || p.PurchasePrice  <= _filtroCostoMax.Value)
-            .Where(p => _filtroPrecioMin   is null || p.SalePrice      >= _filtroPrecioMin.Value)
-            .Where(p => _filtroPrecioMax   is null || p.SalePrice      <= _filtroPrecioMax.Value)
-            .Where(p => _filtroGananciaMin is null || p.ProfitMargin   >= _filtroGananciaMin.Value)
-            .Where(p => _filtroGananciaMax is null || p.ProfitMargin   <= _filtroGananciaMax.Value)
-            .Where(p => _filtroStockMin    is null || p.CurrentStock   >= _filtroStockMin.Value)
-            .Where(p => _filtroStockMax    is null || p.CurrentStock   <= _filtroStockMax.Value);
+            });
 
         _filtrados = _ordenCampo switch
         {
@@ -788,14 +718,6 @@ else
         _filtroCategoriaId = 0;
         _filtroProveedorId = 0;
         _filtroEstado      = string.Empty;
-        _filtroCostoMin    = null;
-        _filtroCostoMax    = null;
-        _filtroPrecioMin   = null;
-        _filtroPrecioMax   = null;
-        _filtroGananciaMin = null;
-        _filtroGananciaMax = null;
-        _filtroStockMin    = null;
-        _filtroStockMax    = null;
         _ordenCampo        = string.Empty;
         _ordenDesc         = false;
         _filtrados         = _productos;
