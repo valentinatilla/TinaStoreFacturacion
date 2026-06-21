@@ -17,11 +17,8 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /source
 
 # ARG para invalidar cache de Railway cuando sea necesario
-ARG CACHE_BUST=6
+ARG CACHE_BUST=7
 RUN echo "Cache bust: $CACHE_BUST"
-
-# Ver version de SDK y workloads disponibles
-RUN dotnet --version && dotnet workload list
 
 # Copiar archivos de proyecto
 COPY src/TinaStore.Web/TinaStore.Web.csproj src/TinaStore.Web/
@@ -37,9 +34,6 @@ RUN dotnet publish src/TinaStore.Web/TinaStore.Web.csproj \
 	-c Release \
 	-o /app/publish \
 	--no-restore
-
-# Ver exactamente qué se publicó en wwwroot
-RUN find /app/publish/wwwroot -type f | sort
 
 # ── Etapa 2: Runtime ─────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
