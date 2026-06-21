@@ -10,8 +10,14 @@
 <div class="ts-wrapper">
     @if (Session.IsAuthenticated)
     {
+        <!-- Backdrop para cerrar sidebar en móvil -->
+        @if (_sidebarOpen)
+        {
+            <div class="ts-sidebar-backdrop" @onclick="ToggleSidebar"></div>
+        }
+
         <!-- Sidebar -->
-        <nav class="ts-sidebar" id="sidebar">
+        <nav class="ts-sidebar @(_sidebarOpen ? "show" : "")" id="sidebar">
             <a href="/" class="ts-brand">
                 @if (!string.IsNullOrEmpty(LogoState.LogoUrl))
                 {
@@ -30,7 +36,7 @@
         <div class="ts-main">
             <!-- Header -->
             <header class="ts-header d-flex align-items-center justify-content-between px-4">
-                <button class="btn btn-sm btn-outline-secondary d-lg-none" onclick="document.getElementById('sidebar').classList.toggle('show')">
+                <button class="btn btn-sm btn-outline-secondary d-lg-none" @onclick="ToggleSidebar">
                     <i class="bi bi-list"></i>
                 </button>
                 <div class="ms-auto d-flex align-items-center gap-3">
@@ -55,8 +61,13 @@
 </div>
 
 @code {
+    private bool _sidebarOpen = false;
+
+    private void ToggleSidebar() => _sidebarOpen = !_sidebarOpen;
+
     protected override async Task OnInitializedAsync()
     {
+        Nav.LocationChanged += OnLocationChanged;
         LogoState.OnChange += OnLogoChanged;
         if (Session.IsAuthenticated && string.IsNullOrEmpty(LogoState.LogoUrl))
         {
@@ -75,7 +86,17 @@
 
     private void OnLogoChanged() => InvokeAsync(StateHasChanged);
 
-    public void Dispose() => LogoState.OnChange -= OnLogoChanged;
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        _sidebarOpen = false;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
+        LogoState.OnChange -= OnLogoChanged;
+    }
 
     private async Task Logout()
     {

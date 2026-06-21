@@ -22,6 +22,10 @@ try
 
     var builder = WebApplication.CreateBuilder(args);
 
+    // ─── Puerto dinámico Railway (Railway inyecta $PORT en runtime) ───────────
+    var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
     // ─── Serilog como proveedor de logging ────────────────────────────────────
     builder.Host.UseSerilog((ctx, lc) => lc
         .ReadFrom.Configuration(ctx.Configuration)
@@ -87,10 +91,21 @@ try
     });
 
     // ─── CORS: permite que la app Web llame a la API ──────────────────────────
+    // En producción configura Cors__AllowedOrigins con la URL de Railway del Web.
+    // Ejemplo: Cors__AllowedOrigins=https://tinastore-web.up.railway.app
+    var allowedOrigins = builder.Configuration["Cors:AllowedOrigins"];
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("AllowAll", policy =>
-            policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+        {
+            if (!string.IsNullOrWhiteSpace(allowedOrigins))
+                policy.WithOrigins(allowedOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                      .AllowAnyMethod()
+                      .AllowAnyHeader()
+                      .AllowCredentials();
+            else
+                policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+        });
     });
 
     var app = builder.Build();
@@ -103,7 +118,9 @@ try
         Log.Information("Base de datos migrada correctamente.");
 
         // Crear usuario administrador inicial
-        const string adminEmail = "admin@tinastore.com";
+        // En producción, configura App__AdminEmail y App__AdminPassword como env vars.
+        var adminEmail    = builder.Configuration["App:AdminEmail"]    ?? "admin@tinastore.com";
+        var adminPassword = builder.Configuration["App:AdminPassword"] ?? "Admin123!";
         if (!db.Users.Any(u => u.Email == adminEmail))
         {
             var hasher = scope.ServiceProvider.GetRequiredService<IAppPasswordHasher>();
@@ -115,10 +132,10 @@ try
                 IsActive = true,
                 PasswordHash = string.Empty
             };
-            admin.PasswordHash = hasher.Hash("Admin123!");
+            admin.PasswordHash = hasher.Hash(adminPassword);
             db.Users.Add(admin);
             db.SaveChanges();
-            Log.Information("Usuario administrador inicial creado: admin@tinastore.com / Admin123!");
+            Log.Information("Usuario administrador inicial creado: {Email}", adminEmail);
         }
     }
 

@@ -2,11 +2,16 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using TinaStore.Web.Auth;
 using TinaStore.Web.Components;
 using TinaStore.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ─── Puerto dinámico Railway ───────────────────────────────────────────
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 // ─── Blazor Server ────────────────────────────────────────────────────────────
 builder.Services.AddRazorComponents()
@@ -76,7 +81,17 @@ builder.Services.AddScoped(sp =>
     return new TinaStoreApiClient(new HttpClient { BaseAddress = new Uri(apiBaseUrl) }, session);
 });
 
+// ─── ForwardedHeaders (Railway termina TLS en el edge) ─────────────────────
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 var app = builder.Build();
+
+app.UseForwardedHeaders();
 
 if (!app.Environment.IsDevelopment())
 {
@@ -84,7 +99,11 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// Solo redirige a HTTPS en desarrollo local; en Railway Railway ya se encarga del TLS.
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();

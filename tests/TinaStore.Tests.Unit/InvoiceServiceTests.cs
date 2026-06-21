@@ -149,7 +149,7 @@ public class InvoiceServiceTests
         var resultado = await _sut.CreateAsync(dto);
 
         resultado.Should().NotBeNull();
-        resultado.StatusName.Should().Be("Paid");
+        resultado.StatusName.Should().Be("Pagada");
     }
 
     [Fact]
@@ -285,7 +285,7 @@ public class InvoiceServiceTests
         var resultado = await _sut.CancelAsync(5, new CancelInvoiceDto("Prueba"));
 
         resultado.Should().NotBeNull();
-        resultado!.StatusName.Should().Be("Cancelled");
+        resultado!.StatusName.Should().Be("Anulada");
         // Stock debe haberse revertido
         _productRepoMock.Verify(r => r.UpdateAsync(It.Is<Product>(p => p.CurrentStock == 52), default), Times.Once);
     }

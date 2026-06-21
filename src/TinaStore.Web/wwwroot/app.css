@@ -1037,8 +1037,186 @@ tr.bulk-row-modified td:first-child {
     min-width: 80px;
 }
 
-/* Badge de estado en el modal */
+/* Badge de estado pendiente en modal */
 .badge-estado-pendiente {
     background-color: #f0c75e;
     color: #5a3d00;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FASE C — Versión en Login
+   ═══════════════════════════════════════════════════════════════════ */
+
+.login-version-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    margin-top: .45rem;
+}
+
+.login-version-badge {
+    font-size: .72rem;
+    font-weight: 700;
+    color: var(--ts-text-soft);
+    letter-spacing: .04em;
+    opacity: .75;
+}
+
+.login-env-badge {
+    font-size: .65rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    padding: .1rem .45rem;
+    border-radius: 999px;
+    text-transform: uppercase;
+}
+
+.login-env-dev {
+    background: rgba(124, 58, 237, .12);
+    color: #7c3aed;
+    border: 1px solid rgba(124, 58, 237, .25);
+}
+
+.login-env-staging {
+    background: rgba(245, 158, 11, .12);
+    color: #b45309;
+    border: 1px solid rgba(245, 158, 11, .25);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FASE D — Responsive móvil: backdrop sidebar y mejoras táctiles
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Backdrop oscuro detrás del sidebar cuando está abierto en móvil */
+.ts-sidebar-backdrop {
+    display: none;
+}
+
+@media (max-width: 991px) {
+    .ts-sidebar-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(74, 25, 66, .55);
+        z-index: 99;
+        animation: backdropFadeIn .2s ease;
+    }
+
+    @keyframes backdropFadeIn {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+    }
+
+    /* El sidebar queda encima del backdrop */
+    .ts-sidebar {
+        z-index: 100;
+    }
+
+    /* Header hamburguesa táctil */
+    .ts-header .btn-outline-secondary {
+        min-width: 40px;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: .4rem .6rem;
+    }
+}
+
+/* ── Botones táctiles: tamaño mínimo 44px para dedos ─────────────── */
+@media (max-width: 768px) {
+    .btn {
+        min-height: 40px;
+    }
+
+    .btn-sm {
+        min-height: 34px;
+    }
+
+    /* Inputs y selects más cómodos para tocar */
+    .form-control,
+    .form-select {
+        min-height: 44px;
+        font-size: 1rem;
+    }
+
+    .form-control-sm,
+    .form-select-sm {
+        min-height: 36px;
+        font-size: .9rem;
+    }
+
+    /* Cabeceras de página: stack vertical en pantallas pequeñas */
+    .ts-page-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: .75rem;
+    }
+
+    .ts-page-header .d-flex.gap-2 {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    /* Contenido con menos padding en móvil */
+    .ts-content {
+        padding: .75rem !important;
+    }
+
+    /* Ocultar columnas secundarias en tablas en móvil pequeño */
+    .ts-table-hide-mobile {
+        display: none !important;
+    }
+}
+
+/* ── Tablas con scroll horizontal contenido ──────────────────────── */
+.table-responsive {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Asegurar que las tablas dentro de .ts-table no salgan de pantalla */
+.ts-table {
+    overflow-x: auto;
+}
+
+/* ── Modales: ocupar casi toda la pantalla en móvil ─────────────── */
+@media (max-width: 576px) {
+    .modal-dialog {
+        margin: .5rem;
+        max-width: calc(100vw - 1rem);
+    }
+
+    .modal-content {
+        border-radius: 16px;
+        max-height: 92vh;
+        overflow-y: auto;
+    }
+
+    .modal-body {
+        overflow-y: auto;
+    }
+
+    /* KPI cards: una por fila en 360px */
+    .kpi-card {
+        margin-bottom: .5rem;
+    }
+
+    /* Botones de acción agrupados: wrap en columna */
+    .d-flex.gap-2.flex-wrap {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    /* Ajuste específico para la barra superior de páginas */
+    .d-flex.justify-content-between.align-items-center.mb-4 {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: .75rem;
+    }
+
+    /* Botones de la barra superior: ancho completo en móvil muy pequeño */
+    .d-flex.justify-content-between.align-items-center.mb-4 .d-flex.gap-2 {
+        width: 100%;
+    }
 }

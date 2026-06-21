@@ -105,7 +105,11 @@ public sealed class AuthController : ControllerBase
         var allowedEmails  = allowedSection.Get<string[]>()
                           ?? allowedSection.GetChildren().Select(c => c.Value ?? "").ToArray();
 
-        if (allowedEmails.Length > 0 && !allowedEmails.Contains(payload.Email, StringComparer.OrdinalIgnoreCase))
+        // Lista vacía = acceso denegado. Google activo sin lista es un error de configuración.
+        if (allowedEmails.Length == 0)
+            return Unauthorized(new { message = "El acceso con Google no está habilitado en este servidor. Contacta al administrador." });
+
+        if (!allowedEmails.Contains(payload.Email, StringComparer.OrdinalIgnoreCase))
             return Unauthorized(new { message = "Este correo de Google no está autorizado para acceder al sistema." });
 
         var result = await _auth.LoginWithGoogleAsync(new GoogleUserInfoDto(payload.Email, payload.Name));

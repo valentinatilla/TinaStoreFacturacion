@@ -25,10 +25,10 @@ public class CustomerServiceTests
     {
         var clientes = new List<Customer>
         {
-            new() { Id = 1, FullName = "Ana García",  IsActive = true  },
-            new() { Id = 2, FullName = "Luis Pérez",  IsActive = false }
+            new() { Id = 1, FullName = "Ana García",  IsActive = true,  Invoices = [] },
+            new() { Id = 2, FullName = "Luis Pérez",  IsActive = false, Invoices = [] }
         };
-        _repoMock.Setup(r => r.GetAllAsync(default)).ReturnsAsync(clientes);
+        _repoMock.Setup(r => r.GetAllWithInvoicesAsync(default)).ReturnsAsync(clientes);
 
         var resultado = await _sut.GetAllAsync();
 
@@ -40,10 +40,10 @@ public class CustomerServiceTests
     {
         var clientes = new List<Customer>
         {
-            new() { Id = 1, FullName = "Ana García",  IsActive = true  },
-            new() { Id = 2, FullName = "Luis Pérez",  IsActive = false }
+            new() { Id = 1, FullName = "Ana García",  IsActive = true,  Invoices = [] },
+            new() { Id = 2, FullName = "Luis Pérez",  IsActive = false, Invoices = [] }
         };
-        _repoMock.Setup(r => r.GetAllAsync(default)).ReturnsAsync(clientes);
+        _repoMock.Setup(r => r.GetAllWithInvoicesAsync(default)).ReturnsAsync(clientes);
 
         var resultado = await _sut.GetAllAsync(soloActivos: true);
 
@@ -56,8 +56,8 @@ public class CustomerServiceTests
     [Fact]
     public async Task GetByIdAsync_ClienteExiste_RetornaDto()
     {
-        var cliente = new Customer { Id = 5, FullName = "María López", IsActive = true };
-        _repoMock.Setup(r => r.GetByIdAsync(5, default)).ReturnsAsync(cliente);
+        var cliente = new Customer { Id = 5, FullName = "María López", IsActive = true, Invoices = [] };
+        _repoMock.Setup(r => r.GetWithInvoicesAsync(5, default)).ReturnsAsync(cliente);
 
         var resultado = await _sut.GetByIdAsync(5);
 
@@ -65,6 +65,8 @@ public class CustomerServiceTests
         resultado!.Id.Should().Be(5);
         resultado.FullName.Should().Be("María López");
     }
+
+
 
     [Fact]
     public async Task GetByIdAsync_ClienteNoExiste_RetornaNull()
@@ -101,8 +103,8 @@ public class CustomerServiceTests
     [Fact]
     public async Task UpdateAsync_ClienteExiste_ActualizaYRetornaDto()
     {
-        var existente = new Customer { Id = 3, FullName = "Pedro Original", IsActive = true };
-        _repoMock.Setup(r => r.GetByIdAsync(3, default)).ReturnsAsync(existente);
+        var existente = new Customer { Id = 3, FullName = "Pedro Original", IsActive = true, Invoices = [] };
+        _repoMock.Setup(r => r.GetWithInvoicesAsync(3, default)).ReturnsAsync(existente);
         _repoMock.Setup(r => r.UpdateAsync(It.IsAny<Customer>(), default)).Returns(Task.CompletedTask);
         _repoMock.Setup(r => r.SaveChangesAsync(default)).ReturnsAsync(1);
 
@@ -117,7 +119,7 @@ public class CustomerServiceTests
     [Fact]
     public async Task UpdateAsync_ClienteNoExiste_RetornaNull()
     {
-        _repoMock.Setup(r => r.GetByIdAsync(99, default)).ReturnsAsync((Customer?)null);
+        _repoMock.Setup(r => r.GetWithInvoicesAsync(99, default)).ReturnsAsync((Customer?)null);
         var dto = new UpdateCustomerDto("X", null, null, null, null, null, null, true);
 
         var resultado = await _sut.UpdateAsync(99, dto);

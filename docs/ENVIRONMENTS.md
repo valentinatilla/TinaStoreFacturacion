@@ -123,25 +123,32 @@ Email__FromName = Tina Store
 
 ## 🗄️ Estrategia de bases de datos
 
-| Ambiente | Motor | Nombre | Ubicación |
+| Ambiente | Motor actual | Nombre | Ubicación |
 |---|---|---|---|
 | Desarrollo | SQLite | `tinastore-dev.db` | En el proyecto local (en .gitignore) |
-| Staging | PostgreSQL | `tinastore_staging` | Servidor de pruebas |
-| Producción | PostgreSQL | `tinastore_prod` | Servidor de producción |
+| Staging | SQLite o PostgreSQL | `tinastore-staging.db` / `tinastore_staging` | Servidor de pruebas |
+| Producción | SQLite (actual) / PostgreSQL (recomendado) | `tinastore.db` / `tinastore_prod` | Servidor de producción |
 
-### Migrar de SQLite a PostgreSQL (para staging/producción):
+> **Estado actual**: la aplicación usa SQLite en todos los ambientes. SQLite es válido para un solo usuario o carga baja. Para múltiples usuarios concurrentes o alta disponibilidad, migrar a PostgreSQL cambiando solo la cadena de conexión (EF Core no requiere cambios en el código).
+
+### Migrar de SQLite a PostgreSQL (opcional, para producción con alta carga):
 
 1. Instalar el paquete de PostgreSQL para EF Core:
    ```powershell
    dotnet add src/TinaStore.Infrastructure package Npgsql.EntityFrameworkCore.PostgreSQL
    ```
 
-2. Cambiar la cadena de conexión:
-   ```
-   Host=localhost;Port=5432;Database=tinastore_prod;Username=postgres;Password=tucontraseña
+2. En `DependencyInjection.cs` de Infrastructure, cambiar `UseSqlite` por `UseNpgsql`:
+   ```csharp
+   options.UseNpgsql(connectionString)
    ```
 
-3. Aplicar migraciones:
+3. Cambiar la cadena de conexión en el servidor:
+   ```
+   Host=servidor;Port=5432;Database=tinastore_prod;Username=usuario;Password=contraseña
+   ```
+
+4. Generar nueva migración inicial para PostgreSQL y aplicarla:
    ```powershell
    dotnet ef database update --project src/TinaStore.Infrastructure --startup-project src/TinaStore.Api
    ```
