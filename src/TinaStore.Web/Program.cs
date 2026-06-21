@@ -10,8 +10,14 @@ using TinaStore.Web.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // ─── Puerto dinámico Railway ───────────────────────────────────────────
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+// Solo sobreescribir las URLs cuando la variable PORT esté definida
+// (Railway la inyecta en producción). En desarrollo se usan las URLs
+// de launchSettings.json para que VS pueda abrir el browser correctamente.
+var railwayPort = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(railwayPort))
+{
+    builder.WebHost.UseUrls($"http://0.0.0.0:{railwayPort}");
+}
 
 // ─── Blazor Server ────────────────────────────────────────────────────────────
 builder.Services.AddRazorComponents()
