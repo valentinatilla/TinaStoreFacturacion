@@ -26,12 +26,12 @@ public record CreateUserDto(
     string FullName,
     string Email,
     string Password,
-    UserRole Role);
+    string Role);
 
 public record UpdateUserDto(
     string FullName,
     string Email,
-    UserRole Role,
+    string Role,
     bool IsActive);
 
 public record ChangePasswordDto(

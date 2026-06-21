@@ -23,8 +23,13 @@ try
     var builder = WebApplication.CreateBuilder(args);
 
     // ─── Puerto dinámico Railway (Railway inyecta $PORT en runtime) ───────────
-    var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+    // Solo sobreescribir cuando la variable PORT esté definida (Railway).
+    // En desarrollo se usan las URLs de launchSettings.json.
+    var railwayPort = Environment.GetEnvironmentVariable("PORT");
+    if (!string.IsNullOrEmpty(railwayPort))
+    {
+        builder.WebHost.UseUrls($"http://0.0.0.0:{railwayPort}");
+    }
 
     // ─── Serilog como proveedor de logging ────────────────────────────────────
     builder.Host.UseSerilog((ctx, lc) => lc

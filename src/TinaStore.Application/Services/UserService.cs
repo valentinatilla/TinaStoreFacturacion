@@ -1,6 +1,7 @@
 ﻿using TinaStore.Application.DTOs;
 using TinaStore.Application.Interfaces;
 using TinaStore.Domain.Entities;
+using TinaStore.Domain.Enums;
 using TinaStore.Domain.Exceptions;
 using TinaStore.Domain.Interfaces;
 
@@ -38,7 +39,7 @@ public class UserService : IUserService
         {
             FullName = dto.FullName.Trim(),
             Email = dto.Email.Trim().ToLower(),
-            Role = dto.Role,
+            Role = Enum.TryParse<UserRole>(dto.Role, ignoreCase: true, out var r) ? r : UserRole.Seller,
             IsActive = true,
             PasswordHash = string.Empty
         };
@@ -60,7 +61,7 @@ public class UserService : IUserService
 
         user.FullName = dto.FullName.Trim();
         user.Email = dto.Email.Trim().ToLower();
-        user.Role = dto.Role;
+        user.Role = Enum.TryParse<UserRole>(dto.Role, ignoreCase: true, out var r) ? r : user.Role;
         user.IsActive = dto.IsActive;
 
         await _users.UpdateAsync(user);
