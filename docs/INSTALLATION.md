@@ -44,10 +44,14 @@ cd src/TinaStore.Api
 dotnet user-secrets init
 
 # Configurar la clave JWT para desarrollo local
-# Puedes usar cualquier texto de más de 32 caracteres
 dotnet user-secrets set "Jwt:Key" "TinaStore-Dev-Key-Solo-Para-Desarrollo-Local-2025!"
 
-# Volver a la raíz del proyecto
+# Configurar credenciales de Google OAuth
+# Obtén ClientId y ClientSecret en: https://console.cloud.google.com/
+dotnet user-secrets set "Google:ClientId"     "TU_CLIENT_ID_AQUI"
+dotnet user-secrets set "Google:ClientSecret" "TU_CLIENT_SECRET_AQUI"
+
+# Volver a la raíz
 cd ../..
 ```
 
@@ -55,6 +59,11 @@ cd ../..
 > Es una forma de guardar contraseñas y claves en tu computadora personal sin escribirlas en el código.
 > Los valores se guardan en `%APPDATA%\Microsoft\UserSecrets\` en Windows.
 > **Nunca se suben a GitHub**.
+
+> ⚠️ **Importante al clonar en un equipo nuevo:**
+> Los `user-secrets` NO se copian con el repositorio. Cada desarrollador debe ejecutar
+> los comandos anteriores en su propia máquina con las credenciales reales.
+> Sin `Google:ClientSecret` el login con Google fallará aunque el resto de la app funcione.
 
 ---
 
