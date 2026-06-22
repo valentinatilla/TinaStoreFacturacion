@@ -15,7 +15,7 @@
     return;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h4 class="fw-bold mb-0"><i class="bi bi-people-fill me-2 text-purple"></i>Gestión de Usuarios</h4>
     <button class="btn bg-purple text-white" @onclick="AbrirNuevo">
         <i class="bi bi-plus-lg me-1"></i>Nuevo usuario
@@ -42,10 +42,10 @@ else
                 <thead>
                     <tr>
                         <th>Nombre</th>
-                        <th>Email</th>
+                        <th class="ts-table-hide-mobile">Email</th>
                         <th>Rol</th>
-                        <th>Estado</th>
-                        <th>Último acceso</th>
+                        <th class="ts-table-hide-mobile">Estado</th>
+                        <th class="ts-table-hide-mobile">Último acceso</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -54,16 +54,16 @@ else
                     {
                         <tr>
                             <td class="fw-semibold">@u.FullName</td>
-                            <td class="text-muted">@u.Email</td>
+                            <td class="text-muted ts-table-hide-mobile">@u.Email</td>
                             <td>
                                 <span class="badge @RolBadge(u.Role)">@RolTexto(u.Role)</span>
                             </td>
-                            <td>
+                            <td class="ts-table-hide-mobile">
                                 <span class="badge @(u.IsActive ? "bg-success" : "bg-secondary")">
                                     @(u.IsActive ? "Activo" : "Inactivo")
                                 </span>
                             </td>
-                            <td class="text-muted small">
+                            <td class="text-muted small ts-table-hide-mobile">
                                 @(u.LastLoginAt.HasValue ? u.LastLoginAt.Value.ToString("dd/MM/yyyy HH:mm") : "—")
                             </td>
                             <td class="text-end">

@@ -44,10 +44,11 @@ cd src/TinaStore.Api
 dotnet user-secrets init
 
 # Configurar la clave JWT para desarrollo local
-# Puedes usar cualquier texto de más de 32 caracteres
 dotnet user-secrets set "Jwt:Key" "TinaStore-Dev-Key-Solo-Para-Desarrollo-Local-2025!"
 
-# Volver a la raíz del proyecto
+
+
+# Volver a la raíz
 cd ../..
 ```
 
@@ -56,20 +57,51 @@ cd ../..
 > Los valores se guardan en `%APPDATA%\Microsoft\UserSecrets\` en Windows.
 > **Nunca se suben a GitHub**.
 
+> ⚠️ **Importante al clonar en un equipo nuevo:**
+> Los `user-secrets` NO se copian con el repositorio. Cada desarrollador debe ejecutar
+> los comandos anteriores en su propia máquina con las credenciales reales.
+> Sin `Google:ClientSecret` el login con Google fallará aunque el resto de la app funcione.
+
 ---
 
 ## 🗄️ Paso 3: Aplicar las migraciones de base de datos
 
 Las migraciones son instrucciones que crean la estructura de la base de datos automáticamente.
 
+> ⚠️ **La base de datos NO está en el repositorio** (está en `.gitignore`).
+> Cada equipo tiene su propia base de datos local. Al arrancar la API por primera vez
+> se crea automáticamente con un usuario administrador inicial.
+
 ```powershell
 # Aplicar las migraciones (crea el archivo tinastore-dev.db)
-dotnet ef database update \
-  --project src/TinaStore.Infrastructure \
+dotnet ef database update `
+  --project src/TinaStore.Infrastructure `
   --startup-project src/TinaStore.Api
 
 # Si el comando ef no está instalado, instálalo así:
 dotnet tool install --global dotnet-ef
+```
+
+---
+
+## 👤 Credenciales por defecto al clonar
+
+Al arrancar la API en un equipo nuevo, se crea automáticamente un usuario administrador con estas credenciales:
+
+| Campo | Valor |
+|---|---|
+| **Email** | `admin@tinastore.com` |
+| **Contraseña** | `Admin123!` |
+
+> ℹ️ Estos datos solo sirven para el primer acceso. Desde el panel (Usuarios) puedes crear
+> los usuarios reales que necesites.
+
+Si quieres cambiar las credenciales del admin inicial sin tocar el código:
+
+```powershell
+# Dentro de src/TinaStore.Api
+dotnet user-secrets set "App:AdminEmail"    "tu@correo.com"
+dotnet user-secrets set "App:AdminPassword" "TuPasswordSegura123!"
 ```
 
 ---

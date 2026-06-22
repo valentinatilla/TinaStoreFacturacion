@@ -19,6 +19,56 @@ dotnet test tests/TinaStore.Tests.Integration
 
 ---
 
+## Pruebas manuales — v2.8.0 (Fases A–F)
+
+### A — Categorías: ordenamiento
+
+| # | Prueba | Resultado esperado |
+|---|---|---|
+| A1 | Clic en "A→Z" | Categorías ordenadas de menor a mayor considerando tildes (ej: ñ después de n) |
+| A2 | Clic en "Z→A" | Categorías ordenadas de mayor a menor |
+| A3 | Escribir en el buscador | La lista se filtra en tiempo real sin recargar |
+| A4 | En pantalla móvil | La columna Descripción desaparece; solo se ve Nombre y Acciones |
+
+### B — Responsive en módulos
+
+| # | Módulo | Prueba | Resultado esperado |
+|---|---|---|---|
+| B1 | Clientes | Abrir en móvil (<576px) | Filtros hacen wrap; columnas secundarias ocultas |
+| B2 | Ventas | Abrir en móvil | Columnas Pagado/Saldo/Fecha se ocultan |
+| B3 | Productos | Abrir en móvil | Columnas SKU/Categoría/Costo ocultas |
+| B4 | Usuarios | Abrir en móvil | Columnas Email/Estado/Último acceso ocultas |
+| B5 | Cuentas por cobrar | Abrir en móvil | Columnas secundarias ocultas; Cliente/Saldo/WhatsApp visibles |
+
+### C — Logo e imágenes
+
+| # | Prueba | Resultado esperado |
+|---|---|---|
+| C1 | Subir logo en Configuración | Logo aparece inmediatamente en el sidebar sin recargar |
+| C2 | Recargar página tras subir logo | Logo persiste y se ve correctamente |
+| C3 | Abrir detalle de venta con imagen de producto | La imagen del producto se muestra (no imagen rota) |
+| C4 | Entorno Railway (producción) | Logo e imágenes accesibles usando la `PublicApiUrl` correcta |
+
+### E — Filtros avanzados en Clientes
+
+| # | Prueba | Resultado esperado |
+|---|---|---|
+| E1 | Ingresar saldo mínimo | Solo aparecen clientes con saldo pendiente ≥ valor ingresado |
+| E2 | Ingresar saldo máximo | Solo aparecen clientes con saldo pendiente ≤ valor ingresado |
+| E3 | Ingresar días sin comprar | Clientes cuya última compra fue hace ≥ días ingresados; clientes sin compra siempre aparecen |
+| E4 | Combinar saldo mínimo + días | Se aplican ambos filtros en AND |
+| E5 | Clic en "Limpiar" | Todos los filtros (incluidos saldo y días) se resetean |
+
+### F — PWA
+
+| # | Prueba | Resultado esperado |
+|---|---|---|
+| F1 | Chrome móvil → "Agregar a pantalla de inicio" | Opción disponible; nombre corto "Tina Store"; color de tema rosado |
+| F2 | App instalada en Android | Ícono en pantalla de inicio (requiere archivos `icon-192.png` / `icon-512.png`) |
+| F3 | Barra de estado en iOS Safari | Color de barra coincide con `theme-color` (#F472B6) |
+
+---
+
 ## Pruebas manuales — Fase C (v1.5.0)
 
 ### 🧾 Facturas — PDF, anulación y descuento

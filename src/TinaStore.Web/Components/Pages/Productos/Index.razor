@@ -5,9 +5,9 @@
 
 <PageTitle>Productos — Tina Store</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h4 class="fw-bold mb-0"><i class="bi bi-box-seam me-2 text-purple"></i>Productos</h4>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
         <button class="btn btn-outline-success btn-sm" @onclick="ExportarExcel">
             <i class="bi bi-file-earmark-excel me-1"></i>Exportar Excel
         </button>
@@ -69,48 +69,17 @@ else
 
     <!-- Filtros -->
     <div class="card border-0 shadow-sm mb-3 p-3">
-        <div class="row g-2 align-items-end">
-            <div class="col-md-4">
-                <label class="form-label small fw-semibold mb-1">Buscar</label>
-                <input class="form-control form-control-sm" placeholder="🔍 Nombre o SKU..."
-                       value="@_filtroTexto"
-                       @oninput="e => { _filtroTexto = e.Value?.ToString() ?? string.Empty; Filtrar(); }" />
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input class="form-control form-control-sm" placeholder="Nombre o SKU..."
+                           value="@_filtroTexto"
+                           @oninput="e => { _filtroTexto = e.Value?.ToString() ?? string.Empty; Filtrar(); }" />
+                </div>
             </div>
-            <div class="col-md-2">
-                <label class="form-label small fw-semibold mb-1">Categoría</label>
-                <select class="form-select form-select-sm"
-                        @onchange="e => { _filtroCategoriaId = int.TryParse(e.Value?.ToString(), out var v) ? v : 0; Filtrar(); }">
-                    <option value="0">Todas</option>
-                    @foreach (var c in _categorias)
-                    {
-                        <option value="@c.Id" selected="@(_filtroCategoriaId == c.Id)">@c.Name</option>
-                    }
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small fw-semibold mb-1">Proveedor</label>
-                <select class="form-select form-select-sm"
-                        @onchange="e => { _filtroProveedorId = int.TryParse(e.Value?.ToString(), out var v) ? v : 0; Filtrar(); }">
-                    <option value="0">Todos</option>
-                    @foreach (var s in _proveedores)
-                    {
-                        <option value="@s.Id" selected="@(_filtroProveedorId == s.Id)">@s.Name</option>
-                    }
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small fw-semibold mb-1">Estado</label>
-                <select class="form-select form-select-sm"
-                        @onchange="e => { _filtroEstado = e.Value?.ToString() ?? string.Empty; Filtrar(); }">
-                    <option value="">Todos</option>
-                    <option value="activo">En stock</option>
-                    <option value="bajo">Bajo stock</option>
-                    <option value="agotado">Agotado</option>
-                    <option value="inactivo">Inactivo</option>
-                </select>
-            </div>
-            <div class="col-md-2 d-flex align-items-end">
-                <button class="btn btn-sm btn-outline-secondary w-100" @onclick="LimpiarFiltros">
+            <div class="col-auto">
+                <button class="btn btn-sm btn-outline-secondary" @onclick="LimpiarFiltros">
                     <i class="bi bi-x-circle me-1"></i>Limpiar
                 </button>
             </div>
@@ -126,22 +95,24 @@ else
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
-                    <tr>
+                    <tr class="align-middle">
                         <th></th>
-                        <th style="cursor:pointer" @onclick='() => OrdenarPor("sku")'>SKU <i class="@(SortIconClass("sku")) ms-1 small"></i></th>
-                        <th style="cursor:pointer" @onclick='() => OrdenarPor("nombre")'>Producto <i class="@(SortIconClass("nombre")) ms-1 small"></i></th>
-                        <th>Categoría</th>
-                        <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("costo")'>Costo <i class="@(SortIconClass("costo")) ms-1 small"></i></th>
-                        <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("precio")'>Precio venta <i class="@(SortIconClass("precio")) ms-1 small"></i></th>
-                        <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("ganancia")'>% Ganancia <i class="@(SortIconClass("ganancia")) ms-1 small"></i></th>
-                        <th class="text-center" style="cursor:pointer" @onclick='() => OrdenarPor("stock")'>Stock <i class="@(SortIconClass("stock")) ms-1 small"></i></th>
-                        <th>Estado</th><th></th>
+                        <th class="ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("sku")'>SKU <i class="@SortIconClass("sku") ms-1 small"></i></th>
+                        <th style="cursor:pointer" @onclick='() => OrdenarPor("nombre")'>Producto <i class="@SortIconClass("nombre") ms-1 small"></i></th>
+                        <th class="ts-table-hide-mobile">Categoría</th>
+                        <th class="ts-table-hide-mobile">Proveedor</th>
+                        <th class="text-end ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("costo")'>Costo <i class="@SortIconClass("costo") ms-1 small"></i></th>
+                        <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("precio")'>Precio venta <i class="@SortIconClass("precio") ms-1 small"></i></th>
+                        <th class="text-end ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("ganancia")'>% Ganancia <i class="@SortIconClass("ganancia") ms-1 small"></i></th>
+                        <th class="text-center" style="cursor:pointer" @onclick='() => OrdenarPor("stock")'>Stock <i class="@SortIconClass("stock") ms-1 small"></i></th>
+                        <th class="ts-table-hide-mobile">Estado</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var p in _filtrados)
-                    {
-                        <tr>
+                   @foreach (var p in _filtrados)
+                   {
+                       <tr class="align-middle">
                             <td class="ts-thumb-cell">
                                 @if (!string.IsNullOrEmpty(p.ImagePath))
                                 {
@@ -152,18 +123,19 @@ else
                                     <span class="ts-thumb-placeholder"><i class="bi bi-image"></i></span>
                                 }
                             </td>
-                            <td class="text-muted small">@p.Sku</td>
+                            <td class="text-muted small ts-table-hide-mobile">@p.Sku</td>
                             <td class="fw-semibold">@p.Name</td>
-                            <td>@p.CategoryName</td>
-                            <td class="text-end text-muted">@(p.PurchasePrice > 0 ? p.PurchasePrice.ToString("C0") : "—")</td>
+                            <td class="ts-table-hide-mobile">@p.CategoryName</td>
+                            <td class="ts-table-hide-mobile text-muted small">@(p.SupplierName ?? "—")</td>
+                            <td class="text-end text-muted ts-table-hide-mobile">@(p.PurchasePrice > 0 ? p.PurchasePrice.ToString("C0") : "—")</td>
                             <td class="text-end">@p.SalePrice.ToString("C0")</td>
-                            <td class="text-end small @(p.ProfitMargin > 0 ? "text-success fw-semibold" : "text-muted")">
+                            <td class="text-end small ts-table-hide-mobile @(p.ProfitMargin > 0 ? "text-success fw-semibold" : "text-muted")">
                                 @(p.ProfitMargin > 0 ? p.ProfitMargin.ToString("0.0") + " %" : "—")
                             </td>
                             <td class="text-center">
                                 <span class="badge @(!p.IsActive ? "bg-secondary" : p.CurrentStock == 0 ? "badge-sin-stock" : p.IsLowStock ? "badge-bajo-stock" : "bg-success")">@p.CurrentStock</span>
                             </td>
-                            <td>
+                            <td class="ts-table-hide-mobile">
                                 @if (!p.IsActive)
                                 {
                                     <span class="badge badge-estado-inactivo">Inactivo</span>
@@ -660,18 +632,16 @@ else
     private byte[]? _imagenBytes;
 
     // ── Filtros ────────────────────────────────────────────────────────────────────
-    private string _filtroTexto       = string.Empty;
-    private int    _filtroCategoriaId;
-    private int    _filtroProveedorId;
-    private string _filtroEstado      = string.Empty;
-    private string _ordenCampo        = string.Empty;
-    private bool   _ordenDesc;
-
-    [Inject] private IConfiguration Config { get; set; } = default!;
+    private string   _filtroTexto       = string.Empty;
+    private int      _filtroCategoriaId;
+    private int      _filtroProveedorId;
+    private string   _filtroEstado      = string.Empty;
+    private string   _ordenCampo        = string.Empty;
+    private bool     _ordenDesc;
 
     protected override async Task OnInitializedAsync()
     {
-        _apiBase = Config["ApiBaseUrl"] ?? string.Empty;
+        _apiBase = Api.PublicBaseUrl;
         await Task.WhenAll(Cargar(), CargarCatalogos());
     }
 
@@ -708,12 +678,12 @@ else
 
         _filtrados = _ordenCampo switch
         {
-            "sku"      => _ordenDesc ? query.OrderByDescending(p => p.Sku).ToList()          : query.OrderBy(p => p.Sku).ToList(),
-            "nombre"   => _ordenDesc ? query.OrderByDescending(p => p.Name).ToList()         : query.OrderBy(p => p.Name).ToList(),
-            "costo"    => _ordenDesc ? query.OrderByDescending(p => p.PurchasePrice).ToList(): query.OrderBy(p => p.PurchasePrice).ToList(),
-            "precio"   => _ordenDesc ? query.OrderByDescending(p => p.SalePrice).ToList()    : query.OrderBy(p => p.SalePrice).ToList(),
-            "ganancia" => _ordenDesc ? query.OrderByDescending(p => p.ProfitMargin).ToList() : query.OrderBy(p => p.ProfitMargin).ToList(),
-            "stock"    => _ordenDesc ? query.OrderByDescending(p => p.CurrentStock).ToList() : query.OrderBy(p => p.CurrentStock).ToList(),
+            "sku"      => _ordenDesc ? query.OrderByDescending(p => p.Sku).ToList()           : query.OrderBy(p => p.Sku).ToList(),
+            "nombre"   => _ordenDesc ? query.OrderByDescending(p => p.Name).ToList()          : query.OrderBy(p => p.Name).ToList(),
+            "costo"    => _ordenDesc ? query.OrderByDescending(p => p.PurchasePrice).ToList() : query.OrderBy(p => p.PurchasePrice).ToList(),
+            "precio"   => _ordenDesc ? query.OrderByDescending(p => p.SalePrice).ToList()     : query.OrderBy(p => p.SalePrice).ToList(),
+            "ganancia" => _ordenDesc ? query.OrderByDescending(p => p.ProfitMargin).ToList()  : query.OrderBy(p => p.ProfitMargin).ToList(),
+            "stock"    => _ordenDesc ? query.OrderByDescending(p => p.CurrentStock).ToList()  : query.OrderBy(p => p.CurrentStock).ToList(),
             _          => query.ToList()
         };
     }

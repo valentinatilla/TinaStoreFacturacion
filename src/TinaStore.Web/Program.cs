@@ -10,8 +10,14 @@ using TinaStore.Web.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // ─── Puerto dinámico Railway ───────────────────────────────────────────
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+// Solo sobreescribir las URLs cuando la variable PORT esté definida
+// (Railway la inyecta en producción). En desarrollo se usan las URLs
+// de launchSettings.json para que VS pueda abrir el browser correctamente.
+var railwayPort = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(railwayPort))
+{
+    builder.WebHost.UseUrls($"http://0.0.0.0:{railwayPort}");
+}
 
 // ─── Blazor Server ────────────────────────────────────────────────────────────
 builder.Services.AddRazorComponents()
@@ -74,11 +80,15 @@ builder.Services.AddSingleton(new GoogleAuthConfig(googleEnabled));
 builder.Services.AddSingleton<LogoStateService>();
 
 // ─── HttpClient apuntando a la API ───────────────────────────────────────────
-var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5172";
+var apiBaseUrl    = builder.Configuration["ApiBaseUrl"]   ?? "http://localhost:5172";
+var publicApiUrl  = builder.Configuration["PublicApiUrl"] ?? apiBaseUrl;
 builder.Services.AddScoped(sp =>
 {
     var session = sp.GetRequiredService<SessionStateService>();
-    return new TinaStoreApiClient(new HttpClient { BaseAddress = new Uri(apiBaseUrl) }, session);
+    return new TinaStoreApiClient(
+        new HttpClient { BaseAddress = new Uri(apiBaseUrl) },
+        session,
+        publicApiUrl);
 });
 
 // ─── ForwardedHeaders (Railway termina TLS en el edge) ─────────────────────

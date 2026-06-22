@@ -4,6 +4,39 @@ Registro de funcionalidades implementadas y planificadas del proyecto.
 
 ---
 
+## v2.8.0 — 2025-07-14 — UX Responsive, Botones, Logo, Filtros y PWA
+
+### ✅ Ordenamiento en Categorías (Fase A)
+- Barra de orden A→Z / Z→A con soporte para tildes y ñ usando `CultureInfo("es-CO")`.
+- Búsqueda local en tiempo real por nombre.
+- Columna Descripción oculta en móvil con `ts-table-hide-mobile`.
+
+### ✅ Responsive global en módulos anchos (Fase B)
+- `flex-wrap` en todas las barras de filtros.
+- Columnas secundarias de las tablas ocultas en móvil con clase `ts-table-hide-mobile`.
+- Módulos: Clientes, Ventas/Facturas, Productos, Usuarios, Cuentas por cobrar.
+
+### ✅ Corrección de logo e imágenes (Fase C)
+- Separación de `ApiBaseUrl` (interna) y `PublicApiUrl` (pública para el navegador).
+- Logo del sidebar y de Configuración siempre accesibles en cualquier entorno.
+
+### ✅ Sistema global de botones semánticos (Fase D)
+- Variables CSS `--ts-purple`, `--ts-purple-dark`, `--ts-purple-light`.
+- Clases `.btn-primary-tina`, `.btn-secondary-tina`, `.btn-danger-tina`, `.btn-icon-tina`, `.btn-ghost-tina`, `.btn-loading-tina`.
+- Animación `@keyframes btnSpin` para botones con estado de carga.
+
+### ✅ Filtros avanzados en Clientes (Fase E)
+- Controles: "Saldo pendiente mayor que", "Saldo pendiente menor que", "Días sin comprar mayor que".
+- Lógica completamente en frontend (sin cambios en API).
+- `LimpiarFiltros()` resetea todos los filtros incluyendo los nuevos.
+
+### ✅ PWA y logo móvil (Fase F)
+- `wwwroot/manifest.webmanifest` con nombre, short_name, colores del tema rosado y referencias a íconos 192×192 / 512×512.
+- `App.razor` con `<link rel="manifest">`, `apple-touch-icon`, meta tags `apple-mobile-web-app-*`.
+- Carpeta `wwwroot/icons/README.md` con instrucciones para generar los íconos físicos.
+
+---
+
 ## Dashboard (v2.4.0 — 2026-06-19)
 
 ### ✅ Producto estrella del mes (Fase D)

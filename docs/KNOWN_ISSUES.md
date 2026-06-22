@@ -5,6 +5,34 @@ Los issues marcados ✅ ya están resueltos. Los marcados 🔴/🟡/🟢 están 
 
 ---
 
+## ✅ RESUELTOS EN v2.8.0 (2025-07-14 — Fases A–F)
+
+### ✅ ISSUE-08 — Logo roto en sidebar y configuración → resuelto en v2.8.0
+- **Causa**: `ApiBaseUrl` (interna) usada para construir URL de imagen accesible por el navegador.
+- **Solución**: `PublicApiUrl`/`PublicBaseUrl` separado; todos los componentes que generan URLs de imágenes ahora usan la URL pública.
+
+### ✅ ISSUE-09 — Imágenes de productos rotas en detalle de venta → resuelto en v2.8.0
+- **Causa**: `IConfiguration["ApiBaseUrl"]` inyectado directamente en las páginas Razor, mismo problema que ISSUE-08.
+- **Solución**: Eliminada inyección directa; uso de `Api.PublicBaseUrl`.
+
+### ✅ ISSUE-10 — Desbordamiento de tablas y filtros en pantallas pequeñas → resuelto en v2.8.0
+- **Causa**: Las filas de filtros no tenían `flex-wrap`; las tablas no ocultaban columnas secundarias en móvil.
+- **Solución**: `flex-wrap` y clase `ts-table-hide-mobile` aplicados en todos los módulos.
+
+### ✅ ISSUE-11 — Categorías sin orden alfabético → resuelto en v2.8.0
+- **Solución**: Barra de orden A→Z / Z→A con soporte de tildes/ñ mediante `CultureInfo("es-CO")`.
+
+---
+
+## 🟡 PENDIENTES
+
+### 🟡 ISSUE-12 — Íconos PWA no generados
+- **Estado**: El `manifest.webmanifest` referencia `icons/icon-192.png` e `icons/icon-512.png` que aún no existen como archivos físicos.
+- **Impacto**: La app no mostrará el ícono correcto al agregarla a la pantalla de inicio de un móvil.
+- **Solución**: Generar los íconos desde el logo de Tina Store y colocarlos en `src/TinaStore.Web/wwwroot/icons/`. Ver instrucciones en `wwwroot/icons/README.md`.
+
+---
+
 ## ✅ RESUELTOS EN v2.7.0 (2026-06-20 — Fases C + D + E)
 
 ### ✅ ISSUE-05 — Diseño del login no alineado con la identidad visual → resuelto en v2.7.0

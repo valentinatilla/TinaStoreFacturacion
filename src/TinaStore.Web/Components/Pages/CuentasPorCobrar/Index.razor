@@ -24,23 +24,48 @@ else if (_data is not null)
         </div>
     }
 
+    <div class="card border-0 shadow-sm mb-3 p-3">
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input class="form-control form-control-sm" placeholder="Buscar cliente..."
+                           @oninput="e => { _filtroTexto = e.Value?.ToString() ?? string.Empty; AplicarFiltros(); }" />
+                </div>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-sm btn-outline-secondary" @onclick="LimpiarFiltros">
+                    <i class="bi bi-x-circle me-1"></i>Limpiar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="card ts-table border-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
                         <th style="width:32px"></th>
-                        <th>Cliente</th>
-                        <th>Documento</th>
-                        <th>Teléfono</th>
-                        <th class="text-center">Ventas pend.</th>
-                        <th class="text-end">Saldo</th>
-                        <th>Última venta</th>
+                        <th style="cursor:pointer" @onclick='() => OrdenarPor("cliente")'>
+                            Cliente <i class="@SortIconClass("cliente") ms-1 small"></i>
+                        </th>
+                        <th class="ts-table-hide-mobile">Documento</th>
+                        <th class="ts-table-hide-mobile">Teléfono</th>
+                        <th class="text-center ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("facturas")'>
+                            Ventas pend. <i class="@SortIconClass("facturas") ms-1 small"></i>
+                        </th>
+                        <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("saldo")'>
+                            Saldo <i class="@SortIconClass("saldo") ms-1 small"></i>
+                        </th>
+                        <th class="ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("fecha")'>
+                            Última venta <i class="@SortIconClass("fecha") ms-1 small"></i>
+                        </th>
                         <th></th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var cxc in _data.Deudores.OrderByDescending(c => c.SaldoPendiente))
+                    @foreach (var cxc in _deudoresFiltrados)
                     {
                         var expandido = _expandidos.Contains(cxc.CustomerId);
                         <tr class="@(expandido ? "detalle-expandido" : "")" style="cursor:pointer"
@@ -49,13 +74,13 @@ else if (_data is not null)
                                 <i class="bi @(expandido ? "bi-chevron-down" : "bi-chevron-right") text-purple small"></i>
                             </td>
                             <td class="fw-semibold align-middle">@cxc.CustomerName</td>
-                            <td class="text-muted align-middle">@cxc.DocumentNumber</td>
-                            <td class="text-muted small align-middle">@cxc.Phone</td>
-                            <td class="text-center align-middle">
+                            <td class="text-muted align-middle ts-table-hide-mobile">@cxc.DocumentNumber</td>
+                            <td class="text-muted small align-middle ts-table-hide-mobile">@cxc.Phone</td>
+                            <td class="text-center align-middle ts-table-hide-mobile">
                                 <span class="badge bg-warning text-dark">@cxc.FacturasPendientes</span>
                             </td>
                             <td class="text-end fw-bold text-danger fs-6 align-middle">@cxc.SaldoPendiente.ToString("C0")</td>
-                            <td class="text-muted small align-middle">@cxc.UltimaFacturaFecha?.ToString("dd/MM/yyyy")</td>
+                            <td class="text-muted small align-middle ts-table-hide-mobile">@cxc.UltimaFacturaFecha?.ToString("dd/MM/yyyy")</td>
                             <td class="text-end align-middle" @onclick:stopPropagation="true">
                                 @if (!string.IsNullOrWhiteSpace(cxc.Phone))
                                 {
@@ -149,12 +174,16 @@ else if (_data is not null)
 
 @code {
     private ReporteCuentasPorCobrarDto? _data;
-    private bool _loading = true;
+    private List<DeudorCXCDto>          _deudoresFiltrados = [];
+    private bool    _loading = true;
     private string? _reminderMessage;
+    private string  _filtroTexto    = string.Empty;
+    private string  _ordenCampo = "saldo";
+    private bool    _ordenDesc  = true;
 
-    private readonly HashSet<int> _expandidos = [];
-    private readonly HashSet<int> _cargandoDetalle = [];
-    private readonly Dictionary<int, List<FacturaDto>> _detallesCache = [];
+    private readonly HashSet<int>                       _expandidos      = [];
+    private readonly HashSet<int>                       _cargandoDetalle = [];
+    private readonly Dictionary<int, List<FacturaDto>>  _detallesCache   = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -165,8 +194,46 @@ else if (_data is not null)
             _data = await t1;
             var cfg = await t2;
             _reminderMessage = cfg?.ReminderMessage;
+            AplicarFiltros();
         }
         finally { _loading = false; }
+    }
+
+    private void AplicarFiltros()
+    {
+        if (_data is null) return;
+        var q = _data.Deudores
+            .Where(c => string.IsNullOrWhiteSpace(_filtroTexto) ||
+                        c.CustomerName.Contains(_filtroTexto, StringComparison.OrdinalIgnoreCase) ||
+                        (c.DocumentNumber?.Contains(_filtroTexto, StringComparison.OrdinalIgnoreCase) ?? false));
+
+        _deudoresFiltrados = (_ordenCampo switch
+        {
+            "cliente"  => _ordenDesc ? q.OrderByDescending(c => c.CustomerName).ToList()        : q.OrderBy(c => c.CustomerName).ToList(),
+            "facturas" => _ordenDesc ? q.OrderByDescending(c => c.FacturasPendientes).ToList()  : q.OrderBy(c => c.FacturasPendientes).ToList(),
+            "fecha"    => _ordenDesc ? q.OrderByDescending(c => c.UltimaFacturaFecha).ToList()  : q.OrderBy(c => c.UltimaFacturaFecha).ToList(),
+            _          => _ordenDesc ? q.OrderByDescending(c => c.SaldoPendiente).ToList()      : q.OrderBy(c => c.SaldoPendiente).ToList()
+        });
+    }
+
+    private void OrdenarPor(string campo)
+    {
+        if (_ordenCampo == campo) _ordenDesc = !_ordenDesc;
+        else { _ordenCampo = campo; _ordenDesc = true; }
+        AplicarFiltros();
+    }
+
+    private string SortIconClass(string campo) =>
+        _ordenCampo != campo ? "bi bi-arrow-down-up text-muted" :
+        _ordenDesc            ? "bi bi-sort-down text-purple"   :
+                                "bi bi-sort-up text-purple";
+
+    private void LimpiarFiltros()
+    {
+        _filtroTexto = string.Empty;
+        _ordenCampo  = "saldo";
+        _ordenDesc   = true;
+        AplicarFiltros();
     }
 
     private async Task ToggleDetalle(int customerId)

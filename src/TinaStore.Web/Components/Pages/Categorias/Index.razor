@@ -1,10 +1,11 @@
 @page "/categorias"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
+@using System.Globalization
 
 <PageTitle>Categorías — Tina Store</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h4 class="fw-bold mb-0"><i class="bi bi-tags me-2 text-purple"></i>Categorías de Productos</h4>
     <button class="btn bg-purple text-white" @onclick="() => AbrirModal()">
         <i class="bi bi-plus-lg me-1"></i>Nueva categoría
@@ -24,16 +25,36 @@
 }
 else
 {
+    <!-- Barra de búsqueda -->
+    <div class="card border-0 shadow-sm mb-3 p-3">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input class="form-control form-control-sm" placeholder="Buscar categoría..."
+                   @oninput="e => { _busqueda = e.Value?.ToString() ?? string.Empty; }" />
+        </div>
+    </div>
+
     <div class="card ts-table border-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
-                <thead><tr><th>Nombre</th><th>Descripción</th><th>Productos</th><th></th></tr></thead>
+                <thead>
+                    <tr>
+                        <th style="cursor:pointer" @onclick='() => OrdenarPor("nombre")'>
+                            Nombre <i class="@SortIconClass("nombre") ms-1 small"></i>
+                        </th>
+                        <th class="ts-table-hide-mobile">Descripción</th>
+                        <th style="cursor:pointer" @onclick='() => OrdenarPor("productos")'>
+                            Productos <i class="@SortIconClass("productos") ms-1 small"></i>
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
                 <tbody>
-                    @foreach (var cat in _categorias)
+                    @foreach (var cat in CategoriasOrdenadas)
                     {
                         <tr>
                             <td class="fw-semibold">@cat.Name</td>
-                            <td class="text-muted">@cat.Description</td>
+                            <td class="text-muted ts-table-hide-mobile">@cat.Description</td>
                             <td><span class="badge bg-secondary">@cat.ProductCount</span></td>
                             <td class="text-end">
                                 <button class="btn btn-sm btn-outline-danger" @onclick="() => Eliminar(cat.Id)"
@@ -42,6 +63,10 @@ else
                                 </button>
                             </td>
                         </tr>
+                    }
+                    @if (!CategoriasOrdenadas.Any())
+                    {
+                        <tr><td colspan="4" class="text-center text-muted py-4">Sin categorías</td></tr>
                     }
                 </tbody>
             </table>
@@ -85,6 +110,38 @@ else
     private string? _descripcion;
     private string? _mensaje;
     private bool _exito;
+    private string _busqueda = "";
+    private string _ordenCampo = "";
+    private bool   _ordenDesc;
+
+    private IEnumerable<CategoriaDto> CategoriasOrdenadas
+    {
+        get
+        {
+            var comparer = StringComparer.Create(new CultureInfo("es-CO"), ignoreCase: true);
+            var lista = string.IsNullOrWhiteSpace(_busqueda)
+                ? _categorias
+                : _categorias.Where(c => c.Name.Contains(_busqueda, StringComparison.OrdinalIgnoreCase)
+                                      || (c.Description?.Contains(_busqueda, StringComparison.OrdinalIgnoreCase) ?? false));
+            return _ordenCampo switch
+            {
+                "nombre"    => _ordenDesc ? lista.OrderByDescending(c => c.Name, comparer)        : lista.OrderBy(c => c.Name, comparer),
+                "productos" => _ordenDesc ? lista.OrderByDescending(c => c.ProductCount)          : lista.OrderBy(c => c.ProductCount),
+                _           => lista
+            };
+        }
+    }
+
+    private void OrdenarPor(string campo)
+    {
+        if (_ordenCampo == campo) _ordenDesc = !_ordenDesc;
+        else { _ordenCampo = campo; _ordenDesc = true; }
+    }
+
+    private string SortIconClass(string campo) =>
+        _ordenCampo != campo ? "bi bi-arrow-down-up text-muted" :
+        _ordenDesc            ? "bi bi-sort-down text-purple"   :
+                                "bi bi-sort-up text-purple";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
