@@ -121,8 +121,14 @@ else
                     {
                         <div class="col-12">
                             <label class="form-label small fw-semibold">Contraseña *</label>
-                            <input type="password" class="form-control" @bind="_form.Password"
-                                   placeholder="Mínimo 6 caracteres" />
+                            <div class="input-group">
+                                <input type="@(_mostrarPassNuevo ? "text" : "password")" class="form-control" @bind="_form.Password"
+                                       placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
+                                <button type="button" class="btn-password-toggle" @onclick="() => _mostrarPassNuevo = !_mostrarPassNuevo" tabindex="-1"
+                                        title="@(_mostrarPassNuevo ? "Ocultar contraseña" : "Ver contraseña")">
+                                    <i class="bi @(_mostrarPassNuevo ? "bi-eye-slash-fill" : "bi-eye-fill")"></i>
+                                </button>
+                            </div>
                         </div>
                     }
                     <div class="col-md-6">
@@ -150,8 +156,8 @@ else
                     }
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary btn-sm" @onclick="CerrarModal">Cancelar</button>
-                    <button class="btn bg-purple text-white btn-sm" @onclick="Guardar" disabled="@_guardando">
+                    <button class="btn btn-secondary" @onclick="CerrarModal">Cancelar</button>
+                    <button class="btn bg-purple text-white" @onclick="Guardar" disabled="@_guardando">
                         @if (_guardando) { <span class="spinner-border spinner-border-sm me-1"></span> }
                         <i class="bi bi-check-lg me-1"></i>Guardar
                     </button>
@@ -179,11 +185,25 @@ else
                     </p>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Nueva contraseña *</label>
-                        <input type="password" class="form-control" @bind="_resetPass" />
+                        <div class="input-group">
+                            <input type="@(_mostrarPassReset1 ? "text" : "password")" class="form-control" @bind="_resetPass"
+                                   autocomplete="new-password" />
+                            <button type="button" class="btn-password-toggle" @onclick="() => _mostrarPassReset1 = !_mostrarPassReset1" tabindex="-1"
+                                    title="@(_mostrarPassReset1 ? "Ocultar contraseña" : "Ver contraseña")">
+                                <i class="bi @(_mostrarPassReset1 ? "bi-eye-slash-fill" : "bi-eye-fill")"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Confirmar contraseña *</label>
-                        <input type="password" class="form-control" @bind="_resetConfirm" />
+                        <div class="input-group">
+                            <input type="@(_mostrarPassReset2 ? "text" : "password")" class="form-control" @bind="_resetConfirm"
+                                   autocomplete="new-password" />
+                            <button type="button" class="btn-password-toggle" @onclick="() => _mostrarPassReset2 = !_mostrarPassReset2" tabindex="-1"
+                                    title="@(_mostrarPassReset2 ? "Ocultar contraseña" : "Ver contraseña")">
+                                <i class="bi @(_mostrarPassReset2 ? "bi-eye-slash-fill" : "bi-eye-fill")"></i>
+                            </button>
+                        </div>
                     </div>
                     @if (_errorReset is not null)
                     {
@@ -191,8 +211,8 @@ else
                     }
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary btn-sm" @onclick="() => _mostrarReset = false">Cancelar</button>
-                    <button class="btn btn-warning btn-sm" @onclick="ConfirmarReset" disabled="@_reseteando">
+                    <button class="btn btn-secondary" @onclick="() => _mostrarReset = false">Cancelar</button>
+                    <button class="btn btn-warning" @onclick="ConfirmarReset" disabled="@_reseteando">
                         @if (_reseteando) { <span class="spinner-border spinner-border-sm me-1"></span> }
                         <i class="bi bi-check-lg me-1"></i>Restablecer
                     </button>
@@ -221,6 +241,11 @@ else
     private bool _reseteando;
     private string? _errorReset;
 
+    // ── Toggles ojito de contraseña ────────────────────────────────────────────
+    private bool _mostrarPassNuevo;
+    private bool _mostrarPassReset1;
+    private bool _mostrarPassReset2;
+
     protected override async Task OnInitializedAsync() => await Cargar();
 
     private async Task Cargar()
@@ -237,6 +262,7 @@ else
         _errorModal = null;
         _mostrarModal = true;
         _mensaje = null;
+        _mostrarPassNuevo = false;
     }
 
     private void AbrirEditar(UsuarioDto u)
@@ -256,9 +282,11 @@ else
         _resetConfirm = "";
         _errorReset = null;
         _mostrarReset = true;
+        _mostrarPassReset1 = false;
+        _mostrarPassReset2 = false;
     }
 
-    private void CerrarModal() { _mostrarModal = false; _errorModal = null; }
+    private void CerrarModal() { _mostrarModal = false; _errorModal = null; _mostrarPassNuevo = false; }
 
     private async Task Guardar()
     {
@@ -317,6 +345,8 @@ else
         {
             var ok = await Api.ResetPasswordUsuarioAsync(_resetId, new ResetPasswordDto(_resetPass, _resetConfirm));
             _mostrarReset = false;
+            _mostrarPassReset1 = false;
+            _mostrarPassReset2 = false;
             _exito   = ok;
             _mensaje = ok ? "Contraseña restablecida correctamente." : "Error al restablecer la contraseña.";
         }

@@ -5,6 +5,116 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [Unreleased] — 2026-06-22 — Fase H: Drag & drop de imagen + Íconos PWA
+
+### Tipo de cambio
+Corrección de bug / Mejora UX / Assets PWA
+
+### Módulos afectados
+Productos (Index.razor), CSS global (app.css), PWA (wwwroot/icons)
+
+### Cambios
+
+**BUG-B16 — Drag & drop de imagen en modal de Productos**
+- El `InputFile` invisible se posiciona como overlay sobre toda la zona de carga usando `.ts-file-input-overlay` (`position: absolute; inset: 0; opacity: 0`). El browser entrega nativamente los archivos arrastrados al input y `OnChange` se dispara igual que con clic.
+- `@ondragenter`/`@ondragleave` gestionan el estado `_dragActivo` que aplica `.ts-drag-active` (borde morado, fondo semitransparente) como feedback visual durante el arrastre.
+- `@ondragover:preventDefault` y `@ondrop:preventDefault` evitan que el browser abra el archivo.
+- Texto de la zona actualizado: "Arrastra una imagen aquí o haz clic para seleccionar".
+
+**ISSUE-12 — Íconos PWA generados**
+- `icon-192.png` (192×192 px) e `icon-512.png` (512×512 px) creados en `wwwroot/icons/`.
+- Diseño: fondo cuadrado #7C3AED (morado), círculo central #F472B6 (rosa), letra "T" blanca. Cumple zona maskable 80%.
+- El manifest ya los referenciaba; ahora `chrome://flags` y Lighthouse no reportan íconos faltantes.
+
+---
+
+## [Unreleased] — 2026-06-22 — Fases B–G: Dashboard, Clientes, Proveedores, Errores API, Productos, Categorías
+
+### Tipo de cambio
+Corrección de bug / Mejora UX / Validaciones backend
+
+### Módulos afectados
+Dashboard (Home.razor), Clientes, Proveedores, Categorías, Productos, TinaStoreApiClient, CSS global
+
+### Cambios
+
+**B05 — Tarjetas KPI del Dashboard clickeables**
+- Las 4 tarjetas KPI de la fila superior son ahora `<a>` con navegación: Ventas → `/facturas`, Por cobrar → `/cuentas-por-cobrar`, Stock bajo → `/productos`.
+- Nueva clase CSS `.kpi-card-link` con hover que resalta el valor en color primario.
+
+**B06 — Unicidad de documento en Clientes**
+- `CustomerService.CreateAsync` y `UpdateAsync` verifican que no exista otro cliente con el mismo documento antes de guardar.
+- `CustomersController` devuelve HTTP 409 Conflict con el mensaje descriptivo.
+- El frontend muestra el error real de la API en el modal.
+
+**B07/B08 — Filtros de email y estado en Clientes**
+- La barra de filtros ahora incluye campo de texto para email y selector de estado (Todos / Activo / Inactivo / Sin compras).
+- `Filtrar()` y `LimpiarFiltros()` actualizados para los tres criterios en simultáneo.
+
+**B10/B11 Fase D — Validaciones NIT/Teléfono en backend (Proveedores)**
+- `SupplierValidators.cs` ahora valida `TaxId` (solo dígitos) y `Phone` (solo dígitos, máximo 10) en `CreateSupplierValidator` y `UpdateSupplierValidator`.
+
+**B12 — Mensajes de error reales de la API en formularios**
+- Nuevo helper `LeerMensajeErrorAsync` en `TinaStoreApiClient` lee el campo `message` o el array de errores de FluentValidation.
+- `CreateClienteAsync`, `UpdateClienteAsync`, `CreateProveedorAsync`, `UpdateProveedorAsync`, `CreateCategoriaAsync` ahora devuelven `(bool Ok, string? Error)`.
+- Los formularios de Clientes, Proveedores y Categorías muestran el mensaje exacto en el modal.
+
+**B14/B15 — Validaciones por campo en Productos**
+- `Guardar()` en Productos verifica: nombre obligatorio, categoría seleccionada, precios y stocks no negativos, con mensajes individuales por campo antes de llamar a la API.
+
+**B17 — Botón X de imagen circular**
+- `.ts-image-remove-btn` corregido: `width/height: 24px`, `padding: 0`, `display: flex; align-items/justify-content: center`. Ahora es perfectamente circular.
+
+**B19 — Imágenes de productos: Content-Type correcto**
+- `SubirImagenProductoAsync` ahora envía `image/jpeg`, `image/png` o `image/webp` según la extensión del archivo, en lugar de `application/octet-stream`. El controller de la API recibe y procesa correctamente el archivo.
+
+**B20 — Enter guarda en modal de Categorías**
+- Los inputs Nombre y Descripción del modal de nueva categoría procesan `@onkeydown` y llaman a `Guardar()` al presionar Enter.
+
+**B21 — Unicidad de nombre en Categorías**
+- `CategoryService.CreateAsync` verifica que no exista otra categoría con el mismo nombre (case-insensitive).
+- `CategoriesController` devuelve HTTP 409 Conflict. El modal muestra el error descriptivo.
+
+---
+
+## [Unreleased] — 2026-06-21 — Fase A: Botones, ojito, user-select, ContactName Proveedores
+
+### Tipo de cambio
+Corrección de bug / Mejora UX
+
+### Módulos afectados
+Login, Usuarios, Proveedores, CSS global (`app.css`)
+
+### Cambios
+
+**B01/B03 — Botones normalizados en Usuarios**
+- Botones del footer de modales (Cancelar / Guardar / Restablecer) en Usuarios ahora son tamaño normal, sin `btn-sm`, consistentes con Clientes y otros módulos.
+- Estilos `.btn-warning` y `.btn-outline-warning` añadidos al sistema visual con `border-radius: 999px`.
+
+**B02 — Ojito de contraseña**
+- Login: botón ojito funcional en campo contraseña. Alterna `type="password"` ↔ `type="text"`. Ícono cambia entre `bi-eye-fill` y `bi-eye-slash-fill`. Se oculta al hacer submit.
+- Usuarios — modal nuevo usuario: ojito en campo contraseña.
+- Usuarios — modal resetear contraseña: dos ojitos independientes, uno por campo.
+- Los ojitos se resetean (contraseña vuelve a ocultarse) al abrir y cerrar los modales.
+- Clase CSS reutilizable `.btn-password-toggle` añadida a `app.css`.
+
+**B04 — user-select: none en etiquetas de interfaz**
+- `user-select: none` aplicado a: `form-label`, encabezados de tabla `thead th`, `.badge`, `.modal-title`, `h4/h5/h6.fw-bold`, `.btn` y elementos de navegación del sidebar.
+- No afecta la selección de contenido de datos (nombres de clientes, documentos, correos, números de factura).
+
+**B09 — Quitar campo Contacto en Proveedores**
+- Campo `ContactName` eliminado del formulario y de la tabla de proveedores.
+- Eliminado de la entidad `Supplier`, DTOs (`SupplierDto`, `CreateSupplierDto`, `UpdateSupplierDto`), servicio `SupplierService`, y `TinaStoreApiClient`.
+- Migración `20260621000001_RemoveSupplierContactName` elimina la columna de la BD.
+
+**B10/B11 — Validaciones y filtros en Proveedores**
+- Barra de filtros rediseñada con `input-group` + botón "Limpiar" (consistente con todos los módulos).
+- NIT: solo números, validado en `Guardar()`.
+- Teléfono: solo números, máximo 10 dígitos, validado en `Guardar()`.
+- Errores mostrados dentro del modal con `alert-danger`. El modal no se cierra si hay error.
+
+---
+
 ## [2.8.0] — 2025-07-14 — Fases A–F: Responsive global, botones, logo, orden, filtros avanzados y PWA
 
 ### Tipo de cambio

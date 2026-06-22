@@ -4,6 +4,156 @@ Registro detallado de todos los bugs corregidos en el proyecto.
 
 ---
 
+## 2026-06-22 — Fase H: Drag & drop de imagen, íconos PWA
+
+### BUG-B16 — Sin drag & drop de imagen en Productos
+- **Módulo**: Productos
+- **Problema**: La zona de carga de imagen del modal de producto solo respondía al clic. Arrastrar y soltar un archivo desde el explorador no hacía nada.
+- **Causa raíz**: El `<InputFile>` estaba oculto con `class="d-none"` y no era alcanzable por el evento `drop` del browser; no había `@ondragover:preventDefault` para habilitar el drop.
+- **Solución**: El `InputFile` pasa a `class="ts-file-input-overlay"` — se posiciona con `position: absolute; inset: 0; opacity: 0` cubriendo toda la zona de drop. El browser entrega nativamente los archivos arrastrados al `<input type="file">` superpuesto y `OnChange` se dispara como en el clic normal. Se añadieron `@ondragenter`/`@ondragleave` para gestionar el estado visual `_dragActivo` que aplica la clase `.ts-drag-active` (borde morado, fondo ligeramente coloreado). `@ondragover:preventDefault` y `@ondrop:preventDefault` evitan la apertura del archivo en el browser.
+- **Archivos**: `Productos/Index.razor`, `app.css`
+- **Resultado**: ✅ Corregido
+
+### ISSUE-12 — Íconos PWA no generados
+- **Módulo**: PWA / manifest
+- **Problema**: `manifest.webmanifest` referenciaba `/icons/icon-192.png` e `/icons/icon-512.png` que no existían como archivos físicos. Al instalar la app en móvil se mostraba el ícono genérico del browser.
+- **Causa raíz**: Los archivos simplemente no habían sido creados. La carpeta `wwwroot/icons/` solo contenía el `README.md` de instrucciones.
+- **Solución**: Generados con System.Drawing: fondo cuadrado #7C3AED (morado marca), círculo rosa #F472B6 en el centro y letra "T" en blanco como inicial de Tina Store. El diseño ocupa el 80% central seguro de la zona maskable según la especificación PWA.
+  - `icon-192.png` — 192×192 px, 3.7 KB
+  - `icon-512.png` — 512×512 px, 11.6 KB
+- **Archivos**: `src/TinaStore.Web/wwwroot/icons/icon-192.png`, `src/TinaStore.Web/wwwroot/icons/icon-512.png`
+- **Resultado**: ✅ Corregido
+
+---
+
+## 2026-06-22 — Fases B–G: Dashboard, Clientes, Proveedores, Errores API, Productos, Categorías
+
+### BUG-B05 — Tarjetas KPI del Dashboard no eran clickeables
+- **Módulo**: Dashboard (Home.razor)
+- **Problema**: Las 4 tarjetas de métricas (Ventas hoy, Ventas del mes, Por cobrar, Stock bajo) eran divs estáticos sin navegación.
+- **Causa raíz**: Renderizadas como `<div class="card kpi-card">` sin interactividad.
+- **Solución**: Reemplazadas por `<a href="...">` apuntando a `/facturas`, `/cuentas-por-cobrar` y `/productos`. Clase CSS `.kpi-card-link` con hover que resalta el valor en color primario.
+- **Archivos**: `Home.razor`, `app.css`
+- **Resultado**: ✅ Corregido
+
+### BUG-B06 — Número de documento de cliente podía repetirse
+- **Módulo**: Clientes
+- **Problema**: Crear dos clientes con el mismo número de documento era posible sin advertencia.
+- **Causa raíz**: `CustomerService` no verificaba unicidad antes de persistir.
+- **Solución**: `CreateAsync` y `UpdateAsync` llaman a `GetByDocumentAsync`; si ya existe, lanzan `InvalidOperationException`. `CustomersController` captura la excepción y devuelve HTTP 409 Conflict con mensaje descriptivo. El modal de Clientes muestra el error real de la API.
+- **Archivos**: `CustomerService.cs`, `CustomersController.cs`, `Clientes/Index.razor`
+- **Resultado**: ✅ Corregido
+
+### BUG-B07/B08 — Faltan filtros de email y estado en Clientes
+- **Módulo**: Clientes
+- **Problema**: La barra de filtros solo permitía buscar por nombre/documento/teléfono. Sin filtro por email ni por estado comercial.
+- **Causa raíz**: No implementados.
+- **Solución**: Se añadieron campo de texto para email y selector de estado (Todos / Activo / Inactivo / Sin compras) en la barra de filtros. `Filtrar()` y `LimpiarFiltros()` actualizados para los tres criterios en simultáneo.
+- **Archivos**: `Clientes/Index.razor`
+- **Resultado**: ✅ Corregido
+
+### BUG-B10/B11-D — Validaciones NIT/Teléfono no estaban en el backend
+- **Módulo**: Proveedores (backend)
+- **Problema**: La validación de NIT solo-numérico y Teléfono máximo 10 dígitos existía solo en el frontend (Fase A). Un cliente HTTP directo a la API podía enviar valores inválidos.
+- **Causa raíz**: `SupplierValidators.cs` no tenía las reglas de formato para `TaxId` ni `Phone`.
+- **Solución**: Añadidas reglas `Matches(@"^\d+$")` y `MaximumLength(10)` a `CreateSupplierValidator` y `UpdateSupplierValidator`.
+- **Archivos**: `SupplierValidators.cs`
+- **Resultado**: ✅ Corregido
+
+### BUG-B12 — Errores reales de la API no se propagaban al formulario
+- **Módulo**: Global (Clientes, Proveedores, Categorías)
+- **Problema**: Al fallar una operación de guardado, el usuario veía "Error al guardar" genérico en lugar del mensaje real de la API (ej: "Ya existe un cliente con ese documento").
+- **Causa raíz**: Los métodos `CreateClienteAsync`, `UpdateClienteAsync`, etc. en `TinaStoreApiClient` retornaban `bool` sin leer el body de la respuesta de error.
+- **Solución**: Nuevo helper `LeerMensajeErrorAsync` que extrae el campo `message` del JSON de error (incluyendo arrays de FluentValidation). Los métodos de Clientes, Proveedores y Categorías ahora devuelven `(bool Ok, string? Error)`. Los modales muestran el mensaje exacto.
+- **Archivos**: `TinaStoreApiClient.cs`, `Clientes/Index.razor`, `Proveedores/Index.razor`, `Categorias/Index.razor`
+- **Resultado**: ✅ Corregido
+
+### BUG-B14/B15 — Sin validaciones por campo ni rechazo de negativos en Productos
+- **Módulo**: Productos
+- **Problema**: `Guardar()` solo verificaba que el nombre no fuera vacío y que hubiera categoría. No rechazaba precios ni stocks negativos; no mostraba mensajes por campo.
+- **Causa raíz**: Validación mínima en el `if` inicial de `Guardar()`.
+- **Solución**: Bloque de validaciones explícitas con mensaje individual para: nombre obligatorio, categoría seleccionada, precio de venta ≥ 0, precio de costo ≥ 0, stock ≥ 0, stock mínimo ≥ 0.
+- **Archivos**: `Productos/Index.razor`
+- **Resultado**: ✅ Corregido
+
+### BUG-B17 — Botón X de imagen era ovalado
+- **Módulo**: Productos
+- **Problema**: El botón para quitar la imagen seleccionada era un óvalo en lugar de un círculo perfecto.
+- **Causa raíz**: `.ts-image-remove-btn` usaba `padding: .1rem .35rem` que generaba ancho variable.
+- **Solución**: Dimensiones fijas `width/height: 24px`, `padding: 0`, `display: flex; align-items/justify-content: center`. Ahora es siempre circular.
+- **Archivos**: `app.css`
+- **Resultado**: ✅ Corregido
+
+### BUG-B19 — Imágenes de productos no se guardaban correctamente
+- **Módulo**: Productos
+- **Problema**: Al seleccionar y guardar una imagen de producto, el servidor podía rechazarla o no procesarla.
+- **Causa raíz**: `SubirImagenProductoAsync` enviaba `Content-Type: application/octet-stream` en el `StreamContent` del multipart. ASP.NET Core lee la extensión pero el tipo incorrecto causaba problemas de validación.
+- **Solución**: El `Content-Type` ahora se infiere de la extensión del archivo: `image/jpeg`, `image/png` o `image/webp`.
+- **Archivos**: `TinaStoreApiClient.cs`
+- **Resultado**: ✅ Corregido
+
+### BUG-B20 — Enter no guardaba en el formulario de Categorías
+- **Módulo**: Categorías
+- **Problema**: Al escribir el nombre de una categoría y presionar Enter, el modal no guardaba — el usuario tenía que usar el ratón para clicar "Guardar".
+- **Causa raíz**: Los inputs del modal no tenían handler de teclado.
+- **Solución**: `@onkeydown="HandleKeyDown"` en ambos inputs (Nombre y Descripción). `HandleKeyDown` llama a `Guardar()` cuando la tecla es `"Enter"`.
+- **Archivos**: `Categorias/Index.razor`
+- **Resultado**: ✅ Corregido
+
+### BUG-B21 — Se podían crear categorías con nombre duplicado
+- **Módulo**: Categorías
+- **Problema**: Crear dos categorías con el mismo nombre era posible.
+- **Causa raíz**: `CategoryService.CreateAsync` no verificaba unicidad.
+- **Solución**: `CreateAsync` obtiene todas las categorías y verifica `OrdinalIgnoreCase` antes de persistir; lanza `InvalidOperationException` si hay duplicado. `CategoriesController` devuelve HTTP 409 Conflict. El modal muestra el error descriptivo.
+- **Archivos**: `CategoryService.cs`, `CategoriesController.cs`, `Categorias/Index.razor`, `TinaStoreApiClient.cs`
+- **Resultado**: ✅ Corregido
+
+---
+
+## 2026-06-21 — Fase A: Botones, ojito, user-select, ContactName
+
+### BUG-A-B02 — Ojito de contraseña no existía / no era reutilizable
+- **Módulo**: Login, Usuarios
+- **Problema**: No existía toggle ver/ocultar contraseña. El input usaba `type="password"` fijo.
+- **Causa raíz**: No implementado.
+- **Solución**: Variable booleana por campo, binding dinámico de `type`, clase `.btn-password-toggle` reutilizable. Ojito se resetea al abrir/cerrar modales y al hacer submit.
+- **Archivos**: `Login.razor`, `Usuarios/Index.razor`, `app.css`
+- **Resultado**: ✅ Corregido
+
+### BUG-A-B01/B03 — Botones de modal en Usuarios con `btn-sm` inconsistente
+- **Módulo**: Usuarios
+- **Problema**: Botones Cancelar/Guardar/Restablecer del modal usaban `btn-sm`, diferente a Clientes.
+- **Causa raíz**: `btn-sm` hardcodeado en footers de modal.
+- **Solución**: Removido `btn-sm`. Añadidos `.btn-warning` y `.btn-outline-warning` al sistema CSS.
+- **Archivos**: `Usuarios/Index.razor`, `app.css`
+- **Resultado**: ✅ Corregido
+
+### BUG-A-B04 — Labels se seleccionaban accidentalmente con doble clic
+- **Módulo**: Global
+- **Problema**: `form-label`, `thead th`, `.badge`, títulos, botones seleccionables con doble clic.
+- **Causa raíz**: No se usaba `user-select: none` en elementos decorativos.
+- **Solución**: `user-select: none` en clases de interfaz. No afecta celdas de datos.
+- **Archivos**: `app.css`
+- **Resultado**: ✅ Corregido
+
+### BUG-A-B09 — Campo Contacto visible en Proveedores
+- **Módulo**: Proveedores
+- **Problema**: Formulario mostraba campo `ContactName` innecesario.
+- **Causa raíz**: Campo presente en entidad, DTOs, servicio, UI y BD.
+- **Solución**: Eliminado en todos los niveles + migración `20260621000001_RemoveSupplierContactName`.
+- **Archivos**: `Supplier.cs`, `SupplierDtos.cs`, `SupplierService.cs`, `TinaStoreApiClient.cs`, `Proveedores/Index.razor`, migración, snapshot.
+- **Resultado**: ✅ Corregido
+
+### BUG-A-B10/B11 — NIT y Teléfono sin validación; errores fuera del modal
+- **Módulo**: Proveedores
+- **Problema**: NIT y Teléfono aceptaban letras. Errores salían fuera del modal. Modal se cerraba con error.
+- **Causa raíz**: Sin validación de formato en frontend. Sin variable de error interna al modal.
+- **Solución**: Regex `^\d+$` para NIT, `^\d+$` + maxlength 10 para Teléfono en `Guardar()`. `_errorModal` dentro del modal. Modal no se cierra si hay error.
+- **Archivos**: `Proveedores/Index.razor`
+- **Resultado**: ✅ Corregido (validación backend pendiente en Fase D)
+
+---
+
 ## BUG-C1-01 — Logo roto en sidebar y configuración *(v2.8.0 — 2025-07-14)*
 
 - **Módulo**: Configuración, Layout (MainLayout)

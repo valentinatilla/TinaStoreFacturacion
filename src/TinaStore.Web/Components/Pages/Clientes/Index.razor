@@ -24,17 +24,32 @@
 }
 else
 {
-    <div class="card border-0 shadow-sm mb-3 p-3">
-        <div class="row g-2 align-items-center">
-            <div class="col">
+    <div class="ts-filter-bar">
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-md">
+                <label class="form-label">Buscar</label>
                 <div class="input-group input-group-sm">
                     <span class="input-group-text"><i class="bi bi-search"></i></span>
                     <input class="form-control form-control-sm" placeholder="Nombre, documento o teléfono..."
-                           @oninput="e => { _filtroTexto = e.Value?.ToString() ?? string.Empty; Filtrar(); }" />
+                           @oninput="e => { _filtroTexto = e.Value?.ToString() ?? string.Empty; Filtrar(); }" value="@_filtroTexto" />
                 </div>
             </div>
-            <div class="col-auto">
-                <button class="btn btn-sm btn-outline-secondary" @onclick="LimpiarFiltros">
+            <div class="col-12 col-md-auto">
+                <label class="form-label">Email</label>
+                <input class="form-control form-control-sm" placeholder="Filtrar por email..."
+                       @oninput="e => { _filtroEmail = e.Value?.ToString() ?? string.Empty; Filtrar(); }" value="@_filtroEmail" />
+            </div>
+            <div class="col-12 col-md-auto">
+                <label class="form-label">Estado</label>
+                <select class="form-select form-select-sm" @onchange="e => { _filtroEstado = e.Value?.ToString() ?? string.Empty; Filtrar(); }">
+                    <option value="">Todos</option>
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                    <option value="sincompras">Sin compras</option>
+                </select>
+            </div>
+            <div class="col-auto d-flex align-items-end">
+                <button class="btn-limpiar" @onclick="LimpiarFiltros">
                     <i class="bi bi-x-circle me-1"></i>Limpiar
                 </button>
             </div>
@@ -243,7 +258,9 @@ else
     private List<string> _erroresModal = [];
 
     // ── Filtros ────────────────────────────────────────────────────────────────────
-    private string _filtroTexto = string.Empty;
+    private string _filtroTexto  = string.Empty;
+    private string _filtroEmail  = string.Empty;
+    private string _filtroEstado = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -261,17 +278,30 @@ else
     private void Filtrar()
     {
         _filtrados = _clientes
-            .Where(c => string.IsNullOrWhiteSpace(_filtroTexto) ||
-                        c.FullName.Contains(_filtroTexto, StringComparison.OrdinalIgnoreCase) ||
-                        (c.DocumentNumber?.Contains(_filtroTexto, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                        (c.Phone?.Contains(_filtroTexto) ?? false))
+            .Where(c =>
+                (string.IsNullOrWhiteSpace(_filtroTexto) ||
+                 c.FullName.Contains(_filtroTexto, StringComparison.OrdinalIgnoreCase) ||
+                 (c.DocumentNumber?.Contains(_filtroTexto, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                 (c.Phone?.Contains(_filtroTexto) ?? false)) &&
+                (string.IsNullOrWhiteSpace(_filtroEmail) ||
+                 (c.Email?.Contains(_filtroEmail, StringComparison.OrdinalIgnoreCase) ?? false)) &&
+                (_filtroEstado switch
+                {
+                    "activo"     => c.IsActive && c.CommercialStatus == "Activo",
+                    "inactivo"   => !c.IsActive,
+                    "sincompras" => c.IsActive && c.CommercialStatus == "Sin compras",
+                    _            => true
+                })
+            )
             .ToList();
     }
 
     private void LimpiarFiltros()
     {
-        _filtroTexto = string.Empty;
-        _filtrados   = _clientes;
+        _filtroTexto  = string.Empty;
+        _filtroEmail  = string.Empty;
+        _filtroEstado = string.Empty;
+        _filtrados    = _clientes;
     }
 
     // ── Ordenamiento por columna ───────────────────────────────────────────────────
@@ -348,15 +378,16 @@ else
 
         _guardando = true;
         bool ok;
+        string? apiError = null;
         if (_editando)
         {
             var dto = new UpdateClienteDto(_form.FullName, _form.DocumentType, _form.DocumentNumber, _form.Phone, _form.Email, _form.Address, _form.Notes, true);
-            ok = await Api.UpdateClienteAsync(_editandoId, dto);
+            (ok, apiError) = await Api.UpdateClienteAsync(_editandoId, dto);
         }
         else
         {
             var dto = new CreateClienteDto(_form.FullName, _form.DocumentType, _form.DocumentNumber, _form.Phone, _form.Email, _form.Address, _form.Notes);
-            ok = await Api.CreateClienteAsync(dto);
+            (ok, apiError) = await Api.CreateClienteAsync(dto);
         }
         _guardando = false;
 
@@ -369,7 +400,7 @@ else
         }
         else
         {
-            _erroresModal.Add("Error al guardar el cliente. Verifica los datos e intenta de nuevo.");
+            _erroresModal.Add(apiError ?? "Error al guardar el cliente. Verifica los datos e intenta de nuevo.");
         }
     }
 

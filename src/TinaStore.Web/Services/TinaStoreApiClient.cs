@@ -35,9 +35,9 @@ public record UpdateClienteDto(string FullName, string? DocumentType, string? Do
 public record CategoriaDto(int Id, string Name, string? Description, bool IsActive, int ProductCount);
 public record CreateCategoriaDto(string Name, string? Description);
 
-public record ProveedorDto(int Id, string Name, string? TaxId, string? ContactName, string? Phone, string? Email, string? Address, string? Notes, bool IsActive, int ProductCount, DateTime CreatedAt);
-public record CreateProveedorDto(string Name, string? TaxId, string? ContactName, string? Phone, string? Email, string? Address, string? Notes);
-public record UpdateProveedorDto(string Name, string? TaxId, string? ContactName, string? Phone, string? Email, string? Address, string? Notes, bool IsActive);
+public record ProveedorDto(int Id, string Name, string? TaxId, string? Phone, string? Email, string? Address, string? Notes, bool IsActive, int ProductCount, DateTime CreatedAt);
+public record CreateProveedorDto(string Name, string? TaxId, string? Phone, string? Email, string? Address, string? Notes);
+public record UpdateProveedorDto(string Name, string? TaxId, string? Phone, string? Email, string? Address, string? Notes, bool IsActive);
 
 public record MetodoPagoDto(int Id, string Name, string? Description, bool IsActive);
 
@@ -149,6 +149,22 @@ public class TinaStoreApiClient
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _session.Token);
     }
 
+    // Helper: lee el campo "message" de una respuesta de error de la API
+    private static async Task<string?> LeerMensajeErrorAsync(HttpResponseMessage r)
+    {
+        try
+        {
+            var json = await r.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+            if (json.TryGetProperty("message", out var msg) && msg.ValueKind == System.Text.Json.JsonValueKind.String)
+                return msg.GetString();
+            // FluentValidation devuelve un array de strings
+            if (json.ValueKind == System.Text.Json.JsonValueKind.Array)
+                return string.Join(" ", json.EnumerateArray().Select(e => e.GetString()));
+        }
+        catch { }
+        return $"Error {(int)r.StatusCode}.";
+    }
+
     // Helper: GET que devuelve null en lugar de lanzar excepción ante 401/403/red caída
     private async Task<T?> GetSafeAsync<T>(string url) where T : class
     {
@@ -248,18 +264,20 @@ public class TinaStoreApiClient
     public Task<ClienteDto?> GetClienteAsync(int id) =>
         GetSafeAsync<ClienteDto>($"/api/customers/{id}");
 
-    public async Task<bool> CreateClienteAsync(CreateClienteDto dto)
+    public async Task<(bool Ok, string? Error)> CreateClienteAsync(CreateClienteDto dto)
     {
         SetAuthHeader();
         var r = await _http.PostAsJsonAsync("/api/customers", dto);
-        return r.IsSuccessStatusCode;
+        if (r.IsSuccessStatusCode) return (true, null);
+        return (false, await LeerMensajeErrorAsync(r));
     }
 
-    public async Task<bool> UpdateClienteAsync(int id, UpdateClienteDto dto)
+    public async Task<(bool Ok, string? Error)> UpdateClienteAsync(int id, UpdateClienteDto dto)
     {
         SetAuthHeader();
         var r = await _http.PutAsJsonAsync($"/api/customers/{id}", dto);
-        return r.IsSuccessStatusCode;
+        if (r.IsSuccessStatusCode) return (true, null);
+        return (false, await LeerMensajeErrorAsync(r));
     }
 
     public async Task<bool> DeleteClienteAsync(int id)
@@ -273,11 +291,12 @@ public class TinaStoreApiClient
     public Task<List<CategoriaDto>?> GetCategoriasAsync() =>
         GetSafeAsync<List<CategoriaDto>>("/api/categories");
 
-    public async Task<bool> CreateCategoriaAsync(CreateCategoriaDto dto)
+    public async Task<(bool Ok, string? Error)> CreateCategoriaAsync(CreateCategoriaDto dto)
     {
         SetAuthHeader();
         var r = await _http.PostAsJsonAsync("/api/categories", dto);
-        return r.IsSuccessStatusCode;
+        if (r.IsSuccessStatusCode) return (true, null);
+        return (false, await LeerMensajeErrorAsync(r));
     }
 
     public async Task<bool> DeleteCategoriaAsync(int id)
@@ -291,18 +310,20 @@ public class TinaStoreApiClient
     public Task<List<ProveedorDto>?> GetProveedoresAsync() =>
         GetSafeAsync<List<ProveedorDto>>("/api/suppliers");
 
-    public async Task<bool> CreateProveedorAsync(CreateProveedorDto dto)
+    public async Task<(bool Ok, string? Error)> CreateProveedorAsync(CreateProveedorDto dto)
     {
         SetAuthHeader();
         var r = await _http.PostAsJsonAsync("/api/suppliers", dto);
-        return r.IsSuccessStatusCode;
+        if (r.IsSuccessStatusCode) return (true, null);
+        return (false, await LeerMensajeErrorAsync(r));
     }
 
-    public async Task<bool> UpdateProveedorAsync(int id, UpdateProveedorDto dto)
+    public async Task<(bool Ok, string? Error)> UpdateProveedorAsync(int id, UpdateProveedorDto dto)
     {
         SetAuthHeader();
         var r = await _http.PutAsJsonAsync($"/api/suppliers/{id}", dto);
-        return r.IsSuccessStatusCode;
+        if (r.IsSuccessStatusCode) return (true, null);
+        return (false, await LeerMensajeErrorAsync(r));
     }
 
     public async Task<bool> DeleteProveedorAsync(int id)
@@ -349,8 +370,16 @@ public class TinaStoreApiClient
     {
         SetAuthHeader();
         using var form = new MultipartFormDataContent();
-        using var sc = new StreamContent(contenido);
-        sc.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        var ext = Path.GetExtension(nombreArchivo).ToLowerInvariant();
+        var contentType = ext switch
+        {
+            ".png"  => "image/png",
+            ".webp" => "image/webp",
+            _       => "image/jpeg"
+        };
+        var sc = new StreamContent(contenido);
+        sc.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+        // El nombre del campo debe coincidir con el parámetro del controller: IFormFile archivo
         form.Add(sc, "archivo", nombreArchivo);
         var r = await _http.PostAsync($"/api/products/{id}/imagen", form);
         if (!r.IsSuccessStatusCode) return null;

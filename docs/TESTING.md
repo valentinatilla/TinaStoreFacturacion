@@ -19,6 +19,154 @@ dotnet test tests/TinaStore.Tests.Integration
 
 ---
 
+## Pruebas manuales — Sprint Corrección 2026-06-22 (Fase H)
+
+### H1 — Drag & drop de imagen en Productos (BUG-B16)
+- [ ] Abrir modal de nuevo/editar producto → la zona de imagen muestra "Arrastra una imagen aquí o haz clic para seleccionar"
+- [ ] Arrastrar un archivo `.jpg` desde el explorador a la zona → la zona se resalta en morado mientras el archivo está sobre ella
+- [ ] Soltar el archivo → se muestra el preview de la imagen correctamente
+- [ ] Arrastrar un archivo `.png` → mismo comportamiento, preview correcto
+- [ ] Arrastrar un archivo `.webp` → preview correcto
+- [ ] Arrastrar un archivo de más de 2 MB → mensaje de error "La imagen no puede superar 2 MB", la zona vuelve a su estado vacío
+- [ ] Arrastrar un archivo `.pdf` o `.txt` → mensaje de error "Solo se permiten imágenes JPG, PNG o WEBP"
+- [ ] Clic en la zona (sin arrastrar) → se abre el explorador de archivos → seleccionar imagen → preview correcto
+- [ ] Con imagen ya seleccionada: clic en X → imagen se elimina, vuelve la zona de drop
+- [ ] Guardar el producto con imagen arrastrada → imagen se sube y se muestra en la tabla de productos
+- [ ] En móvil (touch): el clic sobre la zona abre el selector de archivo del SO
+
+### H2 — Íconos PWA generados (ISSUE-12)
+- [ ] Abrir Chrome DevTools → Application → Manifest → los íconos 192×192 y 512×512 aparecen sin error
+- [ ] En Android (Chrome): "Agregar a pantalla de inicio" → el ícono instalado muestra la T de Tina Store sobre fondo morado
+- [ ] En iOS (Safari): "Añadir a inicio" → ícono correcto o fallback del sistema (iOS no usa maskable)
+- [ ] Lighthouse PWA audit → puntaje de íconos sin advertencias de tamaño faltante
+- [ ] `GET /icons/icon-192.png` responde 200 con `Content-Type: image/png`
+- [ ] `GET /icons/icon-512.png` responde 200 con `Content-Type: image/png`
+
+---
+
+## Pruebas manuales — Sprint Corrección 2026-06-22 (Fases B–G)
+
+### B — Tarjetas KPI clickeables (BUG-B05)
+- [ ] Clic en tarjeta "Ventas hoy" → navega a `/facturas`
+- [ ] Clic en tarjeta "Ventas del mes" → navega a `/facturas`
+- [ ] Clic en tarjeta "Por cobrar" → navega a `/cuentas-por-cobrar`
+- [ ] Clic en tarjeta "Stock bajo" → navega a `/productos`
+- [ ] Hover sobre cualquier tarjeta → cursor pointer y valor cambia de color
+- [ ] En móvil: las tarjetas siguen siendo clickeables y no hay regresión visual
+
+### C — Documento único de cliente (BUG-B06)
+- [ ] Crear cliente con documento ya existente → modal no cierra, muestra mensaje "Ya existe un cliente con ese número de documento"
+- [ ] Editar cliente cambiando documento al de otro cliente → mismo rechazo con mensaje
+- [ ] Crear cliente con documento nuevo → se guarda correctamente
+- [ ] Editar cliente manteniendo su propio documento → se guarda sin error
+
+### C2 — Filtros de email y estado en Clientes (BUG-B07/B08)
+- [ ] Filtrar por email parcial → lista filtra correctamente
+- [ ] Filtrar por estado "Activo" → solo clientes activos
+- [ ] Filtrar por estado "Inactivo" → solo clientes inactivos
+- [ ] Filtrar por estado "Sin compras" → solo clientes sin historial de ventas
+- [ ] Combinar texto + email + estado → los tres filtros en AND
+- [ ] Clic en "Limpiar" → todos los filtros (incluidos email y estado) se resetean
+
+### D — Validaciones backend de proveedores (BUG-B10/B11-D)
+- [ ] Desde Postman/curl: `POST /api/suppliers` con `taxId: "ABC123"` → 400 con mensaje de validación
+- [ ] Desde Postman/curl: `POST /api/suppliers` con `phone: "12345678901"` (11 dígitos) → 400 con error
+- [ ] Desde la UI: campos solo aceptan números (validación frontend sigue activa)
+- [ ] Crear proveedor con NIT y teléfono válidos → se guarda correctamente
+
+### E — Mensajes de error reales de la API (BUG-B12)
+- [ ] Crear cliente con documento duplicado → modal muestra mensaje exacto de la API, no texto genérico
+- [ ] Crear categoría duplicada → mensaje exacto visible en modal
+- [ ] Error de validación FluentValidation (campo vacío) → mensaje(s) de validación visibles
+- [ ] Operación exitosa → modal cierra normalmente, sin mensaje de error residual
+
+### F — Validaciones por campo en Productos (BUG-B14/B15)
+- [ ] Guardar producto sin nombre → mensaje "El nombre del producto es obligatorio"
+- [ ] Guardar producto sin categoría seleccionada → mensaje "Debes seleccionar una categoría"
+- [ ] Guardar producto con precio de venta negativo → mensaje de rechazo
+- [ ] Guardar producto con precio de costo negativo → mensaje de rechazo
+- [ ] Guardar producto con stock negativo → mensaje de rechazo
+- [ ] Guardar producto con stock mínimo negativo → mensaje de rechazo
+- [ ] Guardar producto con todos los campos válidos → se guarda correctamente
+
+### F2 — Botón X circular de imagen (BUG-B17)
+- [ ] Seleccionar imagen en modal de producto → aparece preview con botón X
+- [ ] El botón X es un círculo perfecto (no óvalo)
+- [ ] Clic en X → imagen se deselecciona y vuelve la zona de carga
+- [ ] En móvil: el botón sigue siendo circular y táctilmente cómodo
+
+### F3 — Content-Type correcto en imágenes (BUG-B19)
+- [ ] Subir imagen `.jpg` → se guarda y se muestra correctamente
+- [ ] Subir imagen `.png` → se guarda y se muestra correctamente
+- [ ] Subir imagen `.webp` → se guarda y se muestra correctamente
+- [ ] Imagen del producto visible en detalle de factura (no rota)
+
+### G — Enter guarda en Categorías (BUG-B20)
+- [ ] Modal abierto con foco en "Nombre" → presionar Enter → se guarda
+- [ ] Modal abierto con foco en "Descripción" → presionar Enter → se guarda
+- [ ] Campos vacíos + Enter → no guarda, muestra validación
+
+### G2 — Unicidad de nombre de categoría (BUG-B21)
+- [ ] Crear categoría con nombre exactamente igual a una existente → modal no cierra, mensaje de error
+- [ ] Crear categoría con nombre en MAYÚSCULAS igual a una existente → rechazado (case-insensitive)
+- [ ] Crear categoría con nombre nuevo → se guarda correctamente
+- [ ] Lista de categorías se actualiza inmediatamente después de crear
+
+---
+
+## Pruebas manuales — Sprint Corrección 2026-06-21 (Fase A)
+
+### A1 — Ojito de contraseña (Login y Usuarios)
+- [ ] Login: clic en ojito → contraseña visible, ícono cambia
+- [ ] Login: segundo clic → contraseña oculta, ícono vuelve
+- [ ] Login: alternar 5+ veces → funciona todas las veces
+- [ ] Login: hacer submit con contraseña visible → no queda expuesta al navegar
+- [ ] Usuarios / Nuevo usuario: ojito funciona igual
+- [ ] Usuarios / Nuevo usuario: cerrar modal → contraseña vuelve a ocultarse
+- [ ] Usuarios / Resetear contraseña: dos ojitos independientes funcionan por separado
+- [ ] Probar en móvil (Chrome / Safari)
+
+### A2 — Botones normalizados en Usuarios
+- [ ] Modal "Nuevo usuario" → footer: Cancelar y Guardar del mismo tamaño que en Clientes
+- [ ] Modal "Resetear contraseña" → footer: Cancelar y Restablecer normalizados
+- [ ] Verificar en móvil: botones con tamaño táctil adecuado
+
+### A3 — user-select en etiquetas de interfaz
+- [ ] Doble clic en label "Nombre completo *" → NO se selecciona
+- [ ] Doble clic en encabezado de columna tabla → NO se selecciona
+- [ ] Doble clic en badge "Activo" → NO se selecciona
+- [ ] Doble clic en celda con nombre de cliente → SÍ se puede seleccionar (datos reales)
+- [ ] Doble clic en número de documento → SÍ se puede seleccionar
+
+### A4 — Campo Contacto eliminado en Proveedores
+- [ ] Tabla de proveedores: columna "Contacto" no aparece
+- [ ] Modal "Nuevo proveedor": campo Contacto no aparece
+- [ ] Modal "Editar proveedor": campo Contacto no aparece
+- [ ] Crear proveedor → guarda correctamente
+- [ ] Editar proveedor → actualiza correctamente
+
+### A5 — Validaciones NIT y Teléfono en Proveedores
+- [ ] NIT con letras (ej: "ABC123") → error en modal: "El NIT debe contener solo números."
+- [ ] NIT vacío → guarda (campo opcional)
+- [ ] NIT con solo dígitos → guarda correctamente
+- [ ] Teléfono con guiones (ej: "300-123-4567") → error: "El teléfono debe contener solo números."
+- [ ] Teléfono con 11 dígitos → error: "El teléfono debe tener máximo 10 dígitos."
+- [ ] Teléfono vacío → guarda (campo opcional)
+- [ ] Teléfono con 10 dígitos → guarda correctamente
+- [ ] Modal NO se cierra cuando hay error de validación
+
+### A6 — Filtros en Proveedores
+- [ ] Escribir en barra de búsqueda → lista filtra en tiempo real
+- [ ] Buscar por NIT parcial → resultados correctos
+- [ ] Clic en "Limpiar" → lista completa restaurada
+- [ ] Sin resultados → mensaje "Sin resultados"
+
+### A7 — Migración RemoveSupplierContactName
+- [ ] `dotnet ef database update` en dev → sin errores
+- [ ] Columna ContactName ya no existe en tabla Suppliers
+
+---
+
 ## Pruebas manuales — v2.8.0 (Fases A–F)
 
 ### A — Categorías: ordenamiento

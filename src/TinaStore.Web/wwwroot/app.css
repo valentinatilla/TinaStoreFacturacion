@@ -204,6 +204,21 @@ body {
     box-shadow: var(--ts-shadow-hover);
 }
 
+/* Tarjeta KPI navegable */
+a.kpi-card-link {
+    display: block;
+    cursor: pointer;
+    color: inherit;
+}
+
+a.kpi-card-link:hover {
+    color: inherit;
+}
+
+a.kpi-card-link:hover .fw-bold {
+    color: var(--ts-primary-dark);
+}
+
 .kpi-icon {
     width: 52px; height: 52px;
     border-radius: 14px;
@@ -360,6 +375,34 @@ body {
     background-color: #E9D5FF;
     border-color: #C084FC;
     color: #6B21A8;
+}
+
+.btn-warning {
+    background-color: #FDE68A;
+    border-color: #FDE68A;
+    border-radius: 999px;
+    font-weight: 700;
+    color: #92400E;
+}
+
+.btn-warning:hover {
+    background-color: #F59E0B;
+    border-color: #F59E0B;
+    color: #fff;
+}
+
+.btn-outline-warning {
+    color: #92400E;
+    border-color: #FDE68A;
+    border-radius: 999px;
+    font-weight: 700;
+    transition: all .2s;
+}
+
+.btn-outline-warning:hover {
+    background-color: #FDE68A;
+    border-color: #FDE68A;
+    color: #92400E;
 }
 
 .btn-sm {
@@ -782,6 +825,95 @@ a.btn.bg-purple:focus {
     margin-top: .2rem;
 }
 
+/* ── Barra de filtros uniforme (todos los módulos) ──────────────────────
+   Mismo estilo que la barra de Ventas: bordes redondeados, tipografía Nunito
+   ──────────────────────────────────────────────────────────────────────── */
+.ts-filter-bar {
+    background: var(--ts-surface);
+    border: none;
+    border-radius: 16px;
+    box-shadow: var(--ts-shadow-soft);
+    padding: .875rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.ts-filter-bar .form-label {
+    font-size: .78rem;
+    font-weight: 700;
+    color: var(--ts-text-soft);
+    margin-bottom: .25rem;
+    user-select: none;
+}
+
+.ts-filter-bar .form-control,
+.ts-filter-bar .form-select {
+    border-radius: 999px;
+    border: 1.5px solid var(--ts-accent);
+    font-size: .855rem;
+    font-family: 'Nunito', sans-serif;
+    background: #FFF5FB;
+    color: var(--ts-text-main);
+    transition: border-color .15s, box-shadow .15s;
+}
+
+.ts-filter-bar .form-control:focus,
+.ts-filter-bar .form-select:focus {
+    border-color: var(--ts-primary);
+    box-shadow: 0 0 0 0.18rem rgba(244, 114, 182, 0.22);
+    background: #fff;
+    outline: none;
+}
+
+.ts-filter-bar .form-control::placeholder {
+    color: var(--ts-text-soft);
+    font-style: italic;
+}
+
+.ts-filter-bar .input-group .form-control {
+    border-radius: 0 999px 999px 0;
+}
+
+.ts-filter-bar .input-group .input-group-text {
+    border-radius: 999px 0 0 999px;
+    border: 1.5px solid var(--ts-accent);
+    border-right: none;
+    background: #FFF5FB;
+    color: var(--ts-text-soft);
+}
+
+.ts-filter-bar .btn-limpiar {
+    border-radius: 999px;
+    border: 1.5px solid var(--ts-accent);
+    color: var(--ts-text-soft);
+    background: #fff;
+    font-size: .82rem;
+    font-weight: 600;
+    font-family: 'Nunito', sans-serif;
+    padding: .35rem .9rem;
+    transition: background .15s, color .15s;
+}
+
+.ts-filter-bar .btn-limpiar:hover {
+    background: var(--ts-primary-light);
+    color: var(--ts-primary-dark);
+    border-color: var(--ts-primary);
+}
+
+.ts-filter-stats {
+    margin-top: .6rem;
+    padding-top: .6rem;
+    border-top: 1px solid var(--ts-primary-light);
+    display: flex;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    font-size: .78rem;
+    color: var(--ts-text-soft);
+}
+
+.ts-filter-stats strong {
+    color: var(--ts-text-main);
+}
+
 /* ── Imágenes de productos ───────────────────────────────────────────── */
 .ts-thumb-cell {
     width: 48px;
@@ -795,7 +927,7 @@ a.btn.bg-purple:focus {
     object-fit: cover;
     border-radius: 8px;
     border: 1.5px solid var(--ts-accent);
-    box-shadow: var(--ts-shadow-soft);
+
 }
 
 .ts-thumb-placeholder {
@@ -812,6 +944,7 @@ a.btn.bg-purple:focus {
 }
 
 .ts-image-upload-area {
+    position: relative;
     border: 2px dashed var(--ts-accent);
     border-radius: 12px;
     padding: .75rem;
@@ -820,6 +953,7 @@ a.btn.bg-purple:focus {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: border-color .15s, background .15s;
 }
 
 .ts-image-placeholder {
@@ -828,10 +962,28 @@ a.btn.bg-purple:focus {
     color: var(--ts-text-soft);
     width: 100%;
     padding: .5rem;
+    position: relative; /* no crea stacking context que tape el InputFile overlay */
+    z-index: 0;
+    pointer-events: none; /* el clic lo captura el InputFile overlay */
 }
 
 .ts-image-placeholder:hover {
     color: var(--ts-primary);
+}
+
+.ts-image-upload-area.ts-drag-active {
+    border-color: var(--ts-primary);
+    background: rgba(124, 58, 237, 0.10);
+}
+
+.ts-file-input-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 1;
 }
 
 .ts-image-preview-wrap {
@@ -852,10 +1004,15 @@ a.btn.bg-purple:focus {
     position: absolute;
     top: -8px;
     right: -8px;
-    padding: .1rem .35rem;
+    width: 24px;
+    height: 24px;
+    padding: 0;
     border-radius: 50%;
     line-height: 1;
     font-size: .75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* ── Blazor Error Boundary ──────────────────────────────────────────── */
@@ -1354,4 +1511,98 @@ tr.bulk-row-modified td:first-child {
 }
 @keyframes btnSpin {
     to { transform: rotate(360deg); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FASE A — user-select: none en etiquetas de interfaz
+   Evita que el usuario seleccione accidentalmente con doble clic
+   los textos decorativos de la UI. No afecta contenido de datos.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Encabezados de columna en tablas */
+.ts-table thead th,
+table thead th {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Labels de formulario */
+.form-label,
+label.form-label,
+.form-check-label {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Títulos de cards KPI y secciones informativas */
+.kpi-card .text-muted.small,
+.kpi-card .fw-semibold.small,
+.card-header {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Badges de estado (solo decorativos) */
+.badge {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Títulos de modal */
+.modal-title,
+.modal-header h5 {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Encabezados de página */
+h4.fw-bold,
+h5.fw-bold,
+h6.fw-bold {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Etiquetas de iconos de navegación sidebar */
+.ts-nav-link span,
+.ts-nav-label {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Botones: nunca se deben seleccionar */
+.btn {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* ── Botón toggle para mostrar/ocultar contraseña ────────────────── */
+.btn-password-toggle {
+    border: 1.5px solid var(--ts-accent);
+    border-left: none;
+    background: rgba(252, 231, 243, 0.6);
+    color: var(--ts-primary-dark);
+    border-radius: 0 10px 10px 0;
+    padding: .375rem .65rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s, color .15s;
+    cursor: pointer;
+}
+
+.btn-password-toggle:hover {
+    background: var(--ts-primary-light);
+    color: var(--ts-primary);
+}
+
+.btn-password-toggle:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.15rem rgba(244, 114, 182, 0.35);
+}
+
+/* Cuando está dentro de .login-card, adaptamos el radio */
+.login-card .btn-password-toggle {
+    border-radius: 0 12px 12px 0;
 }

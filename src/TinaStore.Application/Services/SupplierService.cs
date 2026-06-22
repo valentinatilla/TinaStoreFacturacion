@@ -33,7 +33,6 @@ public sealed class SupplierService : ISupplierService
         {
             Name = dto.Name,
             TaxId = dto.TaxId,
-            ContactName = dto.ContactName,
             Phone = dto.Phone,
             Email = dto.Email,
             Address = dto.Address,
@@ -53,7 +52,6 @@ public sealed class SupplierService : ISupplierService
 
         entity.Name = dto.Name;
         entity.TaxId = dto.TaxId;
-        entity.ContactName = dto.ContactName;
         entity.Phone = dto.Phone;
         entity.Email = dto.Email;
         entity.Address = dto.Address;
@@ -79,7 +77,6 @@ public sealed class SupplierService : ISupplierService
     {
         var coincidencias = await _suppliers.FindAsync(s =>
             s.Name.Contains(termino) ||
-            (s.ContactName != null && s.ContactName.Contains(termino)) ||
             (s.TaxId != null && s.TaxId.Contains(termino)));
         return coincidencias.Select(ToDto);
     }
@@ -88,7 +85,6 @@ public sealed class SupplierService : ISupplierService
         s.Id,
         s.Name,
         s.TaxId,
-        s.ContactName,
         s.Phone,
         s.Email,
         s.Address,

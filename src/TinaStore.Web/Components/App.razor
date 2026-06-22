@@ -58,6 +58,92 @@
                 .then(d => d.token || '')
         };
     </script>
+    <script>
+        // ── Zona de imagen: drag-drop + clic totalmente desde JS ────────────────
+        // Se usa un <input type="file"> NATIVO oculto fuera del div.
+        // Ningún evento de archivo pasa por Blazor/SignalR: todo va por FileReader
+        // y llega al componente con invokeMethodAsync('RecibirDropBase64', ...).
+        window.tinaDropZone = {
+            _readAndSend: function (file, dotNetRef) {
+                var reader = new FileReader();
+                reader.onload = function (ev) {
+                    var dataUrl = ev.target.result;
+                    var comma   = dataUrl.indexOf(',');
+                    var base64  = dataUrl.substring(comma + 1);
+                    var mime    = dataUrl.substring(5, comma);
+                    dotNetRef.invokeMethodAsync('RecibirDropBase64', base64, mime, file.name, file.size);
+                };
+                reader.readAsDataURL(file);
+            },
+
+            init: function (zoneEl, inputId, dotNetRef) {
+                if (!zoneEl) return;
+
+                var nativeInput = document.getElementById(inputId);
+                zoneEl._tinaDotNet = dotNetRef;
+
+                // Clic en la zona → abrir el selector de archivos nativo
+                var handleClick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (nativeInput) nativeInput.click();
+                };
+
+                // Selección con el diálogo nativo
+                var handleChange = function () {
+                    var file = nativeInput && nativeInput.files && nativeInput.files[0];
+                    if (file) {
+                        window.tinaDropZone._readAndSend(file, dotNetRef);
+                        nativeInput.value = ''; // permitir re-selección del mismo archivo
+                    }
+                };
+
+                var handleDragOver = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    zoneEl.classList.add('ts-drag-active');
+                };
+
+                var handleDragLeave = function (e) {
+                    var rect = zoneEl.getBoundingClientRect();
+                    if (e.clientX <= rect.left || e.clientX >= rect.right ||
+                        e.clientY <= rect.top  || e.clientY >= rect.bottom) {
+                        zoneEl.classList.remove('ts-drag-active');
+                    }
+                };
+
+                var handleDrop = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    zoneEl.classList.remove('ts-drag-active');
+                    var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+                    if (file) window.tinaDropZone._readAndSend(file, dotNetRef);
+                };
+
+                zoneEl._tinaH = { handleClick: handleClick, handleChange: handleChange,
+                                  handleDragOver: handleDragOver, handleDragLeave: handleDragLeave,
+                                  handleDrop: handleDrop, nativeInput: nativeInput };
+
+                zoneEl.addEventListener('click',     handleClick);
+                zoneEl.addEventListener('dragover',  handleDragOver);
+                zoneEl.addEventListener('dragleave', handleDragLeave);
+                zoneEl.addEventListener('drop',      handleDrop);
+                if (nativeInput) nativeInput.addEventListener('change', handleChange);
+            },
+
+            dispose: function (zoneEl) {
+                if (!zoneEl || !zoneEl._tinaH) return;
+                var h = zoneEl._tinaH;
+                zoneEl.removeEventListener('click',     h.handleClick);
+                zoneEl.removeEventListener('dragover',  h.handleDragOver);
+                zoneEl.removeEventListener('dragleave', h.handleDragLeave);
+                zoneEl.removeEventListener('drop',      h.handleDrop);
+                if (h.nativeInput) h.nativeInput.removeEventListener('change', h.handleChange);
+                delete zoneEl._tinaH;
+                delete zoneEl._tinaDotNet;
+            }
+        };
+    </script>
 </body>
 
 </html>

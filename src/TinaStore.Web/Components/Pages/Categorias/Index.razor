@@ -26,11 +26,21 @@
 else
 {
     <!-- Barra de búsqueda -->
-    <div class="card border-0 shadow-sm mb-3 p-3">
-        <div class="input-group input-group-sm">
-            <span class="input-group-text"><i class="bi bi-search"></i></span>
-            <input class="form-control form-control-sm" placeholder="Buscar categoría..."
-                   @oninput="e => { _busqueda = e.Value?.ToString() ?? string.Empty; }" />
+    <div class="ts-filter-bar">
+        <div class="row g-2 align-items-end">
+            <div class="col">
+                <label class="form-label">Buscar</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input class="form-control form-control-sm" placeholder="Buscar categoría..."
+                           @oninput="e => { _busqueda = e.Value?.ToString() ?? string.Empty; }" />
+                </div>
+            </div>
+            <div class="col-auto d-flex align-items-end">
+                <button class="btn-limpiar" @onclick="() => _busqueda = string.Empty">
+                    <i class="bi bi-x-circle me-1"></i>Limpiar
+                </button>
+            </div>
         </div>
     </div>
 
@@ -84,13 +94,19 @@ else
                     <button class="btn-close" @onclick="() => _mostrarModal = false"></button>
                 </div>
                 <div class="modal-body">
+                    @if (!string.IsNullOrEmpty(_errorModal))
+                    {
+                        <div class="alert alert-danger py-2 small mb-3">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>@_errorModal
+                        </div>
+                    }
                     <div class="mb-3">
                         <label class="form-label small fw-semibold">Nombre *</label>
-                        <input class="form-control" @bind="_nombre" />
+                        <input class="form-control" @bind="_nombre" @onkeydown="HandleKeyDown" />
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-semibold">Descripción</label>
-                        <input class="form-control" @bind="_descripcion" />
+                        <input class="form-control" @bind="_descripcion" @onkeydown="HandleKeyDown" />
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -110,6 +126,7 @@ else
     private string? _descripcion;
     private string? _mensaje;
     private bool _exito;
+    private string? _errorModal;
     private string _busqueda = "";
     private string _ordenCampo = "";
     private bool   _ordenDesc;
@@ -157,15 +174,29 @@ else
         StateHasChanged();
     }
 
-    private void AbrirModal() { _nombre = ""; _descripcion = null; _mostrarModal = true; }
+    private void AbrirModal() { _nombre = ""; _descripcion = null; _errorModal = null; _mostrarModal = true; }
 
     private async Task Guardar()
     {
-        if (string.IsNullOrWhiteSpace(_nombre)) return;
-        var ok = await Api.CreateCategoriaAsync(new CreateCategoriaDto(_nombre, _descripcion));
-        _exito = ok;
-        _mensaje = ok ? "Categoría creada." : "Error al crear la categoría.";
-        if (ok) { _mostrarModal = false; await Cargar(); }
+        _errorModal = null;
+        if (string.IsNullOrWhiteSpace(_nombre)) { _errorModal = "El nombre es obligatorio."; return; }
+        var (ok, error) = await Api.CreateCategoriaAsync(new CreateCategoriaDto(_nombre, _descripcion));
+        if (ok)
+        {
+            _exito = true;
+            _mensaje = "Categoría creada.";
+            _mostrarModal = false;
+            await Cargar();
+        }
+        else
+        {
+            _errorModal = error ?? "Error al crear la categoría.";
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await Guardar();
     }
 
     private async Task Eliminar(int id)

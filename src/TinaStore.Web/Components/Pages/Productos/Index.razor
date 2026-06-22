@@ -2,6 +2,7 @@
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 @inject IJSRuntime JS
+@implements IAsyncDisposable
 
 <PageTitle>Productos — Tina Store</PageTitle>
 
@@ -68,9 +69,10 @@ else
     </div>
 
     <!-- Filtros -->
-    <div class="card border-0 shadow-sm mb-3 p-3">
-        <div class="row g-2 align-items-center">
-            <div class="col">
+    <div class="ts-filter-bar">
+        <div class="row g-2 align-items-end">
+            <div class="col-sm col-md-4">
+                <label class="form-label">Buscar</label>
                 <div class="input-group input-group-sm">
                     <span class="input-group-text"><i class="bi bi-search"></i></span>
                     <input class="form-control form-control-sm" placeholder="Nombre o SKU..."
@@ -78,17 +80,47 @@ else
                            @oninput="e => { _filtroTexto = e.Value?.ToString() ?? string.Empty; Filtrar(); }" />
                 </div>
             </div>
-            <div class="col-auto">
-                <button class="btn btn-sm btn-outline-secondary" @onclick="LimpiarFiltros">
+            <div class="col-sm-6 col-md-2">
+                <label class="form-label">Categoría</label>
+                <select class="form-select form-select-sm" @onchange="e => { _filtroCategoriaId = int.TryParse(e.Value?.ToString(), out var v) ? v : 0; Filtrar(); }">
+                    <option value="0">Todas</option>
+                    @foreach (var c in _categorias)
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-sm-6 col-md-2">
+                <label class="form-label">Proveedor</label>
+                <select class="form-select form-select-sm" @onchange="e => { _filtroProveedorId = int.TryParse(e.Value?.ToString(), out var v) ? v : 0; Filtrar(); }">
+                    <option value="0">Todos</option>
+                    @foreach (var s in _proveedores)
+                    {
+                        <option value="@s.Id">@s.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-sm-6 col-md-2">
+                <label class="form-label">Estado</label>
+                <select class="form-select form-select-sm" @onchange="e => { _filtroEstado = e.Value?.ToString() ?? string.Empty; Filtrar(); }">
+                    <option value="">Todos</option>
+                    <option value="activo">En stock</option>
+                    <option value="bajo">Bajo stock</option>
+                    <option value="agotado">Agotado</option>
+                    <option value="inactivo">Inactivo</option>
+                </select>
+            </div>
+            <div class="col-auto d-flex align-items-end">
+                <button class="btn-limpiar" @onclick="LimpiarFiltros">
                     <i class="bi bi-x-circle me-1"></i>Limpiar
                 </button>
             </div>
         </div>
-        <div class="mt-2 pt-2 border-top d-flex gap-4 flex-wrap">
-            <span class="text-muted small"><i class="bi bi-box-seam me-1"></i>@_filtrados.Count producto(s)</span>
-            <span class="text-muted small"><i class="bi bi-check-circle me-1 text-success"></i>En stock: @_filtrados.Count(p => p.IsActive && p.CurrentStock > 0 && !p.IsLowStock)</span>
-            <span class="text-muted small"><i class="bi bi-exclamation-triangle me-1 text-warning"></i>Bajo stock: @_filtrados.Count(p => p.IsLowStock && p.IsActive)</span>
-            <span class="text-muted small"><i class="bi bi-x-circle me-1 text-danger"></i>Agotados: @_filtrados.Count(p => p.CurrentStock == 0 && p.IsActive)</span>
+        <div class="ts-filter-stats">
+            <span><i class="bi bi-box-seam me-1"></i>@_filtrados.Count producto(s)</span>
+            <span><i class="bi bi-check-circle me-1 text-success"></i>En stock: <strong>@_filtrados.Count(p => p.IsActive && p.CurrentStock > 0 && !p.IsLowStock)</strong></span>
+            <span><i class="bi bi-exclamation-triangle me-1 text-warning"></i>Bajo: <strong>@_filtrados.Count(p => p.IsLowStock && p.IsActive)</strong></span>
+            <span><i class="bi bi-x-circle me-1 text-danger"></i>Agotados: <strong>@_filtrados.Count(p => p.CurrentStock == 0 && p.IsActive)</strong></span>
         </div>
     </div>
     <div class="card ts-table border-0">
@@ -264,7 +296,7 @@ else
                     }
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Imagen del producto</label>
-                        <div class="ts-image-upload-area">
+                        <div @ref="_dropZoneRef" class="ts-image-upload-area" style="cursor:pointer">
                             @if (!string.IsNullOrEmpty(_form.ImagePathActual))
                             {
                                 <div class="ts-image-preview-wrap">
@@ -285,19 +317,28 @@ else
                             }
                             else
                             {
-                                <label class="ts-image-placeholder">
+                                <div class="ts-image-placeholder">
                                     <i class="bi bi-cloud-arrow-up fs-3 d-block mb-1"></i>
-                                    <span class="small">Clic para seleccionar imagen</span>
-                                    <InputFile OnChange="SeleccionarImagen" accept=".jpg,.jpeg,.png,.webp" class="d-none" />
-                                </label>
+                                    <span class="small">Arrastra una imagen aquí o haz clic para seleccionar</span>
+                                </div>
                             }
                         </div>
+                        @* Input nativo oculto fuera del div: el JS lo abre al hacer clic en la zona *@
+                        <input type="file" id="nativeImgProducto" accept=".jpg,.jpeg,.png,.webp" style="display:none" />
                         @if (_form.ImagePathActual is null && _form.ImagenPreviewUrl is null)
                         {
                             <p class="text-muted small mt-1">JPG, PNG o WEBP · Máximo 2 MB</p>
                         }
                     </div>
                 </div>
+                @if (_errorModal is not null)
+                {
+                    <div class="modal-body pt-0">
+                        <div class="alert alert-danger py-2 small mb-0">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>@_errorModal
+                        </div>
+                    </div>
+                }
                 <div class="modal-footer">
                     <button class="btn btn-secondary" @onclick="CerrarModal">Cancelar</button>
                     <button class="btn bg-purple text-white" @onclick="Guardar" disabled="@_guardando">
@@ -627,9 +668,16 @@ else
     private int _editandoId;
     private string? _mensaje;
     private bool _exito;
+    private string? _errorModal;
     private ProductoForm _form = new();
     private IBrowserFile? _imagenSeleccionada;
     private byte[]? _imagenBytes;
+    private bool _dragActivo;
+
+    // ── Drag & drop JS interop ──────────────────────────────────────────────────
+    private ElementReference _dropZoneRef;
+    private DotNetObjectReference<Index>? _dotNetRef;
+    private bool _dropZoneIniciada;
 
     // ── Filtros ────────────────────────────────────────────────────────────────────
     private string   _filtroTexto       = string.Empty;
@@ -643,6 +691,73 @@ else
     {
         _apiBase = Api.PublicBaseUrl;
         await Task.WhenAll(Cargar(), CargarCatalogos());
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_mostrarModal && !_dropZoneIniciada)
+        {
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+            try
+            {
+                // Pequeño delay para que el <input type="file"> (Blazor lo renderiza
+                // de forma asíncrona) ya esté en el DOM antes de que el JS lo busque
+                await Task.Delay(50);
+                await JS.InvokeVoidAsync("tinaDropZone.init", _dropZoneRef, "nativeImgProducto", _dotNetRef);
+                _dropZoneIniciada = true;
+            }
+            catch { }
+        }
+        else if (!_mostrarModal && _dropZoneIniciada)
+        {
+            try { await JS.InvokeVoidAsync("tinaDropZone.dispose", _dropZoneRef); } catch { }
+            _dropZoneIniciada = false;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_dropZoneIniciada)
+        {
+            try { await JS.InvokeVoidAsync("tinaDropZone.dispose", _dropZoneRef); } catch { }
+        }
+        _dotNetRef?.Dispose();
+    }
+
+    [JSInvokable]
+    public async Task RecibirDropBase64(string base64, string mime, string fileName, long fileSize)
+    {
+        _dragActivo = false;
+        const long maxBytes = 2 * 1024 * 1024;
+
+        var ext = Path.GetExtension(fileName).ToLowerInvariant();
+        if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp"))
+        {
+            _errorModal = "Solo se permiten imágenes JPG, PNG o WEBP.";
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+        if (fileSize > maxBytes)
+        {
+            _errorModal = "La imagen no puede superar 2 MB.";
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        try
+        {
+            var bytes = Convert.FromBase64String(base64);
+            _imagenBytes = bytes;
+            _imagenSeleccionada = null; // drop no genera IBrowserFile
+            _form.ImagenPreviewUrl = $"data:{mime};base64,{base64}";
+            _errorModal = null;
+        }
+        catch
+        {
+            _errorModal = "Error al procesar la imagen arrastrada.";
+        }
+
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task Cargar()
@@ -716,6 +831,7 @@ else
         _editando = p is not null;
         _editandoId = p?.Id ?? 0;
         _mensaje = null;
+        _errorModal = null;
         _imagenSeleccionada = null;
 
         if (p is null)
@@ -762,6 +878,8 @@ else
         _mostrarModal = false;
         _imagenSeleccionada = null;
         _imagenBytes = null;
+        _dragActivo = false;
+        _dropZoneIniciada = false;
     }
 
     private async Task SeleccionarImagen(InputFileChangeEventArgs e)
@@ -832,7 +950,40 @@ else
 
     private async Task Guardar()
     {
-        if (string.IsNullOrWhiteSpace(_form.Name) || _form.CategoryId == 0) return;
+        // ── Validaciones por campo ─────────────────────────────────────────────
+        _errorModal = null;
+        _mensaje = null;
+        if (string.IsNullOrWhiteSpace(_form.Name))
+        {
+            _errorModal = "El nombre del producto es obligatorio.";
+            return;
+        }
+        if (_form.CategoryId == 0)
+        {
+            _errorModal = "Debes seleccionar una categoría.";
+            return;
+        }
+        if (_form.SalePrice < 0)
+        {
+            _errorModal = "El precio de venta no puede ser negativo.";
+            return;
+        }
+        if (_form.PurchasePrice < 0)
+        {
+            _errorModal = "El precio de costo no puede ser negativo.";
+            return;
+        }
+        if (_form.CurrentStock < 0)
+        {
+            _errorModal = "El stock no puede ser negativo.";
+            return;
+        }
+        if (_form.MinimumStock < 0)
+        {
+            _errorModal = "El stock mínimo no puede ser negativo.";
+            return;
+        }
+
         _guardando = true;
         int idProducto;
 
@@ -840,25 +991,25 @@ else
         {
             var dto = new UpdateProductoDto(_form.Sku, _form.Name, _form.Description, _form.Unit, _form.PurchasePrice, _form.SalePrice, _form.MinimumStock, true, _form.CategoryId, _form.SupplierId, _form.StockEntrada);
             var ok = await Api.UpdateProductoAsync(_editandoId, dto);
-            if (!ok) { _guardando = false; _exito = false; _mensaje = "Error al guardar el producto."; return; }
+            if (!ok) { _guardando = false; _errorModal = "Error al guardar el producto."; return; }
             idProducto = _editandoId;
         }
         else
         {
             var dto = new CreateProductoDto(_form.Sku, _form.Name, _form.Description, _form.Unit, _form.PurchasePrice, _form.SalePrice, _form.CurrentStock, _form.MinimumStock, _form.CategoryId, _form.SupplierId);
             var creado = await Api.CreateProductoAsync(dto);
-            if (creado is null) { _guardando = false; _exito = false; _mensaje = "Error al crear el producto."; return; }
+            if (creado is null) { _guardando = false; _errorModal = "Error al crear el producto."; return; }
             idProducto = creado.Id;
         }
 
         // Gestión de imagen
-        if (_imagenSeleccionada is not null && _imagenBytes is not null)
+        if (_imagenBytes is not null)
         {
+            var nombreArchivo = _imagenSeleccionada?.Name ?? "imagen.jpg";
             try
             {
-                // Usar los bytes ya leídos durante la selección (IBrowserFile no puede reabrirse)
                 using var ms = new MemoryStream(_imagenBytes);
-                await Api.SubirImagenProductoAsync(idProducto, ms, _imagenSeleccionada.Name);
+                await Api.SubirImagenProductoAsync(idProducto, ms, nombreArchivo);
             }
             catch
             {

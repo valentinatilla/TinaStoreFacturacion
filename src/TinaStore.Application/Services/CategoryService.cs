@@ -29,9 +29,13 @@ public sealed class CategoryService : ICategoryService
 
     public async Task<CategoryDto> CreateAsync(CreateCategoryDto dto)
     {
+        var todas = await _categories.GetAllWithProductsAsync();
+        if (todas.Any(c => c.Name.Equals(dto.Name.Trim(), StringComparison.OrdinalIgnoreCase)))
+            throw new InvalidOperationException($"Ya existe una categoría con el nombre '{dto.Name}'.");
+
         var entity = new Category
         {
-            Name = dto.Name,
+            Name = dto.Name.Trim(),
             Description = dto.Description,
             IsActive = true
         };
