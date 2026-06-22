@@ -5,7 +5,6 @@ public record SupplierDto(
     int Id,
     string Name,
     string? TaxId,
-    string? ContactName,
     string? Phone,
     string? Email,
     string? Address,
@@ -19,7 +18,6 @@ public record SupplierDto(
 public record CreateSupplierDto(
     string Name,
     string? TaxId,
-    string? ContactName,
     string? Phone,
     string? Email,
     string? Address,
@@ -30,7 +28,6 @@ public record CreateSupplierDto(
 public record UpdateSupplierDto(
     string Name,
     string? TaxId,
-    string? ContactName,
     string? Phone,
     string? Email,
     string? Address,

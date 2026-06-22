@@ -23,22 +23,22 @@
 else
 {
     <!-- Filtros -->
-    <div class="card border-0 shadow-sm mb-3 p-3">
+    <div class="ts-filter-bar">
         <div class="row g-2 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label small fw-semibold mb-1">Desde</label>
+            <div class="col-sm-6 col-md-3">
+                <label class="form-label">Desde</label>
                 <input type="date" class="form-control form-control-sm"
                        value="@_filtroDesdeStr"
                        @onchange="e => { _filtroDesdeStr = e.Value?.ToString(); Filtrar(); }" />
             </div>
-            <div class="col-md-3">
-                <label class="form-label small fw-semibold mb-1">Hasta</label>
+            <div class="col-sm-6 col-md-3">
+                <label class="form-label">Hasta</label>
                 <input type="date" class="form-control form-control-sm"
                        value="@_filtroHastaStr"
                        @onchange="e => { _filtroHastaStr = e.Value?.ToString(); Filtrar(); }" />
             </div>
-            <div class="col-md-3">
-                <label class="form-label small fw-semibold mb-1">Categoría <span class="text-muted fw-normal">(otros egresos)</span></label>
+            <div class="col-sm-6 col-md-3">
+                <label class="form-label">Categoría <span class="fw-normal">(otros egresos)</span></label>
                 <select class="form-select form-select-sm"
                         @onchange="e => { _filtroCategoriaId = int.TryParse(e.Value?.ToString(), out var v) ? v : 0; Filtrar(); }">
                     <option value="0">Todas</option>
@@ -48,22 +48,16 @@ else
                     }
                 </select>
             </div>
-            <div class="col-md-3 d-flex align-items-end">
-                <button class="btn btn-sm btn-outline-secondary w-100" @onclick="LimpiarFiltros">
+            <div class="col-sm-6 col-md-3 d-flex align-items-end">
+                <button class="btn-limpiar w-100" @onclick="LimpiarFiltros">
                     <i class="bi bi-x-circle me-1"></i>Limpiar
                 </button>
             </div>
         </div>
-        <div class="mt-2 pt-2 border-top d-flex gap-4">
-            <span class="small text-muted">
-                <i class="bi bi-box-seam me-1"></i>Compras: <strong>@TotalCompras</strong>
-            </span>
-            <span class="small text-muted">
-                <i class="bi bi-receipt me-1"></i>Otros: <strong>@TotalOtros</strong>
-            </span>
-            <span class="small fw-bold" style="color: var(--ts-primary);">
-                Total: @TotalGeneral
-            </span>
+        <div class="ts-filter-stats">
+            <span><i class="bi bi-box-seam me-1"></i>Compras: <strong>@TotalCompras</strong></span>
+            <span><i class="bi bi-receipt me-1"></i>Otros: <strong>@TotalOtros</strong></span>
+            <span style="color: var(--ts-purple); font-weight:700;">Total: @TotalGeneral</span>
         </div>
     </div>
 
@@ -200,6 +194,14 @@ else
                         <label class="form-label small fw-semibold">Notas</label>
                         <input class="form-control" @bind="_form.Notas" />
                     </div>
+                    @if (_errorModal is not null)
+                    {
+                        <div class="col-12">
+                            <div class="alert alert-danger py-2 small mb-0">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>@_errorModal
+                            </div>
+                        </div>
+                    }
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" @onclick="() => _mostrarModal = false">Cancelar</button>
@@ -226,6 +228,7 @@ else
     private bool _guardando;
     private string? _mensaje;
     private bool _exito;
+    private string? _errorModal;
     private EgresoForm _form = new();
     private int _editandoId;
 
@@ -290,7 +293,7 @@ else
         Filtrar();
     }
 
-    private void AbrirModal() { _editandoId = 0; _form = new() { Fecha = DateTime.Today }; _mostrarModal = true; _mensaje = null; }
+    private void AbrirModal() { _editandoId = 0; _form = new() { Fecha = DateTime.Today }; _errorModal = null; _mostrarModal = true; _mensaje = null; }
 
     private void AbrirEditar(EgresoDto e)
     {
@@ -305,6 +308,7 @@ else
             Notas            = e.Notes
         };
         _mostrarModal = true;
+        _errorModal = null;
         _mensaje = null;
     }
 
@@ -318,7 +322,17 @@ else
 
     private async Task Guardar()
     {
-        if (string.IsNullOrWhiteSpace(_form.Descripcion) || _form.Monto <= 0) return;
+        _errorModal = null;
+        if (string.IsNullOrWhiteSpace(_form.Descripcion))
+        {
+            _errorModal = "La descripción es obligatoria.";
+            return;
+        }
+        if (_form.Monto <= 0)
+        {
+            _errorModal = "El monto debe ser mayor a cero.";
+            return;
+        }
         _guardando = true;
         bool ok;
         if (_editandoId > 0)
@@ -332,12 +346,16 @@ else
             ok = await Api.CreateEgresoAsync(dto);
         }
         _guardando = false;
-        _exito   = ok;
-        _mensaje = ok ? (_editandoId > 0 ? "Egreso actualizado." : "Egreso registrado.") : "Error al guardar el egreso.";
         if (ok)
         {
+            _exito   = ok;
+            _mensaje = _editandoId > 0 ? "Egreso actualizado." : "Egreso registrado.";
             _mostrarModal = false;
             await RecargarYFiltrar();
+        }
+        else
+        {
+            _errorModal = "Error al guardar el egreso. Verifica los datos e intenta de nuevo.";
         }
     }
 

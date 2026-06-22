@@ -60,8 +60,15 @@ public sealed class CustomersController : ControllerBase
         if (!validacion.IsValid)
             return BadRequest(validacion.Errors.Select(e => e.ErrorMessage));
 
-        var creado = await _service.CreateAsync(dto);
-        return CreatedAtAction(nameof(GetById), new { id = creado.Id }, creado);
+        try
+        {
+            var creado = await _service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = creado.Id }, creado);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
     }
 
     /// <summary>Actualiza los datos de un cliente existente.</summary>
@@ -72,8 +79,15 @@ public sealed class CustomersController : ControllerBase
         if (!validacion.IsValid)
             return BadRequest(validacion.Errors.Select(e => e.ErrorMessage));
 
-        var actualizado = await _service.UpdateAsync(id, dto);
-        return actualizado is null ? NotFound(new { mensaje = $"Cliente {id} no encontrado." }) : Ok(actualizado);
+        try
+        {
+            var actualizado = await _service.UpdateAsync(id, dto);
+            return actualizado is null ? NotFound(new { mensaje = $"Cliente {id} no encontrado." }) : Ok(actualizado);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
     }
 
     /// <summary>Elimina (baja lógica) un cliente.</summary>

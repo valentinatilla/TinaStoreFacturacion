@@ -49,8 +49,15 @@ public sealed class CategoriesController : ControllerBase
         if (!validacion.IsValid)
             return BadRequest(validacion.Errors.Select(e => e.ErrorMessage));
 
-        var creada = await _service.CreateAsync(dto);
-        return CreatedAtAction(nameof(GetById), new { id = creada.Id }, creada);
+        try
+        {
+            var creada = await _service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = creada.Id }, creada);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
     }
 
     /// <summary>Actualiza una categoría existente.</summary>

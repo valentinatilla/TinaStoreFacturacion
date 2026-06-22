@@ -15,9 +15,14 @@ public sealed class CreateSupplierValidator : AbstractValidator<CreateSupplierDt
             .EmailAddress().WithMessage("El correo electrónico no tiene un formato válido.")
             .When(x => !string.IsNullOrWhiteSpace(x.Email));
 
+        RuleFor(x => x.TaxId)
+            .Matches(@"^\d+$").WithMessage("El NIT debe contener solo números.")
+            .When(x => !string.IsNullOrWhiteSpace(x.TaxId));
+
         RuleFor(x => x.Phone)
-            .MaximumLength(20).WithMessage("El teléfono no puede superar 20 caracteres.")
-            .When(x => x.Phone is not null);
+            .Matches(@"^\d+$").WithMessage("El teléfono debe contener solo números.")
+            .Length(10, 10).WithMessage("El teléfono debe tener exactamente 10 dígitos.")
+            .When(x => !string.IsNullOrWhiteSpace(x.Phone));
     }
 }
 
@@ -32,5 +37,14 @@ public sealed class UpdateSupplierValidator : AbstractValidator<UpdateSupplierDt
         RuleFor(x => x.Email)
             .EmailAddress().WithMessage("El correo electrónico no tiene un formato válido.")
             .When(x => !string.IsNullOrWhiteSpace(x.Email));
+
+        RuleFor(x => x.TaxId)
+            .Matches(@"^\d+$").WithMessage("El NIT debe contener solo números.")
+            .When(x => !string.IsNullOrWhiteSpace(x.TaxId));
+
+        RuleFor(x => x.Phone)
+            .Matches(@"^\d+$").WithMessage("El teléfono debe contener solo números.")
+            .Length(10, 10).WithMessage("El teléfono debe tener exactamente 10 dígitos.")
+            .When(x => !string.IsNullOrWhiteSpace(x.Phone));
     }
 }

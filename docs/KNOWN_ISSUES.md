@@ -5,6 +5,48 @@ Los issues marcados ✅ ya están resueltos. Los marcados 🔴/🟡/🟢 están 
 
 ---
 
+## Sprint Corrección 2026-06-21 — Issues resueltos en Fase A
+
+### ✅ BUG-A-B02 — Ojito de contraseña no existía → resuelto en Fase A (2026-06-21)
+- Login, Usuarios (crear y resetear). Ver BUGFIXES.md para detalle.
+
+### ✅ BUG-A-B01/B03 — Botones de modal Usuarios con btn-sm → resuelto en Fase A (2026-06-21)
+
+### ✅ BUG-A-B04 — Labels seleccionables con doble clic → resuelto en Fase A (2026-06-21)
+
+### ✅ BUG-A-B09 — Campo Contacto en Proveedores → resuelto en Fase A (2026-06-21)
+- Requiere `dotnet ef database update` en producción para aplicar la migración.
+
+### ✅ BUG-A-B10/B11 — NIT/Teléfono sin validación en Proveedores → resuelto parcialmente en Fase A
+- Validación en frontend lista. Pendiente: actualizar `SupplierValidators.cs` en Fase D.
+
+### ✅ BUG-B05 — Tarjetas del Dashboard no clickeables → resuelto en Fase B (2026-06-22)
+
+### ✅ BUG-B06 — Documento de cliente puede repetirse → resuelto en Fase C (2026-06-22)
+
+### ✅ BUG-B07/B08 — Faltan filtros de email y estado en Clientes → resuelto en Fase C (2026-06-22)
+
+### ✅ BUG-B10/B11 Fase D — Validaciones NIT/teléfono al backend → resuelto en Fase D (2026-06-22)
+
+### ✅ BUG-B12 — Errores de backend no se muestran → resuelto en Fase E (2026-06-22)
+
+### ✅ BUG-B14/B15 — Sin validación por campo en Productos → resuelto en Fase F (2026-06-22)
+
+### ✅ BUG-B17 — Botón X de imagen ovalado → resuelto en Fase F (2026-06-22)
+
+### ✅ BUG-B19 — Imágenes de productos: Content-Type incorrecto → resuelto en Fase F (2026-06-22)
+
+### ✅ BUG-B20 — Enter no guarda en Categorías → resuelto en Fase G (2026-06-22)
+
+### ✅ BUG-B21 — Categorías duplicadas → resuelto en Fase G (2026-06-22)
+
+## 🟡 Pendientes post-Fases B–G
+
+### ✅ BUG-B16 — Drag & drop de imagen en Productos → resuelto en Fase H (2026-06-22)
+- `InputFile` superpuesto como overlay invisible captura el drop de forma nativa; estado visual `.ts-drag-active` con `@ondragenter`/`@ondragleave`.
+
+---
+
 ## ✅ RESUELTOS EN v2.8.0 (2025-07-14 — Fases A–F)
 
 ### ✅ ISSUE-08 — Logo roto en sidebar y configuración → resuelto en v2.8.0
@@ -13,6 +55,7 @@ Los issues marcados ✅ ya están resueltos. Los marcados 🔴/🟡/🟢 están 
 
 ### ✅ ISSUE-09 — Imágenes de productos rotas en detalle de venta → resuelto en v2.8.0
 - **Causa**: `IConfiguration["ApiBaseUrl"]` inyectado directamente en las páginas Razor, mismo problema que ISSUE-08.
+
 - **Solución**: Eliminada inyección directa; uso de `Api.PublicBaseUrl`.
 
 ### ✅ ISSUE-10 — Desbordamiento de tablas y filtros en pantallas pequeñas → resuelto en v2.8.0
@@ -26,10 +69,8 @@ Los issues marcados ✅ ya están resueltos. Los marcados 🔴/🟡/🟢 están 
 
 ## 🟡 PENDIENTES
 
-### 🟡 ISSUE-12 — Íconos PWA no generados
-- **Estado**: El `manifest.webmanifest` referencia `icons/icon-192.png` e `icons/icon-512.png` que aún no existen como archivos físicos.
-- **Impacto**: La app no mostrará el ícono correcto al agregarla a la pantalla de inicio de un móvil.
-- **Solución**: Generar los íconos desde el logo de Tina Store y colocarlos en `src/TinaStore.Web/wwwroot/icons/`. Ver instrucciones en `wwwroot/icons/README.md`.
+### ✅ ISSUE-12 — Íconos PWA generados → resuelto en Fase H (2026-06-22)
+- `icon-192.png` (192×192) e `icon-512.png` (512×512) creados en `wwwroot/icons/` con la identidad visual de Tina Store: fondo morado, círculo rosa, letra T blanca. Zona maskable al 80%.
 
 ---
 

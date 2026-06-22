@@ -1,27 +1,35 @@
 # Íconos PWA — Tina Store
 
-Esta carpeta debe contener los íconos de la aplicación para que funcione como PWA
+Esta carpeta contiene los íconos de la aplicación para que funcione como PWA
 (Progressive Web App) instalable en Android e iOS.
 
-## Archivos necesarios
+## Archivos
 
 | Archivo         | Tamaño    | Uso                                        |
 |-----------------|-----------|--------------------------------------------|
 | `icon-192.png`  | 192×192px | Ícono Android / Chrome "Agregar a inicio"  |
 | `icon-512.png`  | 512×512px | Ícono splash screen Android                |
 
-## Cómo generarlos
+## Diseño
 
-1. Prepara una imagen cuadrada del logo de Tina Store (mínimo 512×512 px, fondo rosado
-   o transparente).
-2. Usa https://realfavicongenerator.net o https://maskable.app para generar las versiones.
-3. Coloca los archivos generados en esta carpeta con los nombres exactos indicados.
+Generados con System.Drawing (.NET):
+- **Fondo**: cuadrado #7C3AED (morado marca Tina Store)
+- **Círculo central**: #F472B6 (rosa acento)
+- **Letra**: "T" blanca — inicial de Tina Store
+- Diseño centrado en el 80% seguro de la zona maskable (spec PWA)
 
-## Estado actual
+## Estado
 
-⚠️ Los íconos aún no han sido generados. El manifest.webmanifest referencia estas rutas
-pero los archivos no existen todavía. La app funciona normalmente; solo el ícono PWA
-mostrará un fallback hasta que se agreguen los archivos.
+✅ Íconos generados y listos — 2026-06-22
+
+## Regenerar
+
+Si se cambia la identidad visual, ejecutar desde PowerShell en la raíz del repo:
+
+```powershell
+Add-Type -AssemblyName System.Drawing
+# ... ver script en docs/BUGFIXES.md sección ISSUE-12
+```
 
 ## Referencia en el manifest
 

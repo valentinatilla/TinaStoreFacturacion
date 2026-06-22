@@ -289,3 +289,55 @@ La aplicación tiene un enum `UserRole` con valores `Admin`, `Seller`, `Viewer`.
 - No apto para envíos masivos.
 
 **Integración futura con API oficial**: Requeriría registro en Meta Business, número de teléfono verificado y posiblemente costo por mensaje. La arquitectura actual permite agregar un servicio `IWhatsAppService` que use la API oficial sin modificar la lógica de negocio.
+
+---
+
+## TD-FaseA-Corrección-2026 — Decisiones técnicas Sprint Corrección Post-Pruebas (2026-06-21)
+
+### TD-FA-01 — Eliminar ContactName de Supplier completamente
+
+**Fecha:** 2026-06-21
+**Decisión:** Eliminar el campo `ContactName` de la entidad `Supplier`, todos sus DTOs, el servicio y la base de datos mediante migración.
+**Alternativas descartadas:**
+- Solo ocultar en UI: deja deuda técnica en el modelo de dominio.
+- Marcar como obsoleto: no limpia el código.
+
+**Impacto en datos:** Los valores existentes en `ContactName` se perderán al aplicar la migración. La columna era opcional (nullable), por lo que el riesgo es bajo.
+**Migración:** `20260621000001_RemoveSupplierContactName` — aplicar con `dotnet ef database update --project src/TinaStore.Infrastructure --startup-project src/TinaStore.Api`
+
+---
+
+### TD-FA-02 — Validación de NIT y Teléfono en frontend (Fase A) y backend (Fase D)
+
+**Fecha:** 2026-06-21
+**Decisión:** En Fase A se implementa validación de formato solo en el componente Blazor (`Proveedores/Index.razor`). La validación en `SupplierValidators.cs` se deja para Fase D para no mezclar responsabilidades entre fases.
+**Reglas definidas:**
+- NIT: solo dígitos (`^\d+$`), sin límite de longitud en Fase A.
+- Teléfono: solo dígitos (`^\d+$`), máximo 10 caracteres.
+
+---
+
+### TD-FA-03 — Clase CSS `.btn-password-toggle` centralizada
+
+**Fecha:** 2026-06-21
+**Decisión:** Crear una clase CSS reutilizable en `app.css` para el botón ojito en lugar de estilos inline por componente.
+**Razón:** El toggle se usa en Login, Usuarios (crear y resetear). Centralizar garantiza consistencia visual y facilita mantenimiento.
+**Variante especial:** `.login-card .btn-password-toggle` sobreescribe `border-radius` a `12px` para adaptarse al radio del login card.
+
+---
+
+### TD-FA-04 — user-select: none solo en elementos decorativos de la UI
+
+**Fecha:** 2026-06-21
+**Decisión:** Aplicar `user-select: none` solo a clases CSS de elementos decorativos: `.form-label`, `thead th`, `.badge`, `.modal-title`, `h4/h5/h6.fw-bold`, `.btn`.
+**Elementos NO afectados:** `<td>`, inputs, textareas, párrafos con datos de clientes, documentos o correos.
+**Razón:** Evitar selección accidental en la interfaz sin bloquear la capacidad del usuario de copiar datos reales como nombres, documentos, facturas, correos.
+
+---
+
+### TD-FA-05 — Migración manual sin CLI de EF Core
+
+**Fecha:** 2026-06-21
+**Decisión:** La migración `RemoveSupplierContactName` fue creada manualmente para evitar conflictos con la BD SQLite en uso durante desarrollo.
+**Nota técnica:** El archivo `.Designer.cs` es un stub mínimo. Si en el futuro se necesita regenerar el historial completo de migraciones, ejecutar `dotnet ef migrations add` desde `TinaStore.Api`.
+

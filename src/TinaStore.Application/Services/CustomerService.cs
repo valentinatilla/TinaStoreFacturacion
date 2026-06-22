@@ -30,6 +30,13 @@ public sealed class CustomerService : ICustomerService
 
     public async Task<CustomerDto> CreateAsync(CreateCustomerDto dto)
     {
+        if (!string.IsNullOrWhiteSpace(dto.DocumentNumber))
+        {
+            var existing = await _customers.GetByDocumentAsync(dto.DocumentNumber.Trim());
+            if (existing is not null)
+                throw new InvalidOperationException($"Ya existe un cliente con el documento '{dto.DocumentNumber}'.");
+        }
+
         var entity = new Customer
         {
             FullName = dto.FullName,
@@ -51,6 +58,13 @@ public sealed class CustomerService : ICustomerService
     {
         var entity = await _customers.GetWithInvoicesAsync(id);
         if (entity is null) return null;
+
+        if (!string.IsNullOrWhiteSpace(dto.DocumentNumber))
+        {
+            var existing = await _customers.GetByDocumentAsync(dto.DocumentNumber.Trim());
+            if (existing is not null && existing.Id != id)
+                throw new InvalidOperationException($"Ya existe otro cliente con el documento '{dto.DocumentNumber}'.");
+        }
 
         entity.FullName = dto.FullName;
         entity.DocumentType = dto.DocumentType;

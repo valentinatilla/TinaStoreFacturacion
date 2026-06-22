@@ -21,7 +21,13 @@ if (!string.IsNullOrEmpty(railwayPort))
 
 // ─── Blazor Server ────────────────────────────────────────────────────────────
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+    .AddInteractiveServerComponents()
+    .AddHubOptions(o =>
+    {
+        // Subida de imagen por JS interop: base64 de 2 MB ≈ 2.7 MB.
+        // El límite por defecto de SignalR es 32 KB; aumentamos a 5 MB.
+        o.MaximumReceiveMessageSize = 5 * 1024 * 1024;
+    });
 
 // ─── Autenticación ────────────────────────────────────────────────────────────
 // Cookie se usa solo como transporte temporal para el callback OAuth de Google.
