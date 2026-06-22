@@ -75,7 +75,7 @@ Ver la guía completa en [`docs/INSTALLATION.md`](docs/INSTALLATION.md)
 
 ```powershell
 # 1. Clonar el repositorio
-git clone https://github.com/tuusuario/TinaStoreFacturacion.git
+git clone https://github.com/valentinatilla/TinaStoreFacturacion.git
 cd TinaStoreFacturacion
 
 # 2. Configurar secretos de desarrollo
