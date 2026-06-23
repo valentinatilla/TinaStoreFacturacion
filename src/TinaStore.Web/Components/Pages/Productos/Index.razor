@@ -675,7 +675,6 @@ else
     private ProductoForm _form = new();
     private IBrowserFile? _imagenSeleccionada;
     private byte[]? _imagenBytes;
-    private bool _dragActivo;
 
     // ── Drag & drop JS interop ──────────────────────────────────────────────────
     private ElementReference _dropZoneRef;
@@ -730,7 +729,6 @@ else
     [JSInvokable]
     public async Task RecibirDropBase64(string base64, string mime, string fileName, long fileSize)
     {
-        _dragActivo = false;
         const long maxBytes = 2 * 1024 * 1024;
 
         var ext = Path.GetExtension(fileName).ToLowerInvariant();
@@ -881,7 +879,6 @@ else
         _mostrarModal = false;
         _imagenSeleccionada = null;
         _imagenBytes = null;
-        _dragActivo = false;
         _dropZoneIniciada = false;
     }
 

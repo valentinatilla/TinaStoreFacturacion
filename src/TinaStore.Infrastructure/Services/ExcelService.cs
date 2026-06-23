@@ -85,7 +85,7 @@ public sealed class ExcelService : IExcelService
     {
         var query = _db.Invoices
             .Include(f => f.Customer)
-            .Include(f => f.Details).ThenInclude(d => d.Product).ThenInclude(p => p.Category)
+            .Include(f => f.Details).ThenInclude(d => d.Product!).ThenInclude(p => p.Category)
             .Include(f => f.Payments).ThenInclude(p => p.PaymentMethod)
             .Where(f => !f.IsDeleted);
 
@@ -279,11 +279,11 @@ public sealed class ExcelService : IExcelService
 
         // Rangos con nombre para las validaciones
         if (categorias.Count > 0)
-            wb.NamedRanges.Add("ListaCategorias",
+            wb.DefinedNames.Add("ListaCategorias",
                 wsListas.Range(1, 1, categorias.Count, 1));
 
         if (proveedores.Count > 0)
-            wb.NamedRanges.Add("ListaProveedores",
+            wb.DefinedNames.Add("ListaProveedores",
                 wsListas.Range(1, 2, proveedores.Count, 2));
 
         // ── Hoja principal — misma estructura que exportación ─────────────────
@@ -311,12 +311,12 @@ public sealed class ExcelService : IExcelService
         if (categorias.Count > 0)
         {
             var validCat = ws.Range(2, 4, maxDataRows, 4);
-            validCat.SetDataValidation().List(wsListas.Range(1, 1, categorias.Count, 1), true);
+            validCat.CreateDataValidation().List(wsListas.Range(1, 1, categorias.Count, 1), true);
         }
         if (proveedores.Count > 0)
         {
             var validProv = ws.Range(2, 5, maxDataRows, 5);
-            validProv.SetDataValidation().List(wsListas.Range(1, 2, proveedores.Count, 2), true);
+            validProv.CreateDataValidation().List(wsListas.Range(1, 2, proveedores.Count, 2), true);
         }
 
         // Fila de ejemplo
