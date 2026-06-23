@@ -60,7 +60,7 @@ else
                     </div>
                     <div class="flex-grow-1">
                         <div class="text-muted small">Costo total del inventario</div>
-                        <div class="fw-bold fs-4 text-purple">@_costoInventario.ToString("C0")</div>
+                        <div class="fw-bold fs-4 text-purple">$@_costoInventario.ToString("N0")</div>
                         <div class="text-muted" style="font-size:.75rem;">
                             suma de costo × stock por producto activo
                         </div>
@@ -161,8 +161,8 @@ else
                             <td class="fw-semibold">@p.Name</td>
                             <td class="ts-table-hide-mobile">@p.CategoryName</td>
                             <td class="ts-table-hide-mobile text-muted small">@(p.SupplierName ?? "—")</td>
-                            <td class="text-end text-muted ts-table-hide-mobile">@(p.PurchasePrice > 0 ? p.PurchasePrice.ToString("C0") : "—")</td>
-                            <td class="text-end">@p.SalePrice.ToString("C0")</td>
+                            <td class="text-end text-muted ts-table-hide-mobile">@(p.PurchasePrice > 0 ? p.PurchasePrice.ToString("N0") : "—")</td>
+                            <td class="text-end">$@p.SalePrice.ToString("N0")</td>
                             <td class="text-end small ts-table-hide-mobile @(p.ProfitMargin > 0 ? "text-success fw-semibold" : "text-muted")">
                                 @(p.ProfitMargin > 0 ? p.ProfitMargin.ToString("0.0") + " %" : "—")
                             </td>
@@ -287,7 +287,7 @@ else
                             @if (_form.StockEntrada > 0 && _form.PurchasePrice > 0)
                             {
                                 <p class="text-success small mt-1 mb-0">
-                                    <i class="bi bi-bag-check me-1"></i>Egreso: @((_form.StockEntrada * _form.PurchasePrice).ToString("C0"))
+                                    <i class="bi bi-bag-check me-1"></i>Egreso: @((_form.StockEntrada * _form.PurchasePrice).ToString("N0"))
                                 </p>
                             }
                             else
@@ -477,7 +477,7 @@ else
                                                 }
                                             </td>
                                             <td class="text-end align-middle text-muted small fw-semibold">
-                                                @fila.ValorInventario.ToString("C0")
+                                                $@fila.ValorInventario.ToString("N0")
                                             </td>
                                             <td class="text-center align-middle">
                                                 @if (fila.TieneImagenNueva)
@@ -572,18 +572,18 @@ else
                                                 <td class="text-end">
                                                     @if (fila.Costo != fila.CostoOriginal)
                                                     {
-                                                        <span class="text-muted text-decoration-line-through me-1 small">@fila.CostoOriginal.ToString("C0")</span>
-                                                        <span class="text-success fw-semibold">@fila.Costo.ToString("C0")</span>
+                                                        <span class="text-muted text-decoration-line-through me-1 small">$@fila.CostoOriginal.ToString("N0")</span>
+                                                        <span class="text-success fw-semibold">$@fila.Costo.ToString("N0")</span>
                                                     }
-                                                    else { <span class="text-muted">@fila.Costo.ToString("C0")</span> }
+                                                    else { <span class="text-muted">$@fila.Costo.ToString("N0")</span> }
                                                 </td>
                                                 <td class="text-end">
                                                     @if (fila.PrecioVenta != fila.PrecioOriginal)
                                                     {
-                                                        <span class="text-muted text-decoration-line-through me-1 small">@fila.PrecioOriginal.ToString("C0")</span>
-                                                        <span class="text-success fw-semibold">@fila.PrecioVenta.ToString("C0")</span>
+                                                        <span class="text-muted text-decoration-line-through me-1 small">$@fila.PrecioOriginal.ToString("N0")</span>
+                                                        <span class="text-success fw-semibold">$@fila.PrecioVenta.ToString("N0")</span>
                                                     }
-                                                    else { <span class="text-muted">@fila.PrecioVenta.ToString("C0")</span> }
+                                                    else { <span class="text-muted">$@fila.PrecioVenta.ToString("N0")</span> }
                                                 </td>
                                                 <td class="text-center">
                                                     @if (fila.Stock != fila.StockOriginal)
@@ -597,7 +597,7 @@ else
                                                     }
                                                     else { <span class="text-muted">@fila.Stock</span> }
                                                 </td>
-                                                <td class="text-end fw-semibold text-purple">@fila.ValorInventario.ToString("C0")</td>
+                                                <td class="text-end fw-semibold text-purple">$@fila.ValorInventario.ToString("N0")</td>
                                             </tr>
                                         }
                                     </tbody>

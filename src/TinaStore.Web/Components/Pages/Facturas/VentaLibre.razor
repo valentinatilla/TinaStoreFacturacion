@@ -103,7 +103,7 @@
                                            @bind:after="RecalcularTotales" />
                                 </td>
                                 <td class="text-end fw-semibold align-middle">
-                                    @((l.Cantidad * l.PrecioUnitario).ToString("C0"))
+                                    @((l.Cantidad * l.PrecioUnitario).ToString("N0"))
                                 </td>
                                 <td class="align-middle">
                                     <button class="btn btn-sm btn-link text-danger p-0" @onclick="() => QuitarLinea(l)">
@@ -116,7 +116,7 @@
                     <tfoot class="table-light">
                         <tr>
                             <td colspan="3" class="text-end text-muted small">Subtotal:</td>
-                            <td class="text-end text-muted small">@_subtotal.ToString("C0")</td>
+                            <td class="text-end text-muted small">$@_subtotal.ToString("N0")</td>
                             <td></td>
                         </tr>
                         <tr>
@@ -129,7 +129,7 @@
                                            @bind="_descuentoPct" @bind:after="RecalcularTotales" />
                                     @if (_descuento > 0)
                                     {
-                                        <span class="text-muted small text-nowrap">-@_descuento.ToString("C0")</span>
+                                        <span class="text-muted small text-nowrap">-$@_descuento.ToString("N0")</span>
                                     }
                                 </div>
                             </td>
@@ -147,7 +147,7 @@
                         </tr>
                         <tr class="fw-bold border-top">
                             <td colspan="3" class="text-end fw-bold">Total:</td>
-                            <td class="text-end fw-bold fs-5 text-purple">@_total.ToString("C0")</td>
+                            <td class="text-end fw-bold fs-5 text-purple">$@_total.ToString("N0")</td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -198,7 +198,8 @@
         var t2 = Api.GetMetodosPagoAsync();
         await Task.WhenAll(t1, t2);
         _clientes    = t1.Result ?? [];
-        _metodosPago = t2.Result ?? [];
+        // Excluir "Fiado / Crédito" (Type == 5) del selector de pago inicial
+        _metodosPago = (t2.Result ?? []).Where(m => m.Type != 5).ToList();
         AgregarLinea(); // Una línea vacía de inicio
     }
 

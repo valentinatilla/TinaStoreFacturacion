@@ -11,7 +11,35 @@ El versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
-## [1.4.0] — 2026-06-23
+## [1.5.0] — 2026-07-09
+
+### Añadido
+- **Validador FluentValidation** `UpdateStoreSettingsDtoValidator`: IVA limitado a 0–100%, moneda obligatoria, nombre de tienda obligatorio.
+- **`StoreSettingsValidators.cs`** nuevo archivo en `TinaStore.Application/Validators`.
+- **Validación frontend de IVA** en `StoreSettings.razor`: `Guardar()` bloquea si `TaxPercentage < 0` o `> 100` con mensaje de error visible. Nota informativa "Valor entre 0 y 100" añadida bajo el campo.
+- **Filtro de fechas en Cuentas por Cobrar del módulo Reportes**: el reporte CXC ahora recibe `from` y `to` en todas las capas (repositorio → servicio → controlador → ApiClient → UI). Solo muestra deudores con facturas con saldo pendiente en el período seleccionado.
+
+### Cambiado
+- **Moneda fijada a COP en toda la aplicación**:
+  - `StoreSettings.razor`: campo Moneda convertido a solo lectura (igual que Nombre de tienda). `_modelo.Currency` siempre se inicializa a `"COP"` independientemente de lo que devuelva la API.
+  - `StoreSettingsService.UpdateAsync`: ignorará el valor enviado si la lógica de validación lo requiere.
+  - PDF de facturas (`PdfService.cs`): todos los montos usan formato `$N0` (peso colombiano sin decimales). Encabezado incluye "Moneda: COP".
+  - Todos los componentes Blazor (7 archivos): `ToString("C0")` reemplazado por `$@valor.ToString("N0")` — 50 puntos de moneda actualizados.
+- **PDF de venta libre**: el encabezado de la columna muestra "Descripción" en lugar de "Producto" cuando todos los detalles de la factura tienen `ProductId == null`.
+- **Botones de acción en Ventas** (`Facturas/Index.razor`): envueltos en `d-flex gap-1` para que PDF, Pago y Anular tengan el mismo tamaño (`btn-sm`) y separación uniforme.
+- **Selector de método de pago**: "Fiado / Crédito" (`Type == 5`) excluido del selector en `Facturas/Index.razor` (abonos), `Facturas/Nueva.razor` (pago inicial) y `Facturas/VentaLibre.razor` (pago inicial). Sigue disponible en Egresos.
+- **`MetodoPagoDto`** (cliente web): añadidos campos `Type` (int) y `TypeName` (string) para permitir el filtrado sin depender del enum del dominio.
+- **Egresos — totales**: filas anuladas se muestran con texto tachado y opacidad 55%. Totales usan `$N0` excluyendo registros anulados (`Status != 0`).
+- **Reportes — pantalla en blanco**: la condición `else if (_ventasData is not null)` reemplazada por `else` con guards internos por sección. Si ventas, gastos o CXC fallan individualmente, las demás secciones siguen visibles.
+- **`IReportRepository.GetAllReceivablesAsync`**: ahora recibe `from` y `to`; filtra solo clientes con facturas no anuladas con saldo pendiente en el rango.
+- **`IReportService.GetReceivablesReportAsync`**: recibe `from` y `to`; calcula saldo y conteo de facturas exclusivamente del período.
+- **`ReportsController.GetReceivables`**: añadidos `[FromQuery] DateTime from` y `[FromQuery] DateTime to`.
+- **`CuentasPorCobrar/Index.razor`**: usa rango `2000-01-01 – hoy` para mantener el historial completo de deudores.
+
+### Corregido
+- **Reportes — ventas vacías al cambiar rango**: el servicio y repositorio ya filtraban correctamente; el problema era la condición Razor que bloqueaba la renderización si `_ventasData` era null.
+
+
 
 ### Añadido
 - **Exportación Excel de clientes** (`GET /api/customers/exportar`): hoja con nombre, documento, teléfono, email, dirección, saldo pendiente y fecha de última compra. Botón con spinner en la pantalla de clientes.

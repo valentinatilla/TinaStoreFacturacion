@@ -102,27 +102,28 @@ else
                             </td>
                             <td><span class="badge bg-dark">@f.InvoiceNumber</span></td>
                             <td>@f.CustomerName</td>
-                            <td class="text-end fw-semibold">@f.Total.ToString("C0")</td>
+                            <td class="text-end fw-semibold">$@f.Total.ToString("N0")</td>
                             <td class="text-end ts-table-hide-mobile @(f.AmountPaid < f.Total ? "text-danger" : "text-success")">
-                                @f.AmountPaid.ToString("C0")
+                                $@f.AmountPaid.ToString("N0")
                             </td>
                             <td class="text-end ts-table-hide-mobile @(f.Balance > 0 ? "text-danger fw-semibold" : "text-muted")">
-                                @f.Balance.ToString("C0")
+                                $@f.Balance.ToString("N0")
                             </td>
                             <td>
                                 <span class="badge badge-estado-@f.StatusName.ToLower()">@f.StatusName</span>
                             </td>
                             <td class="text-muted small ts-table-hide-mobile">@f.InvoiceDate.ToString("dd/MM/yyyy")</td>
                             <td class="text-end" @onclick:stopPropagation="true">
+                                <div class="d-flex gap-1 justify-content-end align-items-center">
                                 @if (_pdfDescargando.Contains(f.Id))
                                 {
-                                    <button class="btn btn-sm btn-outline-secondary me-1" disabled title="Generando PDF...">
+                                    <button class="btn btn-sm btn-outline-secondary" disabled title="Generando PDF...">
                                         <span class="spinner-border spinner-border-sm"></span>
                                     </button>
                                 }
                                 else
                                 {
-                                    <button class="btn btn-sm btn-outline-secondary me-1" title="Descargar PDF"
+                                    <button class="btn btn-sm btn-outline-secondary" title="Descargar PDF"
                                             @onclick="() => DescargarPdf(f.Id)">
                                         <i class="bi bi-file-earmark-pdf"></i>
                                     </button>
@@ -131,7 +132,7 @@ else
                                 {
                                     @if (f.Balance > 0)
                                     {
-                                        <button class="btn btn-sm btn-outline-success me-1" title="Registrar pago"
+                                        <button class="btn btn-sm btn-outline-success" title="Registrar pago"
                                                 @onclick="() => AbrirPago(f)">
                                             <i class="bi bi-cash-coin"></i>
                                         </button>
@@ -141,6 +142,7 @@ else
                                         <i class="bi bi-x-circle"></i>
                                     </button>
                                 }
+                                </div>
                             </td>
                         </tr>
 
@@ -193,36 +195,36 @@ else
                                                                     </td>
                                                                     <td class="align-middle">@linea.ProductName</td>
                                                                     <td class="text-center align-middle">@linea.Quantity</td>
-                                                                    <td class="text-end text-muted align-middle">@linea.UnitPrice.ToString("C0")</td>
+                                                                    <td class="text-end text-muted align-middle">$@linea.UnitPrice.ToString("N0")</td>
                                                                     <td class="text-end text-muted align-middle">
-                                                                        @(linea.DiscountAmount > 0 ? linea.DiscountAmount.ToString("C0") : "—")
+                                                                        @(linea.DiscountAmount > 0 ? linea.DiscountAmount.ToString("N0") : "—")
                                                                     </td>
-                                                                    <td class="text-end fw-semibold align-middle">@linea.Subtotal.ToString("C0")</td>
+                                                                    <td class="text-end fw-semibold align-middle">$@linea.Subtotal.ToString("N0")</td>
                                                                 </tr>
                                                             }
                                                         </tbody>
                                                         <tfoot class="table-light">
                                                             <tr>
                                                                 <td colspan="5" class="text-end text-muted small">Subtotal:</td>
-                                                                <td class="text-end text-muted small">@detalle.Subtotal.ToString("C0")</td>
+                                                                <td class="text-end text-muted small">$@detalle.Subtotal.ToString("N0")</td>
                                                             </tr>
                                                             @if (detalle.DiscountAmount > 0)
                                                             {
                                                                 <tr>
                                                                     <td colspan="5" class="text-end text-muted small">Descuento:</td>
-                                                                    <td class="text-end text-muted small">-@detalle.DiscountAmount.ToString("C0")</td>
+                                                                    <td class="text-end text-muted small">-$@detalle.DiscountAmount.ToString("N0")</td>
                                                                 </tr>
                                                             }
                                                             @if (detalle.TaxAmount > 0)
                                                             {
                                                                 <tr>
                                                                     <td colspan="5" class="text-end text-muted small">Impuesto:</td>
-                                                                    <td class="text-end text-muted small">@detalle.TaxAmount.ToString("C0")</td>
+                                                                    <td class="text-end text-muted small">$@detalle.TaxAmount.ToString("N0")</td>
                                                                 </tr>
                                                             }
                                                             <tr>
                                                                 <td colspan="5" class="text-end fw-bold small">Total:</td>
-                                                                <td class="text-end fw-bold text-purple small">@detalle.Total.ToString("C0")</td>
+                                                                <td class="text-end fw-bold text-purple small">$@detalle.Total.ToString("N0")</td>
                                                             </tr>
                                                         </tfoot>
                                                     </table>
@@ -253,7 +255,7 @@ else
                                                     @foreach (var pago in detalle.Payments)
                                                     {
                                                         <div class="pago-chip">
-                                                            <span class="fw-semibold">@pago.Amount.ToString("C0")</span>
+                                                            <span class="fw-semibold">$@pago.Amount.ToString("N0")</span>
                                                             <span class="text-muted ms-1 small">@pago.PaymentMethodName</span>
                                                             <span class="text-muted ms-1 small">·</span>
                                                             <span class="text-muted small">@pago.PaymentDate.ToString("dd/MM/yyyy")</span>
@@ -334,7 +336,7 @@ else
                 <div class="modal-body">
                     <p class="text-muted small mb-3">
                         Venta <strong>@_pagoFacturaNumero</strong> &mdash;
-                        Saldo pendiente: <strong class="text-danger">@_pagoSaldo.ToString("C0")</strong>
+                        Saldo pendiente: <strong class="text-danger">$@_pagoSaldo.ToString("N0")</strong>
                     </p>
                     <div class="row g-3">
                         <div class="col-12">
@@ -451,7 +453,10 @@ else
         var t2 = Api.GetMetodosPagoAsync();
         await Task.WhenAll(t1, t2);
         _facturas    = t1.Result ?? [];
-        _metodosPago = t2.Result ?? [];
+        // Excluir "Fiado / Crédito" (Type == 5 = Credit) del selector de abonos
+        _metodosPago = (t2.Result ?? [])
+            .Where(m => m.Type != 5)
+            .ToList();
         AplicarFiltros();
         _loading = false;
     }

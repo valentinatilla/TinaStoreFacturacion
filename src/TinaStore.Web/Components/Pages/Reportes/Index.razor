@@ -36,7 +36,7 @@ else if (_ventasData is null && _gastosData is null && _cxcData is null)
         <i class="bi bi-info-circle me-2"></i>Selecciona un período y pulsa <strong>Consultar</strong> para ver los reportes.
     </div>
 }
-else if (_ventasData is not null)
+else
 {
     <div class="row g-4">
         <!-- Reporte de ventas -->
@@ -44,7 +44,10 @@ else if (_ventasData is not null)
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-graph-up me-2"></i>Ventas por día
-                    <span class="ms-2 badge bg-purple">Total: @_ventasData.TotalVentas.ToString("C0")</span>
+                    @if (_ventasData is not null)
+                    {
+                        <span class="ms-2 badge bg-purple">Total: $@_ventasData.TotalVentas.ToString("N0")</span>
+                    }
                 </div>
                 <div class="table-responsive">
                     <table class="table table-sm table-hover mb-0">
@@ -52,20 +55,27 @@ else if (_ventasData is not null)
                             <tr><th>Fecha</th><th class="text-center">Facturas</th><th class="text-end">Ventas</th><th class="text-end">Cobrado</th></tr>
                         </thead>
                         <tbody>
-                            @foreach (var v in _ventasData.VentasPorDia)
+                            @if (_ventasData is null)
                             {
-                                <tr>
-                                    <td>@v.Fecha.ToString("dd/MM/yyyy")</td>
-                                    <td class="text-center">@v.CantidadFacturas</td>
-                                    <td class="text-end fw-semibold">@v.TotalVentas.ToString("C0")</td>
-                                    <td class="text-end @(v.TotalCobrado < v.TotalVentas ? "text-warning" : "text-success")">
-                                        @v.TotalCobrado.ToString("C0")
-                                    </td>
-                                </tr>
+                                <tr><td colspan="4" class="text-center text-muted py-3">No se pudieron cargar las ventas</td></tr>
                             }
-                            @if (!_ventasData.VentasPorDia.Any())
+                            else
                             {
-                                <tr><td colspan="4" class="text-center text-muted py-3">Sin ventas en el período</td></tr>
+                                @foreach (var v in _ventasData.VentasPorDia)
+                                {
+                                    <tr>
+                                        <td>@v.Fecha.ToString("dd/MM/yyyy")</td>
+                                        <td class="text-center">@v.CantidadFacturas</td>
+                                        <td class="text-end fw-semibold">$@v.TotalVentas.ToString("N0")</td>
+                                        <td class="text-end @(v.TotalCobrado < v.TotalVentas ? "text-warning" : "text-success")">
+                                            $@v.TotalCobrado.ToString("N0")
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!_ventasData.VentasPorDia.Any())
+                                {
+                                    <tr><td colspan="4" class="text-center text-muted py-3">Sin ventas en el período</td></tr>
+                                }
                             }
                         </tbody>
                     </table>
@@ -80,7 +90,7 @@ else if (_ventasData is not null)
                     <i class="bi bi-pie-chart me-2"></i>Gastos por categoría
                     @if (_gastosData is not null)
                     {
-                        <span class="ms-2 badge bg-danger">Total: @_gastosData.TotalGastos.ToString("C0")</span>
+                        <span class="ms-2 badge bg-danger">Total: $@_gastosData.TotalGastos.ToString("N0")</span>
                     }
                 </div>
                 <div class="table-responsive">
@@ -96,7 +106,7 @@ else if (_ventasData is not null)
                                     <tr>
                                         <td>@g.CategoryName</td>
                                         <td class="text-center">@g.TotalEgresos</td>
-                                        <td class="text-end fw-semibold text-danger">@g.TotalMonto.ToString("C0")</td>
+                                        <td class="text-end fw-semibold text-danger">$@g.TotalMonto.ToString("N0")</td>
                                     </tr>
                                 }
                                 @if (!_gastosData.PorCategoria.Any())
@@ -117,7 +127,7 @@ else if (_ventasData is not null)
                     <i class="bi bi-cash-stack me-2"></i>Cuentas por Cobrar
                     @if (_cxcData is not null && _cxcData.Deudores.Any())
                     {
-                        <span class="ms-2 badge bg-warning text-dark">Total: @_cxcData.TotalPorCobrar.ToString("C0")</span>
+                        <span class="ms-2 badge bg-warning text-dark">Total: $@_cxcData.TotalPorCobrar.ToString("N0")</span>
                     }
                 </div>
                 <div class="table-responsive">
@@ -134,7 +144,7 @@ else if (_ventasData is not null)
                                         <td class="fw-semibold">@cxc.CustomerName</td>
                                         <td class="text-muted">@cxc.DocumentNumber</td>
                                         <td class="text-center">@cxc.FacturasPendientes</td>
-                                        <td class="text-end text-danger fw-semibold">@cxc.SaldoPendiente.ToString("C0")</td>
+                                        <td class="text-end text-danger fw-semibold">$@cxc.SaldoPendiente.ToString("N0")</td>
                                         <td class="text-muted small">@cxc.UltimaFacturaFecha?.ToString("dd/MM/yyyy")</td>
                                     </tr>
                                 }
@@ -171,7 +181,7 @@ else if (_ventasData is not null)
         StateHasChanged();
         var t1 = Api.GetReporteVentasAsync(_desde, _hasta);
         var t2 = Api.GetReporteGastosAsync(_desde, _hasta);
-        var t3 = Api.GetReporteCuentasPorCobrarAsync();
+        var t3 = Api.GetReporteCuentasPorCobrarAsync(_desde, _hasta);
         await Task.WhenAll(t1, t2, t3);
         _ventasData = t1.Result;
         _gastosData = t2.Result;

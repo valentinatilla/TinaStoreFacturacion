@@ -105,7 +105,7 @@ else
                                 }
                             </td>
                             <td class="text-end fw-semibold ts-table-hide-mobile @(c.PendingBalance > 0 ? "text-danger" : "text-muted")">
-                                @(c.PendingBalance > 0 ? c.PendingBalance.ToString("C0") : "—")
+                                @(c.PendingBalance > 0 ? c.PendingBalance.ToString("N0") : "—")
                             </td>
                             <td class="text-muted small ts-table-hide-mobile">
                                 @(c.LastPurchaseDate.HasValue

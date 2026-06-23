@@ -68,33 +68,42 @@ public sealed class ReportService : IReportService
         return new ReporteGastosDto(from, to, totalMonto, gastos.Count, porCategoria);
     }
 
-    public async Task<ReporteCuentasPorCobrarDto> GetReceivablesReportAsync()
+    public async Task<ReporteCuentasPorCobrarDto> GetReceivablesReportAsync(DateTime from, DateTime to)
     {
-        var cuentas = await _repo.GetAllReceivablesAsync();
-        var total   = cuentas.Sum(a => a.Balance);
+        var toFin   = to.Date.AddDays(1).AddTicks(-1);
+        var cuentas = await _repo.GetAllReceivablesAsync(from.Date, toFin);
 
         var deudores = cuentas
             .Select(a =>
             {
-                var facturasPendientes = a.Customer?.Invoices?
-                    .Count(i => i.Balance > 0 && i.Status != InvoiceStatus.Cancelled) ?? 0;
-                var ultimaFecha = a.Customer?.Invoices?
-                    .Where(i => i.Balance > 0 && i.Status != InvoiceStatus.Cancelled)
+                // Solo facturas del período con saldo pendiente
+                var facturasPeriodo = a.Customer?.Invoices?
+                    .Where(i => i.Balance > 0
+                             && i.Status != InvoiceStatus.Cancelled
+                             && i.InvoiceDate >= from.Date
+                             && i.InvoiceDate <= toFin)
+                    .ToList() ?? [];
+
+                var saldoPeriodo = facturasPeriodo.Sum(i => i.Balance);
+                var ultimaFecha  = facturasPeriodo
                     .OrderByDescending(i => i.InvoiceDate)
                     .FirstOrDefault()?.InvoiceDate;
 
                 return new DeudorCXCDto(
                     a.CustomerId,
-                    a.Customer?.FullName    ?? string.Empty,
+                    a.Customer?.FullName       ?? string.Empty,
                     a.Customer?.DocumentNumber,
                     a.Customer?.Phone,
-                    a.Balance,
-                    facturasPendientes,
+                    saldoPeriodo,
+                    facturasPeriodo.Count,
                     ultimaFecha);
             })
+            .Where(d => d.SaldoPendiente > 0)
+            .OrderByDescending(d => d.SaldoPendiente)
             .ToList();
 
-        return new ReporteCuentasPorCobrarDto(total, cuentas.Count, deudores);
+        var total = deudores.Sum(d => d.SaldoPendiente);
+        return new ReporteCuentasPorCobrarDto(total, deudores.Count, deudores);
     }
 
     public async Task<IEnumerable<TopProductoDto>> GetTopProductsAsync(DateTime from, DateTime to, int top = 10)

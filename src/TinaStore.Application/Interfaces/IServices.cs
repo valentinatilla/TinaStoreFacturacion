@@ -94,7 +94,7 @@ public interface IReportService
 {
     Task<ReporteVentasDto> GetSalesReportAsync(DateTime from, DateTime to);
     Task<ReporteGastosDto> GetExpensesReportAsync(DateTime from, DateTime to);
-    Task<ReporteCuentasPorCobrarDto> GetReceivablesReportAsync();
+    Task<ReporteCuentasPorCobrarDto> GetReceivablesReportAsync(DateTime from, DateTime to);
     Task<IEnumerable<TopProductoDto>> GetTopProductsAsync(DateTime from, DateTime to, int top = 10);
 }
 

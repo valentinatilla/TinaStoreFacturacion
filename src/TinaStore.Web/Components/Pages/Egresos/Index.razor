@@ -72,11 +72,15 @@ else
                 <tbody>
                     @foreach (var e in _filtradosCompras)
                     {
-                        <tr>
+                        var anulado = e.Status != 0;
+                        <tr class="@(anulado ? "text-muted" : "")"
+                            style="@(anulado ? "opacity:.55" : "")">
                             <td class="text-muted small">@e.ExpenseDate.ToString("dd/MM/yyyy")</td>
-                            <td>@e.Description</td>
+                            <td>@if (anulado){<s>@e.Description</s>}else{@e.Description}</td>
                             <td class="text-muted small">@(e.SupplierName ?? "—")</td>
-                            <td class="text-end fw-semibold">@e.Amount.ToString("C0")</td>
+                            <td class="text-end fw-semibold">
+                                @if (anulado){<s>$@e.Amount.ToString("N0")</s>}else{<span>$@e.Amount.ToString("N0")</span>}
+                            </td>
                             <td class="text-end">
                                 @if (e.Status == 0)
                                 {
@@ -114,11 +118,15 @@ else
                 <tbody>
                     @foreach (var e in _filtradosOtros)
                     {
-                        <tr>
+                        var anulado = e.Status != 0;
+                        <tr class="@(anulado ? "text-muted" : "")"
+                            style="@(anulado ? "opacity:.55" : "")">
                             <td class="text-muted small">@e.ExpenseDate.ToString("dd/MM/yyyy")</td>
-                            <td>@e.Description</td>
-                            <td><span class="badge bg-secondary">@e.ExpenseCategoryName</span></td>
-                            <td class="text-end fw-semibold">@e.Amount.ToString("C0")</td>
+                            <td>@if (anulado){<s>@e.Description</s>}else{@e.Description}</td>
+                            <td><span class="badge @(anulado ? "bg-danger" : "bg-secondary")">@e.ExpenseCategoryName</span></td>
+                            <td class="text-end fw-semibold">
+                                @if (anulado){<s>$@e.Amount.ToString("N0")</s>}else{<span>$@e.Amount.ToString("N0")</span>}
+                            </td>
                             <td class="text-end">
                                 @if (e.Status == 0)
                                 {
@@ -238,12 +246,12 @@ else
     private int _filtroCategoriaId;
 
     private string TotalCompras =>
-        _filtradosCompras.Where(e => e.Status == 0).Sum(e => e.Amount).ToString("C0");
+        $"${_filtradosCompras.Where(e => e.Status == 0).Sum(e => e.Amount):N0}";
     private string TotalOtros =>
-        _filtradosOtros.Where(e => e.Status == 0).Sum(e => e.Amount).ToString("C0");
+        $"${_filtradosOtros.Where(e => e.Status == 0).Sum(e => e.Amount):N0}";
     private string TotalGeneral =>
-        (_filtradosCompras.Where(e => e.Status == 0).Sum(e => e.Amount)
-       + _filtradosOtros.Where(e => e.Status == 0).Sum(e => e.Amount)).ToString("C0");
+        $"${(_filtradosCompras.Where(e => e.Status == 0).Sum(e => e.Amount)
+           + _filtradosOtros.Where(e => e.Status == 0).Sum(e => e.Amount)):N0}";
 
     protected override async Task OnInitializedAsync()
     {

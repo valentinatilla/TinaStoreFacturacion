@@ -319,11 +319,15 @@ public class ReportRepository(AppDbContext context) : IReportRepository
             .OrderBy(e => e.ExpenseDate)
             .ToListAsync(ct);
 
-    public async Task<IReadOnlyList<AccountReceivable>> GetAllReceivablesAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyList<AccountReceivable>> GetAllReceivablesAsync(DateTime from, DateTime to, CancellationToken ct = default)
         => await _db.AccountsReceivable
             .Include(a => a.Customer)
                 .ThenInclude(c => c.Invoices)
-            .Where(a => a.TotalDebt > a.TotalPaid)
+            .Where(a => a.Customer.Invoices.Any(i =>
+                i.Balance > 0
+                && i.Status != Domain.Enums.InvoiceStatus.Cancelled
+                && i.InvoiceDate >= from
+                && i.InvoiceDate <= to))
             .OrderByDescending(a => a.TotalDebt - a.TotalPaid)
             .ToListAsync(ct);
 }

@@ -39,7 +39,7 @@ public record ProveedorDto(int Id, string Name, string? TaxId, string? Phone, st
 public record CreateProveedorDto(string Name, string? TaxId, string? Phone, string? Email, string? Address, string? Notes);
 public record UpdateProveedorDto(string Name, string? TaxId, string? Phone, string? Email, string? Address, string? Notes, bool IsActive);
 
-public record MetodoPagoDto(int Id, string Name, string? Description, bool IsActive);
+public record MetodoPagoDto(int Id, string Name, string? Description, bool IsActive, int Type = 0, string TypeName = "");
 
 public record ProductoDto(int Id, string? Sku, string Name, string? Description, string? Unit, decimal SalePrice, decimal PurchasePrice, int CurrentStock, int MinimumStock, bool IsActive, bool IsLowStock, decimal ProfitMargin, int CategoryId, string CategoryName, int? SupplierId, string? SupplierName, string? ImagePath);
 public record CreateProductoDto(string? Sku, string Name, string? Description, string? Unit, decimal PurchasePrice, decimal SalePrice, int CurrentStock, int MinimumStock, int CategoryId, int? SupplierId);
@@ -528,8 +528,9 @@ public class TinaStoreApiClient
         GetSafeAsync<ReporteGastosDto>(
             $"/api/reports/gastos?from={desde:yyyy-MM-dd}&to={hasta:yyyy-MM-dd}");
 
-    public Task<ReporteCuentasPorCobrarDto?> GetReporteCuentasPorCobrarAsync() =>
-        GetSafeAsync<ReporteCuentasPorCobrarDto>("/api/reports/cuentas-por-cobrar");
+    public Task<ReporteCuentasPorCobrarDto?> GetReporteCuentasPorCobrarAsync(DateTime desde, DateTime hasta) =>
+        GetSafeAsync<ReporteCuentasPorCobrarDto>(
+            $"/api/reports/cuentas-por-cobrar?from={desde:yyyy-MM-dd}&to={hasta:yyyy-MM-dd}");
 
     public async Task<byte[]?> ExportarProductosExcelAsync()
     {

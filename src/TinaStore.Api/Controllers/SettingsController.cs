@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TinaStore.Application.DTOs;
@@ -11,8 +12,13 @@ namespace TinaStore.Api.Controllers;
 public sealed class SettingsController : ControllerBase
 {
     private readonly IStoreSettingsService _service;
+    private readonly IValidator<UpdateStoreSettingsDto> _updateValidator;
 
-    public SettingsController(IStoreSettingsService service) => _service = service;
+    public SettingsController(IStoreSettingsService service, IValidator<UpdateStoreSettingsDto> updateValidator)
+    {
+        _service = service;
+        _updateValidator = updateValidator;
+    }
 
     /// <summary>Obtiene la configuración actual de la tienda.</summary>
     [HttpGet]
@@ -23,8 +29,9 @@ public sealed class SettingsController : ControllerBase
     [HttpPut]
     public async Task<IActionResult> Update([FromBody] UpdateStoreSettingsDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.StoreName))
-            return BadRequest(new { mensaje = "El nombre de la tienda es obligatorio." });
+        var validacion = await _updateValidator.ValidateAsync(dto);
+        if (!validacion.IsValid)
+            return BadRequest(validacion.Errors.Select(e => e.ErrorMessage));
 
         var result = await _service.UpdateAsync(dto);
         return Ok(result);

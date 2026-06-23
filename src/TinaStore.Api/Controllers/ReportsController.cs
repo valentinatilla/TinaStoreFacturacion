@@ -23,10 +23,10 @@ public sealed class ReportsController : ControllerBase
     public async Task<IActionResult> GetExpenses([FromQuery] DateTime from, [FromQuery] DateTime to)
         => Ok(await _service.GetExpensesReportAsync(from, to));
 
-    /// <summary>Reporte de cuentas por cobrar vigentes.</summary>
+    /// <summary>Reporte de cuentas por cobrar vigentes en el período.</summary>
     [HttpGet("cuentas-por-cobrar")]
-    public async Task<IActionResult> GetReceivables()
-        => Ok(await _service.GetReceivablesReportAsync());
+    public async Task<IActionResult> GetReceivables([FromQuery] DateTime from, [FromQuery] DateTime to)
+        => Ok(await _service.GetReceivablesReportAsync(from, to));
 
     /// <summary>Top productos más vendidos en el período.</summary>
     [HttpGet("top-productos")]

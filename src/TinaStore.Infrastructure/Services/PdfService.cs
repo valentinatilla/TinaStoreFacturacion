@@ -53,6 +53,7 @@ public sealed class PdfService : IPdfService
                             c.Item().AlignRight().Text("N° Factura").FontSize(8).FontColor("#888888");
                             c.Item().AlignRight().Text(invoice.InvoiceNumber).Bold().FontSize(14);
                             c.Item().AlignRight().Text(invoice.InvoiceDate.ToString("dd/MM/yyyy HH:mm")).FontColor("#555555");
+                            c.Item().AlignRight().Text($"Moneda: {currency}").FontSize(8).FontColor("#888888");
                         });
                     });
                     col.Item().PaddingVertical(5).LineHorizontal(1).LineColor("#CCCCCC");
@@ -78,6 +79,7 @@ public sealed class PdfService : IPdfService
                     });
 
                     // Tabla de productos
+                    var esVentaLibre = invoice.Details.Any() && invoice.Details.All(d => d.ProductId == null);
                     col.Item().Table(table =>
                     {
                         table.ColumnsDefinition(cols =>
@@ -96,7 +98,7 @@ public sealed class PdfService : IPdfService
 
                         table.Header(h =>
                         {
-                            h.Cell().Element(HeaderCell).Text("Producto");
+                            h.Cell().Element(HeaderCell).Text(esVentaLibre ? "Descripción" : "Producto");
                             h.Cell().Element(HeaderCell).AlignCenter().Text("Cant.");
                             h.Cell().Element(HeaderCell).AlignRight().Text("Precio");
                             h.Cell().Element(HeaderCell).AlignRight().Text("Desc.");
@@ -113,9 +115,9 @@ public sealed class PdfService : IPdfService
 
                             table.Cell().Element(c => Cell(c, bg)).Text(d.ProductName);
                             table.Cell().Element(c => Cell(c, bg)).AlignCenter().Text(d.Quantity.ToString());
-                            table.Cell().Element(c => Cell(c, bg)).AlignRight().Text($"{currency} {d.UnitPrice:N2}");
-                            table.Cell().Element(c => Cell(c, bg)).AlignRight().Text($"{currency} {d.DiscountAmount:N2}");
-                            table.Cell().Element(c => Cell(c, bg)).AlignRight().Text($"{currency} {d.Subtotal:N2}");
+                            table.Cell().Element(c => Cell(c, bg)).AlignRight().Text($"${d.UnitPrice:N0}");
+                            table.Cell().Element(c => Cell(c, bg)).AlignRight().Text(d.DiscountAmount > 0 ? $"${d.DiscountAmount:N0}" : "—");
+                            table.Cell().Element(c => Cell(c, bg)).AlignRight().Text($"${d.Subtotal:N0}");
                             rowIndex++;
                         }
                     });
@@ -134,7 +136,7 @@ public sealed class PdfService : IPdfService
                                 });
                                 r.ConstantItem(120).AlignRight().Text(t =>
                                 {
-                                    var span = t.Span($"{currency} {valor:N2}");
+                                    var span = t.Span($"${valor:N0}");
                                     if (bold) span.Bold();
                                 });
                             });
@@ -142,7 +144,7 @@ public sealed class PdfService : IPdfService
 
                         Fila("Subtotal:", invoice.Subtotal);
                         if (invoice.DiscountAmount > 0) Fila("Descuento:", invoice.DiscountAmount);
-                        if (invoice.TaxAmount > 0) Fila("Impuesto:", invoice.TaxAmount);
+                        if (invoice.TaxAmount > 0) Fila($"Impuesto ({currency}):", invoice.TaxAmount);
                         Fila("TOTAL:", invoice.Total, true);
                         Fila("Pagado:", invoice.AmountPaid);
                         Fila("Saldo pendiente:", invoice.Balance, invoice.Balance > 0);
@@ -166,7 +168,7 @@ public sealed class PdfService : IPdfService
                                         if (!string.IsNullOrWhiteSpace(p.Notes))
                                             c.Item().Text($"Nota: {p.Notes}").FontSize(9).FontColor("#888888");
                                     });
-                                    r.ConstantItem(120).AlignRight().Text($"{currency} {p.Amount:N2}");
+                                    r.ConstantItem(120).AlignRight().Text($"${p.Amount:N0}");
                                 });
                             }
                         });
