@@ -27,9 +27,9 @@ public class ValidatorsTests
     }
 
     [Fact]
-    public void Cliente_NombreMasDe100Chars_FallaValidacion()
+    public void Cliente_NombreMasDe30Chars_FallaValidacion()
     {
-        var nombre = new string('A', 101);
+        var nombre = new string('A', 31);
         var dto = new CreateCustomerDto(nombre, null, null, null, null, null, null);
         var resultado = _createClienteValidator.Validate(dto);
         resultado.IsValid.Should().BeFalse();
@@ -37,9 +37,9 @@ public class ValidatorsTests
     }
 
     [Fact]
-    public void Cliente_NombreExacto100Chars_PasaValidacion()
+    public void Cliente_NombreExacto30Chars_PasaValidacion()
     {
-        var nombre = new string('A', 100);
+        var nombre = new string('A', 30);
         var dto = new CreateCustomerDto(nombre, null, null, null, null, null, null);
         var resultado = _createClienteValidator.Validate(dto);
         resultado.IsValid.Should().BeTrue();
@@ -117,9 +117,9 @@ public class ValidatorsTests
     }
 
     [Fact]
-    public void Producto_NombreMasDe100Chars_FallaValidacion()
+    public void Producto_NombreMasDe30Chars_FallaValidacion()
     {
-        var nombre = new string('B', 101);
+        var nombre = new string('B', 31);
         var dto = new CreateProductDto(null, nombre, null, null, 0, 1000, 0, 0, 1, null);
         var resultado = _createProdValidator.Validate(dto);
         resultado.IsValid.Should().BeFalse();
@@ -127,9 +127,9 @@ public class ValidatorsTests
     }
 
     [Fact]
-    public void Producto_SkuMasDe50Chars_FallaValidacion()
+    public void Producto_SkuMasDe30Chars_FallaValidacion()
     {
-        var sku = new string('S', 51);
+        var sku = new string('S', 31);
         var dto = new CreateProductDto(sku, "Nombre", null, null, 0, 1000, 0, 0, 1, null);
         var resultado = _createProdValidator.Validate(dto);
         resultado.IsValid.Should().BeFalse();
@@ -137,9 +137,9 @@ public class ValidatorsTests
     }
 
     [Fact]
-    public void Producto_SkuExacto50Chars_PasaValidacion()
+    public void Producto_SkuExacto30Chars_PasaValidacion()
     {
-        var sku = new string('S', 50);
+        var sku = new string('S', 30);
         var dto = new CreateProductDto(sku, "Nombre válido", null, null, 0, 1000, 0, 0, 1, null);
         var resultado = _createProdValidator.Validate(dto);
         resultado.IsValid.Should().BeTrue();
@@ -244,9 +244,9 @@ public class ValidatorsTests
     }
 
     [Fact]
-    public void Categoria_NombreMasDe60Chars_FallaValidacion()
+    public void Categoria_NombreMasDe30Chars_FallaValidacion()
     {
-        var nombre = new string('C', 61);
+        var nombre = new string('C', 31);
         var dto = new CreateCategoryDto(nombre, null);
         var resultado = _createCatValidator.Validate(dto);
         resultado.IsValid.Should().BeFalse();
@@ -254,9 +254,9 @@ public class ValidatorsTests
     }
 
     [Fact]
-    public void Categoria_NombreExacto60Chars_PasaValidacion()
+    public void Categoria_NombreExacto30Chars_PasaValidacion()
     {
-        var nombre = new string('C', 60);
+        var nombre = new string('C', 30);
         var dto = new CreateCategoryDto(nombre, null);
         var resultado = _createCatValidator.Validate(dto);
         resultado.IsValid.Should().BeTrue();
@@ -273,9 +273,9 @@ public class ValidatorsTests
     }
 
     [Fact]
-    public void CategoriaUpdate_NombreMasDe60Chars_FallaValidacion()
+    public void CategoriaUpdate_NombreMasDe30Chars_FallaValidacion()
     {
-        var nombre = new string('C', 61);
+        var nombre = new string('C', 31);
         var dto = new UpdateCategoryDto(nombre, null, true);
         var resultado = _updateCatValidator.Validate(dto);
         resultado.IsValid.Should().BeFalse();

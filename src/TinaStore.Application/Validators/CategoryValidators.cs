@@ -9,7 +9,7 @@ public sealed class CreateCategoryValidator : AbstractValidator<CreateCategoryDt
     {
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("El nombre de la categoría es obligatorio.")
-            .MaximumLength(60).WithMessage("El nombre no puede superar 60 caracteres.");
+            .MaximumLength(30).WithMessage("El nombre no puede superar 30 caracteres.");
 
         RuleFor(x => x.Description)
             .MaximumLength(200).WithMessage("La descripción no puede superar 200 caracteres.")
@@ -23,6 +23,6 @@ public sealed class UpdateCategoryValidator : AbstractValidator<UpdateCategoryDt
     {
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("El nombre de la categoría es obligatorio.")
-            .MaximumLength(60).WithMessage("El nombre no puede superar 60 caracteres.");
+            .MaximumLength(30).WithMessage("El nombre no puede superar 30 caracteres.");
     }
 }

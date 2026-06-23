@@ -8,12 +8,12 @@ public sealed class CreateProductValidator : AbstractValidator<CreateProductDto>
     public CreateProductValidator()
     {
         RuleFor(x => x.Sku)
-            .MaximumLength(50).WithMessage("El SKU no puede superar 50 caracteres.")
+            .MaximumLength(30).WithMessage("El SKU no puede superar 30 caracteres.")
             .When(x => x.Sku is not null);
 
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("El nombre del producto es obligatorio.")
-            .MaximumLength(100).WithMessage("El nombre no puede superar 100 caracteres.");
+            .MaximumLength(30).WithMessage("El nombre no puede superar 30 caracteres.");
 
         RuleFor(x => x.Description)
             .MaximumLength(300).WithMessage("La descripción no puede superar 300 caracteres.")
@@ -50,7 +50,7 @@ public sealed class UpdateProductValidator : AbstractValidator<UpdateProductDto>
     {
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("El nombre del producto es obligatorio.")
-            .MaximumLength(100).WithMessage("El nombre no puede superar 100 caracteres.");
+            .MaximumLength(30).WithMessage("El nombre no puede superar 30 caracteres.");
 
         RuleFor(x => x.Unit)
             .MaximumLength(30).WithMessage("La unidad de medida no puede superar 30 caracteres.")
