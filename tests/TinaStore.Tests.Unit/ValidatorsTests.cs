@@ -186,7 +186,7 @@ public class ValidatorsTests
     [Fact]
     public void Producto_PrecioVentaSuperaTecho_FallaValidacion()
     {
-        var dto = new CreateProductDto(null, "Nombre", null, null, 0, 10_000_000m, 0, 0, 1, null);
+        var dto = new CreateProductDto(null, "Nombre", null, null, 0, 1_000_000m, 0, 0, 1, null);
         var resultado = _createProdValidator.Validate(dto);
         resultado.IsValid.Should().BeFalse();
         resultado.Errors.Should().Contain(e => e.PropertyName == "SalePrice");
@@ -195,7 +195,7 @@ public class ValidatorsTests
     [Fact]
     public void Producto_PrecioVentaEnTecho_PasaValidacion()
     {
-        var dto = new CreateProductDto(null, "Nombre", null, null, 0, 9_999_999.99m, 0, 0, 1, null);
+        var dto = new CreateProductDto(null, "Nombre", null, null, 0, 999_999.99m, 0, 0, 1, null);
         var resultado = _createProdValidator.Validate(dto);
         resultado.IsValid.Should().BeTrue();
     }
@@ -203,7 +203,7 @@ public class ValidatorsTests
     [Fact]
     public void Producto_PrecioCompraSuperaTecho_FallaValidacion()
     {
-        var dto = new CreateProductDto(null, "Nombre", null, null, 10_000_001m, 1000, 0, 0, 1, null);
+        var dto = new CreateProductDto(null, "Nombre", null, null, 1_000_000m, 1000, 0, 0, 1, null);
         var resultado = _createProdValidator.Validate(dto);
         resultado.IsValid.Should().BeFalse();
         resultado.Errors.Should().Contain(e => e.PropertyName == "PurchasePrice");

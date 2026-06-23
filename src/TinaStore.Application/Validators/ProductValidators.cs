@@ -27,11 +27,11 @@ public sealed class CreateProductValidator : AbstractValidator<CreateProductDto>
 
         RuleFor(x => x.PurchasePrice)
             .GreaterThanOrEqualTo(0).WithMessage("El precio de compra no puede ser negativo.")
-            .LessThanOrEqualTo(9_999_999.99m).WithMessage("El precio de compra no puede superar $9.999.999,99.");
+            .LessThanOrEqualTo(999_999.99m).WithMessage("El precio de compra no puede superar $999.999,99.");
 
         RuleFor(x => x.SalePrice)
             .GreaterThan(0).WithMessage("El precio de venta debe ser mayor a cero.")
-            .LessThanOrEqualTo(9_999_999.99m).WithMessage("El precio de venta no puede superar $9.999.999,99.");
+            .LessThanOrEqualTo(999_999.99m).WithMessage("El precio de venta no puede superar $999.999,99.");
 
         RuleFor(x => x.CurrentStock)
             .GreaterThanOrEqualTo(0).WithMessage("El stock inicial no puede ser negativo.");
@@ -60,11 +60,11 @@ public sealed class UpdateProductValidator : AbstractValidator<UpdateProductDto>
 
         RuleFor(x => x.PurchasePrice)
             .GreaterThanOrEqualTo(0).WithMessage("El precio de compra no puede ser negativo.")
-            .LessThanOrEqualTo(9_999_999.99m).WithMessage("El precio de compra no puede superar $9.999.999,99.");
+            .LessThanOrEqualTo(999_999.99m).WithMessage("El precio de compra no puede superar $999.999,99.");
 
         RuleFor(x => x.SalePrice)
             .GreaterThan(0).WithMessage("El precio de venta debe ser mayor a cero.")
-            .LessThanOrEqualTo(9_999_999.99m).WithMessage("El precio de venta no puede superar $9.999.999,99.");
+            .LessThanOrEqualTo(999_999.99m).WithMessage("El precio de venta no puede superar $999.999,99.");
 
         RuleFor(x => x.CategoryId)
             .GreaterThan(0).WithMessage("Debe seleccionar una categoría válida.");
