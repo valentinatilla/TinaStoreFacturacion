@@ -15,12 +15,10 @@ Los issues marcados ✅ ya están resueltos. Los marcados 🔴/🟡/🟢 están 
 ### ✅ BUG-24 — Bajo stock y Agotado al mismo tiempo → resuelto (Fase M)
 ### ✅ BUG-25 — Plantillas Excel inconsistentes → resuelto (Fase N)
 
-### 🟡 DEUDA-01 — Índice único en Products(Name) y Products(Sku) pendiente
-- **Estado**: Deuda técnica. La validación de unicidad está implementada en `ProductService` (nivel de servicio), pero **no existe** un índice único en la base de datos.
-- **Motivo**: La BD de desarrollo contiene cientos de productos duplicados por nombre, resultado de una importación masiva accidental. Crear el índice ahora rompería el startup de la aplicación.
-- **Impacto**: Si dos usuarios crean el mismo producto simultáneamente (condición de carrera), el servicio no garantiza unicidad absoluta.
-- **Acción requerida**: Limpiar los duplicados de la BD (revisar cuáles son legítimos y cuáles son residuos de importación), luego ejecutar una migración que agregue `HasIndex` con `IsUnique()` en `AppDbContext`.
-- **Prioridad**: Media (no bloquea operación normal).
+### ✅ DEUDA-01 — Índice único en Products(Name) y Products(Sku) → RESUELTO (2026-06-23)
+- **Estado**: ✅ Completado. Se limpiaron 108 registros duplicados con soft-delete y se creó la migración `AddUniqueIndexProductNameSku` con índices únicos filtrados (`WHERE IsDeleted = 0`).
+- **Solución**: Script temporal `tools/DbClean` para limpiar `tinastore-dev.db`; `HasIndex().IsUnique().HasFilter()` en `AppDbContext`; migración EF Core generada y aplicada.
+- **Archivos**: `AppDbContext.cs`, `Data/Migrations/20260623031426_AddUniqueIndexProductNameSku.cs`.
 
 ---
 
