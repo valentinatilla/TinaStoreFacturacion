@@ -9,6 +9,11 @@
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h4 class="fw-bold mb-0"><i class="bi bi-receipt me-2 text-purple"></i>Ventas</h4>
     <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-outline-purple" @onclick="ExportarExcel" disabled="@_exportandoVentas">
+            @if (_exportandoVentas) { <span class="spinner-border spinner-border-sm me-1"></span> }
+            else { <i class="bi bi-file-earmark-excel me-1"></i> }
+            Exportar ventas
+        </button>
         <NavLink href="/ventas/libre" class="btn btn-outline-purple">
             <i class="bi bi-lightning-charge me-1"></i>Venta libre
         </NavLink>
@@ -398,6 +403,29 @@ else
     private string _motivoAnulacion = "";
     private bool   _anulando;
     private string? _errorModal;
+    private bool _exportandoVentas;
+
+    private async Task ExportarExcel()
+    {
+        _exportandoVentas = true;
+        _mensaje = null;
+        try
+        {
+            var bytes = await Api.ExportarVentasExcelAsync(_filtroDesde, _filtroHasta);
+            if (bytes is not null)
+            {
+                var base64 = Convert.ToBase64String(bytes);
+                await JS.InvokeVoidAsync("downloadFileFromBase64", base64,
+                    $"ventas-{DateTime.Now:yyyyMMdd}.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+                _exito   = true;
+                _mensaje = "Ventas exportadas correctamente.";
+            }
+            else { _exito = false; _mensaje = "No se pudo generar el archivo Excel."; }
+        }
+        catch { _exito = false; _mensaje = "Error al exportar ventas."; }
+        finally { _exportandoVentas = false; }
+    }
 
     private bool   _mostrarModalPago;
     private int    _idFacturaPago;

@@ -90,7 +90,8 @@ public class AppDbContext : DbContext
 
         // Datos iniciales: categorías por defecto
         modelBuilder.Entity<Category>().HasData(
-            new Category { Id = 1, Name = "General", Description = "Categoría general", IsActive = true, CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
+            new Category { Id = 1,  Name = "General",        Description = "Categoría general",                         IsActive = true, CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new Category { Id = 99, Name = "Sin categoría",  Description = "Categoría de reserva para productos sin clasificar", IsActive = true, CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
         );
 
         // Datos iniciales: métodos de pago por defecto

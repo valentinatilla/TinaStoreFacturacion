@@ -215,23 +215,23 @@ else
                 <div class="modal-body row g-3">
                     <div class="col-md-5">
                         <label class="form-label small fw-semibold">Nombre *</label>
-                        <input class="form-control" @bind="_form.Name" />
+                        <input class="form-control" @bind="_form.Name" maxlength="100" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">SKU</label>
-                        <input class="form-control" @bind="_form.Sku" placeholder="Ej: SKU-001" />
+                        <input class="form-control" @bind="_form.Sku" maxlength="50" placeholder="Ej: SKU-001" />
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Descripción</label>
-                        <input class="form-control" @bind="_form.Description" />
+                        <input class="form-control" @bind="_form.Description" maxlength="300" />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Precio de venta *</label>
-                        <input type="number" class="form-control" @bind="_form.SalePrice" min="0" step="0.01" />
+                        <input type="number" class="form-control" @bind="_form.SalePrice" min="0.01" max="9999999.99" step="0.01" />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Precio de costo</label>
-                        <input type="number" class="form-control" @bind="_form.PurchasePrice" min="0" step="0.01" />
+                        <input type="number" class="form-control" @bind="_form.PurchasePrice" min="0" max="9999999.99" step="0.01" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">% Ganancia</label>
@@ -256,7 +256,7 @@ else
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">Unidad</label>
-                        <input class="form-control" @bind="_form.Unit" placeholder="Ej: unidad, kg…" />
+                        <input class="form-control" @bind="_form.Unit" maxlength="30" placeholder="Ej: unidad, kg…" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">Categoría *</label>
@@ -966,14 +966,24 @@ else
             _errorModal = "Debes seleccionar una categoría.";
             return;
         }
-        if (_form.SalePrice < 0)
+        if (_form.SalePrice <= 0)
         {
-            _errorModal = "El precio de venta no puede ser negativo.";
+            _errorModal = "El precio de venta debe ser mayor a cero.";
+            return;
+        }
+        if (_form.SalePrice > 9_999_999.99m)
+        {
+            _errorModal = "El precio de venta no puede superar $9.999.999,99.";
             return;
         }
         if (_form.PurchasePrice < 0)
         {
             _errorModal = "El precio de costo no puede ser negativo.";
+            return;
+        }
+        if (_form.PurchasePrice > 9_999_999.99m)
+        {
+            _errorModal = "El precio de costo no puede superar $9.999.999,99.";
             return;
         }
         if (_form.CurrentStock < 0)

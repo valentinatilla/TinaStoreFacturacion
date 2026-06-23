@@ -106,6 +106,8 @@ public interface IPdfService
 public interface IExcelService
 {
     Task<byte[]> ExportProductsAsync();
+    Task<byte[]> ExportCustomersAsync();
+    Task<byte[]> ExportInvoicesAsync(DateTime? desde = null, DateTime? hasta = null);
     Task<ExcelImportResultDto> ImportProductsAsync(Stream excelStream);
     Task<byte[]> GetProductTemplateAsync();
     Task<List<ImportPreviewRowDto>> PreviewImportAsync(Stream excelStream);

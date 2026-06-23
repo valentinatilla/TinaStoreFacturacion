@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using TinaStore.Application.DTOs;
 using TinaStore.Application.Interfaces;
 using TinaStore.Domain.Entities;
+using TinaStore.Domain.Enums;
 using TinaStore.Infrastructure.Data;
 
 namespace TinaStore.Infrastructure.Services;
@@ -12,6 +13,194 @@ public sealed class ExcelService : IExcelService
     private readonly AppDbContext _db;
 
     public ExcelService(AppDbContext db) => _db = db;
+
+    // ── Exportar clientes ─────────────────────────────────────────────────────
+    public async Task<byte[]> ExportCustomersAsync()
+    {
+        var clientes = await _db.Customers
+            .Include(c => c.AccountReceivable)
+            .Where(c => !c.IsDeleted)
+            .OrderBy(c => c.FullName)
+            .ToListAsync();
+
+        using var wb = new XLWorkbook();
+        var ws = wb.Worksheets.Add("Clientes");
+
+        var headers = new[]
+        {
+            "Nombre", "Tipo documento", "N° documento", "Teléfono",
+            "Correo", "Dirección", "Estado", "Última compra",
+            "Saldo pendiente", "Fecha de creación"
+        };
+
+        for (var i = 0; i < headers.Length; i++)
+        {
+            var cell = ws.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#DB2777");
+            cell.Style.Font.FontColor = XLColor.White;
+        }
+
+        for (var i = 0; i < clientes.Count; i++)
+        {
+            var c   = clientes[i];
+            var row = i + 2;
+
+            ws.Cell(row, 1).Value  = c.FullName;
+            ws.Cell(row, 2).Value  = c.DocumentType ?? string.Empty;
+            ws.Cell(row, 3).Value  = c.DocumentNumber ?? string.Empty;
+            ws.Cell(row, 4).Value  = c.Phone ?? string.Empty;
+            ws.Cell(row, 5).Value  = c.Email ?? string.Empty;
+            ws.Cell(row, 6).Value  = c.Address ?? string.Empty;
+            ws.Cell(row, 7).Value  = c.IsActive ? "Activo" : "Inactivo";
+
+            // Última compra: máximo de InvoiceDate entre las facturas no anuladas del cliente
+            var ultCompra = await _db.Invoices
+                .Where(f => !f.IsDeleted && f.CustomerId == c.Id && f.Status != InvoiceStatus.Cancelled)
+                .MaxAsync(f => (DateTime?)f.InvoiceDate);
+            ws.Cell(row, 8).Value = ultCompra.HasValue
+                ? ultCompra.Value.ToLocalTime().ToString("dd/MM/yyyy")
+                : "—";
+
+            var saldo = c.AccountReceivable?.TotalDebt - c.AccountReceivable?.TotalPaid ?? 0m;
+            ws.Cell(row, 9).Value  = (double)(saldo > 0 ? saldo : 0m);
+            ws.Cell(row, 9).Style.NumberFormat.Format = "#,##0.00";
+
+            ws.Cell(row, 10).Value = c.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy");
+
+            if (i % 2 == 1)
+                ws.Row(row).Style.Fill.BackgroundColor = XLColor.FromHtml("#FDF2F8");
+        }
+
+        ws.Columns().AdjustToContents();
+
+        using var ms = new MemoryStream();
+        wb.SaveAs(ms);
+        return ms.ToArray();
+    }
+
+    // ── Exportar ventas ───────────────────────────────────────────────────────
+    public async Task<byte[]> ExportInvoicesAsync(DateTime? desde = null, DateTime? hasta = null)
+    {
+        var query = _db.Invoices
+            .Include(f => f.Customer)
+            .Include(f => f.Details).ThenInclude(d => d.Product).ThenInclude(p => p.Category)
+            .Include(f => f.Payments).ThenInclude(p => p.PaymentMethod)
+            .Where(f => !f.IsDeleted);
+
+        if (desde.HasValue)  query = query.Where(f => f.InvoiceDate >= desde.Value.ToUniversalTime());
+        if (hasta.HasValue)  query = query.Where(f => f.InvoiceDate <= hasta.Value.ToUniversalTime().AddDays(1).AddSeconds(-1));
+
+        var facturas = await query.OrderByDescending(f => f.InvoiceDate).ToListAsync();
+
+        using var wb = new XLWorkbook();
+
+        // ── Hoja 1: Resumen ───────────────────────────────────────────────────
+        var wsRes = wb.Worksheets.Add("Resumen ventas");
+
+        var hdrsRes = new[]
+        {
+            "N° Venta", "Fecha", "Cliente", "Tipo", "Total",
+            "Pagado", "Saldo", "Estado", "Método de pago", "Observaciones"
+        };
+        for (var i = 0; i < hdrsRes.Length; i++)
+        {
+            var cell = wsRes.Cell(1, i + 1);
+            cell.Value = hdrsRes[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#DB2777");
+            cell.Style.Font.FontColor = XLColor.White;
+        }
+
+        for (var i = 0; i < facturas.Count; i++)
+        {
+            var f   = facturas[i];
+            var row = i + 2;
+
+            var tieneProductos = f.Details.Any(d => d.ProductId is not null);
+            var tipo           = tieneProductos ? "Con productos" : "Venta libre";
+            var estado         = f.Status switch
+            {
+                InvoiceStatus.Paid      => "Pagada",
+                InvoiceStatus.Pending   => "Pendiente",
+                InvoiceStatus.Partial   => "Parcial",
+                InvoiceStatus.Cancelled => "ANULADA",
+                _                       => f.Status.ToString()
+            };
+            var metodoPago = f.Payments.Any()
+                ? string.Join(", ", f.Payments
+                    .GroupBy(p => p.PaymentMethod?.Name ?? "—")
+                    .Select(g => g.Key))
+                : "—";
+
+            wsRes.Cell(row, 1).Value  = f.InvoiceNumber;
+            wsRes.Cell(row, 2).Value  = f.InvoiceDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
+            wsRes.Cell(row, 3).Value  = f.Customer?.FullName ?? "—";
+            wsRes.Cell(row, 4).Value  = tipo;
+            wsRes.Cell(row, 5).Value  = (double)f.Total;
+            wsRes.Cell(row, 6).Value  = (double)f.AmountPaid;
+            wsRes.Cell(row, 7).Value  = (double)f.Balance;
+            wsRes.Cell(row, 8).Value  = estado;
+            wsRes.Cell(row, 9).Value  = metodoPago;
+            wsRes.Cell(row, 10).Value = f.Notes ?? string.Empty;
+
+            foreach (var col in new[] { 5, 6, 7 })
+                wsRes.Cell(row, col).Style.NumberFormat.Format = "#,##0.00";
+
+            if (f.Status == InvoiceStatus.Cancelled)
+                wsRes.Row(row).Style.Font.FontColor = XLColor.Red;
+            else if (i % 2 == 1)
+                wsRes.Row(row).Style.Fill.BackgroundColor = XLColor.FromHtml("#FDF2F8");
+        }
+        wsRes.Columns().AdjustToContents();
+
+        // ── Hoja 2: Detalle de productos ──────────────────────────────────────
+        var wsDet = wb.Worksheets.Add("Detalle de productos");
+
+        var hdrsDet = new[]
+        {
+            "N° Venta", "SKU", "Producto", "Categoría",
+            "Cantidad", "Precio unitario", "Descuento", "Subtotal"
+        };
+        for (var i = 0; i < hdrsDet.Length; i++)
+        {
+            var cell = wsDet.Cell(1, i + 1);
+            cell.Value = hdrsDet[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#9333EA");
+            cell.Style.Font.FontColor = XLColor.White;
+        }
+
+        var detRow = 2;
+        foreach (var f in facturas)
+        {
+            foreach (var d in f.Details)
+            {
+                wsDet.Cell(detRow, 1).Value = f.InvoiceNumber;
+                wsDet.Cell(detRow, 2).Value = d.Product?.Sku ?? "—";
+                wsDet.Cell(detRow, 3).Value = d.ProductName.Length > 0 ? d.ProductName : "—";
+                wsDet.Cell(detRow, 4).Value = d.Product?.Category?.Name ?? "—";
+                wsDet.Cell(detRow, 5).Value = d.Quantity;
+                wsDet.Cell(detRow, 6).Value = (double)d.UnitPrice;
+                wsDet.Cell(detRow, 7).Value = (double)d.DiscountAmount;
+                wsDet.Cell(detRow, 8).Value = (double)d.Subtotal;
+
+                foreach (var col in new[] { 6, 7, 8 })
+                    wsDet.Cell(detRow, col).Style.NumberFormat.Format = "#,##0.00";
+
+                if (detRow % 2 == 1)
+                    wsDet.Row(detRow).Style.Fill.BackgroundColor = XLColor.FromHtml("#F3E8FF");
+
+                detRow++;
+            }
+        }
+        wsDet.Columns().AdjustToContents();
+
+        using var ms = new MemoryStream();
+        wb.SaveAs(ms);
+        return ms.ToArray();
+    }
 
     // ── Exportar productos ────────────────────────────────────────────────────
     public async Task<byte[]> ExportProductsAsync()

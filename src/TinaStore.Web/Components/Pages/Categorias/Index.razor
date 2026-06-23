@@ -102,11 +102,11 @@ else
                     }
                     <div class="mb-3">
                         <label class="form-label small fw-semibold">Nombre *</label>
-                        <input class="form-control" @bind="_nombre" @onkeydown="HandleKeyDown" />
+                        <input class="form-control" @bind="_nombre" @onkeydown="HandleKeyDown" maxlength="60" />
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-semibold">Descripción</label>
-                        <input class="form-control" @bind="_descripcion" @onkeydown="HandleKeyDown" />
+                        <input class="form-control" @bind="_descripcion" @onkeydown="HandleKeyDown" maxlength="200" />
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -136,9 +136,10 @@ else
         get
         {
             var comparer = StringComparer.Create(new CultureInfo("es-CO"), ignoreCase: true);
-            var lista = string.IsNullOrWhiteSpace(_busqueda)
-                ? _categorias
-                : _categorias.Where(c => c.Name.Contains(_busqueda, StringComparison.OrdinalIgnoreCase)
+            // Excluir "Sin categoría" (Id=99) del listado de gestión; es una categoría del sistema
+            var lista = _categorias.Where(c => c.Id != 99);
+            if (!string.IsNullOrWhiteSpace(_busqueda))
+                lista = lista.Where(c => c.Name.Contains(_busqueda, StringComparison.OrdinalIgnoreCase)
                                       || (c.Description?.Contains(_busqueda, StringComparison.OrdinalIgnoreCase) ?? false));
             return _ordenCampo switch
             {

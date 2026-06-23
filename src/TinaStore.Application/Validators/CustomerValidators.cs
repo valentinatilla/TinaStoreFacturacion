@@ -9,15 +9,14 @@ public sealed class CreateCustomerValidator : AbstractValidator<CreateCustomerDt
     {
         RuleFor(x => x.FullName)
             .NotEmpty().WithMessage("El nombre completo es obligatorio.")
-            .MaximumLength(200).WithMessage("El nombre no puede superar 200 caracteres.");
+            .MaximumLength(100).WithMessage("El nombre no puede superar 100 caracteres.");
 
         RuleFor(x => x.DocumentNumber)
             .MaximumLength(20).WithMessage("El número de documento no puede superar 20 caracteres.")
             .When(x => x.DocumentNumber is not null);
 
         RuleFor(x => x.Phone)
-            .MaximumLength(20).WithMessage("El teléfono no puede superar 20 caracteres.")
-            .Matches(@"^\+?[\d\s\-]{7,20}$").WithMessage("Ingresa un número de teléfono válido. Para Colombia debe tener 10 dígitos.")
+            .Matches(@"^\d{10}$").WithMessage("El teléfono debe tener exactamente 10 dígitos (sin espacios ni guiones).")
             .When(x => !string.IsNullOrWhiteSpace(x.Phone));
 
         RuleFor(x => x.Email)
@@ -32,11 +31,10 @@ public sealed class UpdateCustomerValidator : AbstractValidator<UpdateCustomerDt
     {
         RuleFor(x => x.FullName)
             .NotEmpty().WithMessage("El nombre completo es obligatorio.")
-            .MaximumLength(200).WithMessage("El nombre no puede superar 200 caracteres.");
+            .MaximumLength(100).WithMessage("El nombre no puede superar 100 caracteres.");
 
         RuleFor(x => x.Phone)
-            .MaximumLength(20).WithMessage("El teléfono no puede superar 20 caracteres.")
-            .Matches(@"^\+?[\d\s\-]{7,20}$").WithMessage("Ingresa un número de teléfono válido. Para Colombia debe tener 10 dígitos.")
+            .Matches(@"^\d{10}$").WithMessage("El teléfono debe tener exactamente 10 dígitos (sin espacios ni guiones).")
             .When(x => !string.IsNullOrWhiteSpace(x.Phone));
 
         RuleFor(x => x.Email)

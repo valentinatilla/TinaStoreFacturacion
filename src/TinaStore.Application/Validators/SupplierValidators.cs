@@ -9,7 +9,7 @@ public sealed class CreateSupplierValidator : AbstractValidator<CreateSupplierDt
     {
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("El nombre del proveedor es obligatorio.")
-            .MaximumLength(200).WithMessage("El nombre no puede superar 200 caracteres.");
+            .MaximumLength(100).WithMessage("El nombre no puede superar 100 caracteres.");
 
         RuleFor(x => x.Email)
             .EmailAddress().WithMessage("El correo electrónico no tiene un formato válido.")
@@ -32,7 +32,7 @@ public sealed class UpdateSupplierValidator : AbstractValidator<UpdateSupplierDt
     {
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("El nombre del proveedor es obligatorio.")
-            .MaximumLength(200).WithMessage("El nombre no puede superar 200 caracteres.");
+            .MaximumLength(100).WithMessage("El nombre no puede superar 100 caracteres.");
 
         RuleFor(x => x.Email)
             .EmailAddress().WithMessage("El correo electrónico no tiene un formato válido.")

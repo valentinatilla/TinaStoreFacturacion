@@ -537,6 +537,25 @@ public class TinaStoreApiClient
         return r.IsSuccessStatusCode ? await r.Content.ReadAsByteArrayAsync() : null;
     }
 
+    public async Task<byte[]?> ExportarClientesExcelAsync()
+    {
+        SetAuthHeader();
+        var r = await _http.GetAsync("/api/customers/exportar");
+        return r.IsSuccessStatusCode ? await r.Content.ReadAsByteArrayAsync() : null;
+    }
+
+    public async Task<byte[]?> ExportarVentasExcelAsync(DateTime? desde = null, DateTime? hasta = null)
+    {
+        SetAuthHeader();
+        var url = "/api/invoices/exportar";
+        var qs  = new List<string>();
+        if (desde.HasValue) qs.Add($"desde={desde.Value:yyyy-MM-dd}");
+        if (hasta.HasValue) qs.Add($"hasta={hasta.Value:yyyy-MM-dd}");
+        if (qs.Count > 0) url += "?" + string.Join("&", qs);
+        var r = await _http.GetAsync(url);
+        return r.IsSuccessStatusCode ? await r.Content.ReadAsByteArrayAsync() : null;
+    }
+
     public async Task<byte[]?> DescargarPlantillaExcelAsync()
     {
         SetAuthHeader();
