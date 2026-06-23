@@ -103,12 +103,6 @@ else if (_cargado)
                           placeholder="Hola {nombre}, te recordamos que tienes un saldo pendiente de {saldo}. Por favor comunícate con nosotros. Gracias 🌸"></textarea>
                 <div class="text-muted small mt-1">Usa <code>{nombre}</code> y <code>{saldo}</code> como variables.</div>
             </div>
-            <div class="col-md-6">
-                <div class="form-check form-switch mt-2">
-                    <input class="form-check-input" type="checkbox" @bind="_modelo.AllowNegativeStock" id="negStock" />
-                    <label class="form-check-label small" for="negStock">Permitir stock negativo</label>
-                </div>
-            </div>
         </div>
 
         <button class="btn bg-purple text-white px-4" @onclick="Guardar" disabled="@_guardando">
@@ -197,6 +191,7 @@ else if (_cargado)
         }
         try
         {
+            _modelo.AllowNegativeStock = false; // el stock negativo no está permitido
             var dto = new UpdateConfiguracionDto(
                 _modelo.StoreName, _modelo.Address, _modelo.Phone, _modelo.Email,
                 _modelo.TaxId, _modelo.InvoiceFooterMessage, _modelo.ReminderMessage,
