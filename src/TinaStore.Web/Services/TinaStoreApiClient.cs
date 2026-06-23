@@ -149,12 +149,16 @@ public class TinaStoreApiClient
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _session.Token);
     }
 
-    // Helper: lee el campo "message" de una respuesta de error de la API
+    // Helper: lee el campo "message" o "mensaje" de una respuesta de error de la API
     private static async Task<string?> LeerMensajeErrorAsync(HttpResponseMessage r)
     {
         try
         {
             var json = await r.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+            // DomainException devuelve { "mensaje": "..." }
+            if (json.TryGetProperty("mensaje", out var msj) && msj.ValueKind == System.Text.Json.JsonValueKind.String)
+                return msj.GetString();
+            // Convención inglesa { "message": "..." }
             if (json.TryGetProperty("message", out var msg) && msg.ValueKind == System.Text.Json.JsonValueKind.String)
                 return msg.GetString();
             // FluentValidation devuelve un array de strings
