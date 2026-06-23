@@ -75,10 +75,13 @@ else
                             <td class="text-muted ts-table-hide-mobile">@cat.Description</td>
                             <td><span class="badge bg-secondary">@cat.ProductCount</span></td>
                             <td class="text-end">
-                                <button class="btn btn-sm btn-outline-danger" @onclick="() => Eliminar(cat.Id)"
-                                        disabled="@(cat.Id == 99 || cat.ProductCount > 0)">
-                                    <i class="bi bi-trash"></i>
-                                </button>
+                                @if (cat.Id != 99)
+                                {
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => Eliminar(cat.Id)"
+                                            disabled="@(cat.ProductCount > 0)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                }
                             </td>
                         </tr>
                     }
