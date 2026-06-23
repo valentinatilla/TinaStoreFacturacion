@@ -336,6 +336,7 @@ public sealed class InvoiceService : IInvoiceService
         i.Status,
         StatusEnEspanol(i.Status),
         i.Notes,
+        i.CancellationReason,
         i.Details.Select(d => new InvoiceDetailDto(
             d.Id, d.ProductId, d.ProductName,
             d.Quantity, d.UnitPrice, d.DiscountAmount, d.Subtotal,

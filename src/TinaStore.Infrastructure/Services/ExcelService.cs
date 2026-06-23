@@ -344,14 +344,45 @@ public sealed class ExcelService : IExcelService
         return ms.ToArray();
     }
 
+    // ── Resolución de columnas por nombre (fila 1) ────────────────────────────
+    /// <summary>
+    /// Lee la fila de cabecera y devuelve un diccionario normalizado
+    /// (clave en minúsculas sin asterisco) → número de columna (1-based).
+    /// Permite importaciones robustas ante columnas reordenadas, extra o faltantes.
+    /// </summary>
+    private static Dictionary<string, int> ResolveColumns(IXLWorksheet ws)
+    {
+        var map = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var lastCol = ws.LastColumnUsed()?.ColumnNumber() ?? 0;
+        for (var col = 1; col <= lastCol; col++)
+        {
+            var header = ws.Cell(1, col).GetValue<string>()
+                           .Trim()
+                           .Replace("*", string.Empty)
+                           .ToLowerInvariant();
+            if (!string.IsNullOrEmpty(header) && !map.ContainsKey(header))
+                map[header] = col;
+        }
+        return map;
+    }
+
     // ── Importar productos desde Excel ────────────────────────────────────────
     public async Task<ExcelImportResultDto> ImportProductsAsync(Stream excelStream)
     {
         using var wb = new XLWorkbook(excelStream);
         var ws = wb.Worksheets.FirstOrDefault(w => w.Name == "Productos")
                  ?? wb.Worksheets.First(w => w.Visibility == XLWorksheetVisibility.Visible);
-        var lastRow = ws.LastRowUsed()?.RowNumber() ?? 1;
 
+        var cols = ResolveColumns(ws);
+
+        // Validar columnas obligatorias
+        var faltantes = new[] { "nombre", "categoría", "costo", "precio de venta", "stock inicial" }
+            .Where(k => !cols.ContainsKey(k)).ToList();
+        if (faltantes.Count > 0)
+            return new ExcelImportResultDto(0, 0, 1,
+                [$"Formato inválido. Columnas no encontradas: {string.Join(", ", faltantes)}. Descarga la plantilla actualizada."]);
+
+        var lastRow = ws.LastRowUsed()?.RowNumber() ?? 1;
         var importados = 0;
         var errores = new List<string>();
 
@@ -359,20 +390,28 @@ public sealed class ExcelService : IExcelService
         {
             try
             {
-                // Nueva estructura: SKU(1) Nombre(2) Desc(3) Cat(4) Prov(5) Costo(6) Venta(7) Stock(8) Min(9) Unidad(10)
-                var nombre = SafeStr(ws, row, 2);
-                if (string.IsNullOrEmpty(nombre)) continue;
+                var nombre = cols.TryGetValue("nombre", out var cNombre)
+                    ? SafeStr(ws, row, cNombre) : string.Empty;
+                if (string.IsNullOrWhiteSpace(nombre)) continue;
 
-                var costPrice    = SafeDecimal(ws, row, 6);
-                var salePrice    = SafeDecimal(ws, row, 7);
-                var stock        = SafeInt(ws, row, 8);
-                var minStock     = SafeInt(ws, row, 9);
-                var categoryRaw  = SafeStr(ws, row, 4);
-                var supplierRaw  = SafeStr(ws, row, 5);
+                var costPrice   = cols.TryGetValue("costo", out var cCosto)        ? SafeDecimal(ws, row, cCosto)  : 0m;
+                var salePrice   = cols.TryGetValue("precio de venta", out var cVta) ? SafeDecimal(ws, row, cVta)    : 0m;
+                var stock       = cols.TryGetValue("stock inicial", out var cStk)   ? SafeInt(ws, row, cStk)        : 0;
+                var minStock    = cols.TryGetValue("stock mínimo", out var cMin)    ? SafeInt(ws, row, cMin)        : 0;
+                var categoryRaw = cols.TryGetValue("categoría", out var cCat)       ? SafeStr(ws, row, cCat)        : string.Empty;
+                var supplierRaw = cols.TryGetValue("proveedor", out var cProv)      ? SafeStr(ws, row, cProv)       : string.Empty;
+                var sku         = cols.TryGetValue("sku", out var cSku)             ? SafeStr(ws, row, cSku)        : string.Empty;
+                var desc        = cols.TryGetValue("descripción", out var cDesc)    ? SafeStr(ws, row, cDesc)       : string.Empty;
+                var unit        = cols.TryGetValue("unidad de medida", out var cUnit)? SafeStr(ws, row, cUnit)      : string.Empty;
 
                 if (costPrice < 0 || salePrice <= 0)
                 {
                     errores.Add($"Fila {row}: precio inválido.");
+                    continue;
+                }
+                if (stock < 0 || minStock < 0)
+                {
+                    errores.Add($"Fila {row}: el stock no puede ser negativo.");
                     continue;
                 }
                 if (string.IsNullOrWhiteSpace(categoryRaw))
@@ -405,10 +444,10 @@ public sealed class ExcelService : IExcelService
 
                 var producto = new Product
                 {
-                    Sku           = SafeStr(ws, row, 1).NullIfEmpty(),
+                    Sku           = sku.NullIfEmpty(),
                     Name          = nombre,
-                    Description   = SafeStr(ws, row, 3).NullIfEmpty(),
-                    Unit          = SafeStr(ws, row, 10).NullIfEmpty(),
+                    Description   = desc.NullIfEmpty(),
+                    Unit          = unit.NullIfEmpty(),
                     PurchasePrice = costPrice,
                     SalePrice     = salePrice,
                     CurrentStock  = stock,
@@ -439,28 +478,39 @@ public sealed class ExcelService : IExcelService
         using var wb = new XLWorkbook(excelStream);
         var ws = wb.Worksheets.FirstOrDefault(w => w.Name == "Productos")
                  ?? wb.Worksheets.First(w => w.Visibility == XLWorksheetVisibility.Visible);
-        var lastRow = ws.LastRowUsed()?.RowNumber() ?? 1;
 
+        var cols    = ResolveColumns(ws);
+        var lastRow = ws.LastRowUsed()?.RowNumber() ?? 1;
         var preview = new List<ImportPreviewRowDto>();
+
+        // Si faltan columnas obligatorias, devolver una sola fila de error
+        var faltantes = new[] { "nombre", "categoría", "costo", "precio de venta", "stock inicial" }
+            .Where(k => !cols.ContainsKey(k)).ToList();
+        if (faltantes.Count > 0)
+        {
+            preview.Add(new ImportPreviewRowDto(
+                1, "—", null, null, 0, 0, 0, 0, 0, null, null, null,
+                Valido: false,
+                MensajeError: $"Formato inválido. Columnas no encontradas: {string.Join(", ", faltantes)}. Descarga la plantilla actualizada."));
+            return preview;
+        }
 
         for (var row = 2; row <= lastRow; row++)
         {
-            // Nueva estructura: SKU(1) Nombre(2) Desc(3) Cat(4) Prov(5) Costo(6) Venta(7) Stock(8) Min(9) Unidad(10)
-            string nombre;
-            try { nombre = ws.Cell(row, 2).GetValue<string>().Trim(); }
-            catch { nombre = string.Empty; }
-            if (string.IsNullOrEmpty(nombre)) continue;
+            var nombre = cols.TryGetValue("nombre", out var cNombre)
+                ? SafeStr(ws, row, cNombre) : string.Empty;
+            if (string.IsNullOrWhiteSpace(nombre)) continue;
 
-            var sku         = SafeStr(ws, row, 1).NullIfEmpty();
-            var descripcion = SafeStr(ws, row, 3).NullIfEmpty();
-            var costPrice   = SafeDecimal(ws, row, 6);
-            var salePrice   = SafeDecimal(ws, row, 7);
-            var stock       = SafeInt(ws, row, 8);
-            var minStock    = SafeInt(ws, row, 9);
-            var categoryRaw = SafeStr(ws, row, 4);
-            var supplierRaw = SafeStr(ws, row, 5);
+            var sku         = cols.TryGetValue("sku", out var cSku)              ? SafeStr(ws, row, cSku).NullIfEmpty()  : null;
+            var descripcion = cols.TryGetValue("descripción", out var cDesc)      ? SafeStr(ws, row, cDesc).NullIfEmpty() : null;
+            var costPrice   = cols.TryGetValue("costo", out var cCosto)           ? SafeDecimal(ws, row, cCosto)          : 0m;
+            var salePrice   = cols.TryGetValue("precio de venta", out var cVta)   ? SafeDecimal(ws, row, cVta)            : 0m;
+            var stock       = cols.TryGetValue("stock inicial", out var cStk)     ? SafeInt(ws, row, cStk)                : 0;
+            var minStock    = cols.TryGetValue("stock mínimo", out var cMin)      ? SafeInt(ws, row, cMin)                : 0;
+            var categoryRaw = cols.TryGetValue("categoría", out var cCat)         ? SafeStr(ws, row, cCat)                : string.Empty;
+            var supplierRaw = cols.TryGetValue("proveedor", out var cProv)        ? SafeStr(ws, row, cProv)               : string.Empty;
 
-            string? error = null;
+            string? error           = null;
             string? categoriaNombre = null;
             int     categoryId      = 0;
             int?    supplierId      = null;
@@ -471,6 +521,10 @@ public sealed class ExcelService : IExcelService
                 error = costPrice < 0 ? "Precio de costo inválido."
                       : "Precio de venta debe ser mayor a 0.";
             }
+            else if (stock < 0 || minStock < 0)
+            {
+                error = "El stock no puede ser negativo.";
+            }
             else if (string.IsNullOrWhiteSpace(categoryRaw))
             {
                 error = "Categoría es requerida.";
@@ -478,8 +532,7 @@ public sealed class ExcelService : IExcelService
             else
             {
                 var categoria = await _db.Categories
-                    .FirstOrDefaultAsync(c => !c.IsDeleted &&
-                        c.Name.ToLower() == categoryRaw.ToLower());
+                    .FirstOrDefaultAsync(c => !c.IsDeleted && c.Name.ToLower() == categoryRaw.ToLower());
                 if (categoria is null && int.TryParse(categoryRaw, out var cid))
                     categoria = await _db.Categories
                         .FirstOrDefaultAsync(c => !c.IsDeleted && c.Id == cid);
@@ -495,8 +548,7 @@ public sealed class ExcelService : IExcelService
                 if (!string.IsNullOrWhiteSpace(supplierRaw))
                 {
                     var proveedor = await _db.Suppliers
-                        .FirstOrDefaultAsync(s => !s.IsDeleted &&
-                            s.Name.ToLower() == supplierRaw.ToLower());
+                        .FirstOrDefaultAsync(s => !s.IsDeleted && s.Name.ToLower() == supplierRaw.ToLower());
                     if (proveedor is null && int.TryParse(supplierRaw, out var sid))
                         proveedor = await _db.Suppliers
                             .FirstOrDefaultAsync(s => !s.IsDeleted && s.Id == sid);
@@ -509,18 +561,10 @@ public sealed class ExcelService : IExcelService
             }
 
             preview.Add(new ImportPreviewRowDto(
-                row,
-                nombre,
-                sku,
-                descripcion,
-                costPrice,
-                salePrice,
-                stock,
-                minStock,
-                categoryId,
-                categoriaNombre,
-                supplierId,
-                proveedorNombre,
+                row, nombre, sku, descripcion,
+                costPrice, salePrice, stock, minStock,
+                categoryId, categoriaNombre,
+                supplierId, proveedorNombre,
                 Valido: error is null,
                 MensajeError: error
             ));
@@ -529,7 +573,7 @@ public sealed class ExcelService : IExcelService
         return preview;
     }
 
-    // ── Helpers de lectura segura de celdas ───────────────────────────────────
+    // ── Importar desde vista previa confirmada (sin re-leer el Excel) ─────────
     private static string SafeStr(IXLWorksheet ws, int row, int col)
     {
         try { return ws.Cell(row, col).GetValue<string>()?.Trim() ?? string.Empty; }

@@ -4,7 +4,60 @@ Registro detallado de todos los bugs corregidos en el proyecto.
 
 ---
 
-## Fases I–N — Productos: imágenes masivas, validaciones, proveedor, estados, Excel
+## Fases AA–AE — Validaciones finales y robustez preproducción
+
+### BUG-AA1 — Campo Unidad sin feedback visual en frontend
+- **Módulo**: Productos / Formulario de creación y edición
+- **Problema**: El campo Unidad no mostraba error visual inmediato si el usuario escribía números; el mensaje solo aparecía al intentar guardar.
+- **Solución**: Input con clase `is-invalid` condicional y `<div class="invalid-feedback">` bajo el campo.
+- **Archivos**: `Productos/Index.razor`
+- **Resultado**: ✅ Corregido
+
+### BUG-AA2 — Importación Excel permitía stock negativo
+- **Módulo**: Productos / Importación Excel
+- **Problema**: `ImportProductsAsync` y `PreviewImportAsync` no validaban `StockInicial < 0`; el producto se creaba con stock negativo.
+- **Solución**: Validación explícita en ambos métodos. Inputs HTML con `min="0"` en `Importar.razor`.
+- **Archivos**: `ExcelService.cs`, `Productos/Importar.razor`
+- **Resultado**: ✅ Corregido
+
+### BUG-AA3 — Login permitía correos con formato inválido
+- **Módulo**: Autenticación
+- **Problema**: El formulario de login solo validaba `[Required]`; enviaba petición a la API con correos como "abc" o "test@".
+- **Solución**: `[EmailAddress]` añadido al modelo con mensaje en español. `<ValidationMessage>` inline. `OnValidSubmit` bloquea el envío.
+- **Archivos**: `Login.razor`
+- **Resultado**: ✅ Corregido
+
+### BUG-AB1 — Selector de categorías en Nueva Venta como filtro desplegable
+- **Módulo**: Ventas / Nueva venta
+- **Problema**: El select de categoría era un filtro tipo dropdown, no una selección visual clara.
+- **Solución**: Reemplazado por chips pill con estado activo (bg-purple) y método `SeleccionarCategoria`.
+- **Archivos**: `Facturas/Nueva.razor`
+- **Resultado**: ✅ Corregido
+
+### BUG-AC1 — Descuento solo aplicaba a toda la factura, no por producto
+- **Módulo**: Ventas / Nueva venta
+- **Problema**: Solo existía un campo de descuento global en porcentaje; no se podía aplicar descuento individual por línea.
+- **Solución**: `DetalleLinea` con `DescuentoLinea` y `Subtotal` calculado. Nueva columna "Dto. ($)" en la tabla. `CreateDetalleFacturaDto.DiscountAmount` enviado al API.
+- **Archivos**: `Facturas/Nueva.razor`
+- **Resultado**: ✅ Corregido
+
+### BUG-AD1 — Nota de creación y motivo de anulación no visibles
+- **Módulo**: Ventas / Listado y PDF
+- **Problema**: `CancellationReason` existía en la entidad pero no se exponía en el DTO ni en la UI. Las notas de creación y anulación no aparecían en el detalle expandible ni en el PDF.
+- **Solución**: `InvoiceDto` con campo `CancellationReason`. Mapeo en `InvoiceService.ToDto`. `VentaDetalleDto` actualizado. UI con sección "Nota de creación" y "Motivo de anulación" (alert-danger). PDF con bloques condicionales.
+- **Archivos**: `InvoiceDtos.cs`, `InvoiceService.cs`, `TinaStoreApiClient.cs`, `Facturas/Index.razor`, `PdfService.cs`
+- **Resultado**: ✅ Corregido
+
+### BUG-AE1 — Importación Excel frágil ante plantillas modificadas
+- **Módulo**: Productos / Importación Excel
+- **Problema**: `ImportProductsAsync` y `PreviewImportAsync` leían columnas por posición fija (col 1, 2, 3…). Si el usuario reordenaba columnas o añadía nuevas, los datos se cruzaban silenciosamente.
+- **Solución**: `ResolveColumns(IXLWorksheet)` mapea nombre de cabecera → índice en runtime. Columnas obligatorias validadas por nombre. Tolerante a columnas extra y reordenamiento.
+- **Archivos**: `ExcelService.cs`
+- **Resultado**: ✅ Corregido
+
+---
+
+
 
 ### BUG-19 — Error silencioso al subir imagen en edición masiva
 - **Módulo**: Productos / Edición masiva

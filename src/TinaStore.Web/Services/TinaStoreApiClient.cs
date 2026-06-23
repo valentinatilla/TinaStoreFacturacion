@@ -57,7 +57,7 @@ public record CreatePagoInicialDto(int PaymentMethodId, decimal Amount, string? 
 
 public record DetalleLineaVentaDto(int Id, int ProductId, string ProductName, int Quantity, decimal UnitPrice, decimal DiscountAmount, decimal Subtotal, string? ImagePath = null);
 public record PagoRegistradoDto(int Id, int PaymentMethodId, string PaymentMethodName, DateTime PaymentDate, decimal Amount, string? Reference, string? Notes);
-public record VentaDetalleDto(int Id, string InvoiceNumber, DateTime InvoiceDate, string CustomerName, decimal Subtotal, decimal DiscountAmount, decimal TaxAmount, decimal Total, decimal AmountPaid, decimal Balance, int Status, string StatusName, string? Notes, List<DetalleLineaVentaDto> Details, List<PagoRegistradoDto> Payments);
+public record VentaDetalleDto(int Id, string InvoiceNumber, DateTime InvoiceDate, string CustomerName, decimal Subtotal, decimal DiscountAmount, decimal TaxAmount, decimal Total, decimal AmountPaid, decimal Balance, int Status, string StatusName, string? Notes, string? CancellationReason, List<DetalleLineaVentaDto> Details, List<PagoRegistradoDto> Payments);
 
 public record EgresoDto(int Id, DateTime ExpenseDate, string Description, decimal Amount, string? Notes, int Status, string StatusName, int ExpenseCategoryId, string ExpenseCategoryName, int? SupplierId, string? SupplierName, int? PaymentMethodId, string? PaymentMethodName);
 public record CreateEgresoDto(DateTime ExpenseDate, string Description, decimal Amount, string? Notes, int ExpenseCategoryId, int? SupplierId, int? PaymentMethodId);

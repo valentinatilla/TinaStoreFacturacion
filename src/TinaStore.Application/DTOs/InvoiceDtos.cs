@@ -74,6 +74,7 @@ public record InvoiceDto(
     InvoiceStatus Status,
     string StatusName,
     string? Notes,
+    string? CancellationReason,
     List<InvoiceDetailDto> Details,
     List<PaymentDto> Payments
 );

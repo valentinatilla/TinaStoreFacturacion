@@ -188,6 +188,26 @@ public sealed class PdfService : IPdfService
                             .Text(etiqueta)
                             .Bold().FontColor(Colors.White);
                     });
+
+                    // Nota de creación
+                    if (!string.IsNullOrWhiteSpace(invoice.Notes))
+                    {
+                        col.Item().PaddingTop(8).Row(r =>
+                        {
+                            r.AutoItem().Text("Nota: ").Bold().FontSize(9).FontColor("#555555");
+                            r.RelativeItem().Text(invoice.Notes).FontSize(9).FontColor("#555555");
+                        });
+                    }
+
+                    // Motivo de anulación
+                    if (!string.IsNullOrWhiteSpace(invoice.CancellationReason))
+                    {
+                        col.Item().PaddingTop(6).Background("#FEE2E2").Padding(6).Row(r =>
+                        {
+                            r.AutoItem().Text("Motivo anulación: ").Bold().FontSize(9).FontColor("#991B1B");
+                            r.RelativeItem().Text(invoice.CancellationReason).FontSize(9).FontColor("#991B1B");
+                        });
+                    }
                 });
 
                 // Pie
