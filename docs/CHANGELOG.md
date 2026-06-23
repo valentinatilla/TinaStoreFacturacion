@@ -5,6 +5,88 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [1.5.0] — 2026-07-09 — Fases V–Y: Estabilización Preproducción (moneda, ventas, egresos, reportes, IVA)
+
+### Tipo de cambio
+Corrección de bugs / Mejoras UX / Consistencia de datos / Validaciones de negocio
+
+### Módulos afectados
+`PdfService`, `StoreSettings.razor`, `Facturas/Index.razor`, `Facturas/Nueva.razor`, `Facturas/VentaLibre.razor`, `Egresos/Index.razor`, `Reportes/Index.razor`, `CuentasPorCobrar/Index.razor`, `ReportService`, `ReportsController`, `IReportRepository`, `IReportService`, `SpecificRepositories`, `TinaStoreApiClient`, `StoreSettingsValidators`, `SettingsController`, `_Imports.razor`
+
+---
+
+### FASE V — Moneda COP unificada
+
+**V1 — Formato monetario en PDF**
+- `PdfService.cs`: todos los montos (filas, totales, pagos) usan `$N0` (peso colombiano, sin decimales).
+- Encabezado del PDF incluye "Moneda: COP" junto al número de factura.
+- Anteriormente usaba `{currency} {valor:N2}` con decimales y dependía de la cultura del sistema.
+
+**V2 — Campo Moneda de solo lectura en Configuración**
+- `StoreSettings.razor`: campo Moneda convertido a `form-control-plaintext` (solo lectura, igual al campo Nombre de tienda).
+- `_modelo.Currency` siempre se inicializa como `"COP"` al cargar; el usuario no puede modificarlo.
+- `Guardar()`: si `Currency` estuviera vacío por algún motivo, se asigna `"COP"` antes de enviar.
+
+**V3 — Formato $N0 en todos los componentes Blazor**
+- 7 archivos actualizados: `Home.razor`, `Facturas/Index.razor`, `Facturas/Nueva.razor`, `Facturas/VentaLibre.razor`, `Productos/Index.razor`, `Clientes/Index.razor`, `CuentasPorCobrar/Index.razor`.
+- 50 puntos de moneda cambiados de `ToString("C0")` (dependiente del SO) a `$@valor.ToString("N0")` (formato colombiano explícito).
+
+---
+
+### FASE W — Ventas y PDF
+
+**W1 — Botones de acción uniformes en Ventas**
+- `Facturas/Index.razor`: botones PDF, Pago y Anular envueltos en `<div class="d-flex gap-1 justify-content-end">`. Se eliminó `me-1` individual para que todos tengan el mismo tamaño `btn-sm` y separación uniforme.
+
+**W2 — Exclusión de Fiado/Crédito en selectores de pago**
+- `TinaStoreApiClient.cs`: `MetodoPagoDto` extendido con `Type` (int) y `TypeName` (string) para filtrar sin depender del enum del dominio.
+- `Facturas/Index.razor`: lista de métodos de pago para abonos filtrada con `.Where(m => m.Type != 5)`.
+- `Facturas/Nueva.razor`: lista de métodos para pago inicial filtrada con `.Where(m => m.Type != 5)`.
+- `Facturas/VentaLibre.razor`: lista de métodos para pago inicial filtrada con `.Where(m => m.Type != 5)`.
+- `Egresos/Index.razor`: mantiene todos los métodos (en gastos es válido registrar pago a crédito con proveedor).
+
+**W3 — PDF de venta libre con columna "Descripción"**
+- `PdfService.cs`: detecta venta libre cuando `invoice.Details.All(d => d.ProductId == null)`.
+- El encabezado de la tabla muestra "Descripción" en lugar de "Producto" en ese caso.
+
+---
+
+### FASE X — Egresos y Reportes
+
+**X1 — Visualización de egresos anulados y totales COP**
+- `Egresos/Index.razor`: filas anuladas muestran texto tachado (`<s>`) y opacidad 55%.
+- Categoría de la fila anulada se marca con badge rojo en lugar de gris.
+- Totales `TotalCompras`, `TotalOtros`, `TotalGeneral` usan `$N0` y excluyen registros con `Status != 0`.
+
+**X2 — Reportes: sin pantalla en blanco**
+- `Reportes/Index.razor`: condición `else if (_ventasData is not null)` reemplazada por `else` con guards internos `@if (_ventasData is null)` por sección.
+- Ahora si ventas, gastos o CXC fallan individualmente, las demás secciones permanecen visibles con mensaje "No se pudieron cargar".
+- Todos los montos de Reportes cambiados a `$N0`.
+
+**X3 — Filtro de fechas en Cuentas por Cobrar (Reportes)**
+- `IReportRepository.GetAllReceivablesAsync(from, to)`: query EF filtra solo clientes con facturas no anuladas, con `Balance > 0` en el rango.
+- `IReportService.GetReceivablesReportAsync(from, to)`: calcula saldo y conteo de facturas solo del período. Excluye deudores sin saldo en el período.
+- `ReportsController.GetReceivables([FromQuery] DateTime from, [FromQuery] DateTime to)`: endpoint actualizado.
+- `TinaStoreApiClient.GetReporteCuentasPorCobrarAsync(desde, hasta)`: URL incluye `?from=&to=`.
+- `Reportes/Index.razor`: pasa `_desde` y `_hasta` en la llamada al ApiClient.
+- `CuentasPorCobrar/Index.razor`: usa rango `new DateTime(2000,1,1) – DateTime.Today` para mostrar historial completo de deudores sin romper la firma.
+
+---
+
+### FASE Y — Validación de IVA
+
+**Y1 — Validador backend**
+- Nuevo archivo `src/TinaStore.Application/Validators/StoreSettingsValidators.cs` con `UpdateStoreSettingsDtoValidator`.
+- Reglas: `StoreName` no vacío, `Currency` no vacío (máx 10), `TaxPercentage` entre 0 y 100.
+- `SettingsController`: inyecta `IValidator<UpdateStoreSettingsDto>` y valida antes de actualizar. Elimina la validación manual anterior.
+
+**Y2 — Validación frontend de IVA**
+- `StoreSettings.razor`: `Guardar()` valida `TaxPercentage` en rango 0–100 antes de llamar a la API. Muestra mensaje "El IVA debe estar entre 0% y 100%." si no cumple.
+- Campo IVA mantiene atributos HTML `min="0" max="100"`.
+- Nota informativa añadida: "Valor entre 0 y 100. Ejemplo: 19 para IVA del 19%."
+
+---
+
 ## [Unreleased] — Fases I–N: Correcciones de Productos (imágenes masivas, validaciones, proveedor, estados, Excel)
 
 ### Tipo de cambio

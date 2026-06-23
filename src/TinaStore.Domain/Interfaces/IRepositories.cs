@@ -75,7 +75,7 @@ public interface IReportRepository
     Task<IReadOnlyList<Invoice>> GetInvoicesByRangeAsync(DateTime from, DateTime to, CancellationToken ct = default);
     Task<IReadOnlyList<InvoiceDetail>> GetSoldDetailsByRangeAsync(DateTime from, DateTime to, CancellationToken ct = default);
     Task<IReadOnlyList<Expense>> GetExpensesByRangeAsync(DateTime from, DateTime to, CancellationToken ct = default);
-    Task<IReadOnlyList<AccountReceivable>> GetAllReceivablesAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<AccountReceivable>> GetAllReceivablesAsync(DateTime from, DateTime to, CancellationToken ct = default);
 }
 
 public interface IUserRepository : IRepository<User>

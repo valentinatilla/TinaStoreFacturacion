@@ -103,7 +103,7 @@
                                 </span>
                             </span>
                             <span class="d-flex align-items-center gap-2">
-                                <span class="text-purple fw-semibold">@p.SalePrice.ToString("C0")</span>
+                                <span class="text-purple fw-semibold">$@p.SalePrice.ToString("N0")</span>
                                 <span class="text-muted small">Stock: @p.CurrentStock</span>
                                 @if (p.CurrentStock == 0)
                                 {
@@ -160,8 +160,8 @@
                                         <div class="text-danger" style="font-size:0.7rem;">Máx. @d.StockDisponible</div>
                                     }
                                 </td>
-                                <td class="text-end">@d.PrecioUnitario.ToString("C0")</td>
-                                <td class="text-end fw-semibold">@((d.Cantidad * d.PrecioUnitario).ToString("C0"))</td>
+                                <td class="text-end">$@d.PrecioUnitario.ToString("N0")</td>
+                                <td class="text-end fw-semibold">@((d.Cantidad * d.PrecioUnitario).ToString("N0"))</td>
                                 <td>
                                     <button class="btn btn-sm btn-link text-danger p-0" @onclick="() => QuitarProducto(d)">
                                         <i class="bi bi-x-lg"></i>
@@ -173,7 +173,7 @@
                     <tfoot class="table-light">
                         <tr>
                             <td colspan="4" class="text-end text-muted small">Subtotal:</td>
-                            <td class="text-end text-muted small">@_subtotal.ToString("C0")</td>
+                            <td class="text-end text-muted small">$@_subtotal.ToString("N0")</td>
                             <td></td>
                         </tr>
                         <tr>
@@ -186,7 +186,7 @@
                                            @bind="_descuentoPct" @bind:after="RecalcularTotales" />
                                     @if (_descuento > 0)
                                     {
-                                        <span class="text-muted small text-nowrap">-@_descuento.ToString("C0")</span>
+                                        <span class="text-muted small text-nowrap">-$@_descuento.ToString("N0")</span>
                                     }
                                 </div>
                                 @if (_advertenciaDescuento is not null)
@@ -208,7 +208,7 @@
                         </tr>
                         <tr class="fw-bold border-top">
                             <td colspan="4" class="text-end fw-bold">Total:</td>
-                            <td class="text-end fw-bold fs-5 text-purple">@_total.ToString("C0")</td>
+                            <td class="text-end fw-bold fs-5 text-purple">$@_total.ToString("N0")</td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -318,7 +318,8 @@
         var t4 = Api.GetCategoriasAsync();
         await Task.WhenAll(t1, t2, t3, t4);
         _clientes     = t1.Result ?? [];
-        _metodosPago  = t2.Result ?? [];
+        // Excluir "Fiado / Crédito" (Type == 5) del selector de pago inicial
+        _metodosPago  = (t2.Result ?? []).Where(m => m.Type != 5).ToList();
         _productos    = t3.Result ?? [];
         _categorias   = t4.Result ?? [];
     }

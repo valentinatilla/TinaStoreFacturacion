@@ -64,7 +64,11 @@ else if (_cargado)
             </div>
             <div class="col-md-4">
                 <label class="form-label small fw-semibold">Moneda</label>
-                <input class="form-control" @bind="_modelo.Currency" placeholder="COP" />
+                <input class="form-control-plaintext fw-semibold text-purple ps-2 border rounded bg-light"
+                       value="COP" readonly />
+                <div class="text-muted small mt-1">
+                    <i class="bi bi-lock-fill me-1"></i>Peso colombiano (COP).
+                </div>
             </div>
             <div class="col-12">
                 <label class="form-label small fw-semibold">Dirección</label>
@@ -85,6 +89,7 @@ else if (_cargado)
             <div class="col-md-6">
                 <label class="form-label small fw-semibold">IVA (%)</label>
                 <input type="number" class="form-control" @bind="_modelo.TaxPercentage" min="0" max="100" step="0.01" />
+                <div class="text-muted small mt-1">Valor entre 0 y 100. Ejemplo: 19 para IVA del 19%.</div>
             </div>
             <div class="col-12">
                 <label class="form-label small fw-semibold">Mensaje pie de factura</label>
@@ -137,7 +142,7 @@ else if (_cargado)
                 _modelo.TaxId                = cfg.TaxId;
                 _modelo.InvoiceFooterMessage = cfg.InvoiceFooterMessage;
                 _modelo.ReminderMessage      = cfg.ReminderMessage;
-                _modelo.Currency             = cfg.Currency;
+                _modelo.Currency             = "COP"; // Fijo: peso colombiano
                 _modelo.TaxPercentage        = cfg.TaxPercentage;
                 _modelo.AllowNegativeStock   = cfg.AllowNegativeStock;
                 _logoUrl = string.IsNullOrEmpty(cfg.LogoPath)
@@ -179,6 +184,17 @@ else if (_cargado)
     {
         _guardando = true;
         _mensaje = null;
+        // Garantizar moneda por defecto
+        if (string.IsNullOrWhiteSpace(_modelo.Currency))
+            _modelo.Currency = "COP";
+        // Validar IVA
+        if (_modelo.TaxPercentage < 0 || _modelo.TaxPercentage > 100)
+        {
+            _mensaje = "El IVA debe estar entre 0% y 100%.";
+            _exito = false;
+            _guardando = false;
+            return;
+        }
         try
         {
             var dto = new UpdateConfiguracionDto(

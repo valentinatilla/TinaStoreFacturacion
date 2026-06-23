@@ -19,7 +19,7 @@ else if (_data is not null)
     {
         <div class="alert alert-warning py-2 mb-3">
             <i class="bi bi-exclamation-triangle me-2"></i>
-            Total pendiente: <strong>@_data.TotalPorCobrar.ToString("C0")</strong>
+            Total pendiente: <strong>$@_data.TotalPorCobrar.ToString("N0")</strong>
             en @_data.TotalClientes clientes
         </div>
     }
@@ -80,7 +80,7 @@ else if (_data is not null)
                             <td class="text-center align-middle ts-table-hide-mobile">
                                 <span class="badge bg-warning text-dark">@cxc.FacturasPendientes</span>
                             </td>
-                            <td class="text-end fw-bold text-danger fs-6 align-middle">@cxc.SaldoPendiente.ToString("C0")</td>
+                            <td class="text-end fw-bold text-danger fs-6 align-middle">$@cxc.SaldoPendiente.ToString("N0")</td>
                             <td class="text-muted small align-middle ts-table-hide-mobile">@cxc.UltimaFacturaFecha?.ToString("dd/MM/yyyy")</td>
                             <td class="text-end align-middle" @onclick:stopPropagation="true">
                                 @if (!string.IsNullOrWhiteSpace(cxc.Phone))
@@ -126,9 +126,9 @@ else if (_data is not null)
                                                             <tr>
                                                                 <td><span class="badge bg-secondary">@f.InvoiceNumber</span></td>
                                                                 <td class="text-muted small">@f.InvoiceDate.ToString("dd/MM/yyyy")</td>
-                                                                <td class="text-end fw-semibold">@f.Total.ToString("C0")</td>
-                                                                <td class="text-end text-success">@f.AmountPaid.ToString("C0")</td>
-                                                                <td class="text-end fw-bold text-danger">@f.Balance.ToString("C0")</td>
+                                                                <td class="text-end fw-semibold">$@f.Total.ToString("N0")</td>
+                                                                <td class="text-end text-success">$@f.AmountPaid.ToString("N0")</td>
+                                                                <td class="text-end fw-bold text-danger">$@f.Balance.ToString("N0")</td>
                                                                 <td class="text-center">
                                                                     <span class="badge badge-estado-@f.StatusName.ToLower()">@f.StatusName</span>
                                                                 </td>
@@ -139,7 +139,7 @@ else if (_data is not null)
                                                         <tr>
                                                             <td colspan="4" class="text-end fw-semibold small">Total pendiente:</td>
                                                             <td class="text-end fw-bold text-danger">
-                                                                @facturas.Sum(f => f.Balance).ToString("C0")
+                                                                @facturas.Sum(f => f.Balance).ToString("N0")
                                                             </td>
                                                             <td></td>
                                                         </tr>
@@ -190,7 +190,8 @@ else if (_data is not null)
     {
         try
         {
-            var t1 = Api.GetReporteCuentasPorCobrarAsync();
+            // CuentasPorCobrar muestra todo el historial: rango desde el inicio hasta hoy
+            var t1 = Api.GetReporteCuentasPorCobrarAsync(new DateTime(2000, 1, 1), DateTime.Today);
             var t2 = Api.GetConfiguracionAsync();
             _data = await t1;
             var cfg = await t2;
@@ -274,7 +275,7 @@ else if (_data is not null)
             ?? "Hola {nombre}, te recordamos que tienes un saldo pendiente de {saldo}. Por favor comunícate con nosotros. Gracias 🌸";
         var mensaje = plantilla
             .Replace("{nombre}", cxc.CustomerName)
-            .Replace("{saldo}", cxc.SaldoPendiente.ToString("C0"));
+            .Replace("{saldo}", cxc.SaldoPendiente.ToString("N0"));
         var url = $"https://wa.me/{telefono}?text={Uri.EscapeDataString(mensaje)}";
         await JS.InvokeVoidAsync("open", url, "_blank");
     }
