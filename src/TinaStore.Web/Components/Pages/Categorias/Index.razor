@@ -63,12 +63,20 @@ else
                     @foreach (var cat in CategoriasOrdenadas)
                     {
                         <tr>
-                            <td class="fw-semibold">@cat.Name</td>
+                            <td class="fw-semibold">
+                                @cat.Name
+                                @if (cat.Id == 99)
+                                {
+                                    <span class="badge bg-secondary ms-2" title="Categoría del sistema, no se puede eliminar">
+                                        <i class="bi bi-lock-fill me-1"></i>Sistema
+                                    </span>
+                                }
+                            </td>
                             <td class="text-muted ts-table-hide-mobile">@cat.Description</td>
                             <td><span class="badge bg-secondary">@cat.ProductCount</span></td>
                             <td class="text-end">
                                 <button class="btn btn-sm btn-outline-danger" @onclick="() => Eliminar(cat.Id)"
-                                        disabled="@(cat.ProductCount > 0)">
+                                        disabled="@(cat.Id == 99 || cat.ProductCount > 0)">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </td>
@@ -136,8 +144,7 @@ else
         get
         {
             var comparer = StringComparer.Create(new CultureInfo("es-CO"), ignoreCase: true);
-            // Excluir "Sin categoría" (Id=99) del listado de gestión; es una categoría del sistema
-            var lista = _categorias.Where(c => c.Id != 99);
+            var lista = _categorias.AsEnumerable();
             if (!string.IsNullOrWhiteSpace(_busqueda))
                 lista = lista.Where(c => c.Name.Contains(_busqueda, StringComparison.OrdinalIgnoreCase)
                                       || (c.Description?.Contains(_busqueda, StringComparison.OrdinalIgnoreCase) ?? false));
