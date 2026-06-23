@@ -47,7 +47,7 @@ public sealed class CategoriesController : ControllerBase
     {
         var validacion = await _createValidator.ValidateAsync(dto);
         if (!validacion.IsValid)
-            return BadRequest(validacion.Errors.Select(e => e.ErrorMessage));
+            return BadRequest(new { mensaje = string.Join(" ", validacion.Errors.Select(e => e.ErrorMessage)) });
 
         try
         {
@@ -56,7 +56,7 @@ public sealed class CategoriesController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return Conflict(new { message = ex.Message });
+            return Conflict(new { mensaje = ex.Message });
         }
     }
 
@@ -66,22 +66,33 @@ public sealed class CategoriesController : ControllerBase
     {
         var validacion = await _updateValidator.ValidateAsync(dto);
         if (!validacion.IsValid)
-            return BadRequest(validacion.Errors.Select(e => e.ErrorMessage));
+            return BadRequest(new { mensaje = string.Join(" ", validacion.Errors.Select(e => e.ErrorMessage)) });
 
-        var actualizada = await _service.UpdateAsync(id, dto);
-        return actualizada is null ? NotFound(new { mensaje = $"Categoría {id} no encontrada." }) : Ok(actualizada);
+        try
+        {
+            var actualizada = await _service.UpdateAsync(id, dto);
+            return actualizada is null
+                ? NotFound(new { mensaje = $"Categoría {id} no encontrada." })
+                : Ok(actualizada);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
     }
 
-    /// <summary>Elimina (baja lógica) una categoría. No se permite si tiene productos activos asociados.</summary>
+    /// <summary>Elimina (baja lógica) una categoría. Si tiene productos, los reasigna a "Sin categoría".</summary>
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var categoria = await _service.GetByIdAsync(id);
-        if (categoria is null) return NotFound(new { mensaje = $"Categoría {id} no encontrada." });
-        if (categoria.ProductCount > 0)
-            return BadRequest(new { mensaje = "No se puede eliminar la categoría porque tiene productos activos asociados." });
-
-        var eliminada = await _service.DeleteAsync(id);
-        return eliminada ? NoContent() : NotFound(new { mensaje = $"Categoría {id} no encontrada." });
+        try
+        {
+            var eliminada = await _service.DeleteAsync(id);
+            return eliminada ? NoContent() : NotFound(new { mensaje = $"Categoría {id} no encontrada." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
     }
 }

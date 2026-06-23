@@ -202,9 +202,9 @@ else
 
     private async Task Eliminar(int id)
     {
-        var ok = await Api.DeleteCategoriaAsync(id);
-        _exito = ok;
-        _mensaje = ok ? "Categoría eliminada." : "No se puede eliminar: tiene productos asociados.";
+        var (ok, error) = await Api.DeleteCategoriaAsync(id);
+        _exito   = ok;
+        _mensaje = ok ? "Categoría eliminada." : (error ?? "No se pudo eliminar la categoría.");
         if (ok) await Cargar();
     }
 }

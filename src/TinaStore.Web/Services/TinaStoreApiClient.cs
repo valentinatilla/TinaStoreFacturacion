@@ -303,11 +303,12 @@ public class TinaStoreApiClient
         return (false, await LeerMensajeErrorAsync(r));
     }
 
-    public async Task<bool> DeleteCategoriaAsync(int id)
+    public async Task<(bool Ok, string? Error)> DeleteCategoriaAsync(int id)
     {
         SetAuthHeader();
         var r = await _http.DeleteAsync($"/api/categories/{id}");
-        return r.IsSuccessStatusCode;
+        if (r.IsSuccessStatusCode) return (true, null);
+        return (false, await LeerMensajeErrorAsync(r));
     }
 
     // ── Proveedores ───────────────────────────────────────────────────────────
