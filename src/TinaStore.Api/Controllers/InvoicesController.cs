@@ -16,17 +16,20 @@ public sealed class InvoicesController : ControllerBase
     private readonly IValidator<CreateInvoiceDto> _createValidator;
     private readonly IValidator<RegisterPaymentDto> _paymentValidator;
     private readonly IValidator<CancelInvoiceDto> _cancelValidator;
+    private readonly IExcelService _excel;
 
     public InvoicesController(
         IInvoiceService service,
         IValidator<CreateInvoiceDto> createValidator,
         IValidator<RegisterPaymentDto> paymentValidator,
-        IValidator<CancelInvoiceDto> cancelValidator)
+        IValidator<CancelInvoiceDto> cancelValidator,
+        IExcelService excel)
     {
         _service = service;
         _createValidator = createValidator;
         _paymentValidator = paymentValidator;
         _cancelValidator = cancelValidator;
+        _excel = excel;
     }
 
     /// <summary>Obtiene todas las facturas.</summary>
@@ -112,4 +115,18 @@ public sealed class InvoicesController : ControllerBase
             return BadRequest(new { mensaje = ex.Message });
         }
     }
+
+    /// <summary>Exporta las ventas a Excel con hoja de resumen y detalle de productos. Filtro opcional por rango de fechas.</summary>
+    [HttpGet("exportar")]
+    public async Task<IActionResult> Exportar([FromQuery] DateTime? desde, [FromQuery] DateTime? hasta)
+    {
+        var bytes = await _excel.ExportInvoicesAsync(desde, hasta);
+        var nombre = desde.HasValue || hasta.HasValue
+            ? $"ventas-{(desde?.ToString("yyyyMMdd") ?? "inicio")}-{(hasta?.ToString("yyyyMMdd") ?? "hoy")}.xlsx"
+            : $"ventas-{DateTime.Now:yyyyMMdd}.xlsx";
+        return File(bytes,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            nombre);
+    }
 }
+

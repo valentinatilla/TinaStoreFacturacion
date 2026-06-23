@@ -86,12 +86,12 @@ else
                 <div class="modal-body row g-3">
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Nombre *</label>
-                        <input class="form-control" @bind="_form.Name" />
+                        <input class="form-control" @bind="_form.Name" maxlength="30" />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">NIT / RUT</label>
                         <input class="form-control" @bind="_form.TaxId" inputmode="numeric"
-                               @onkeypress="SoloNumerosNIT" placeholder="Ej: 900123456" />
+                               @onkeypress="SoloNumerosNIT" placeholder="Ej: 900123456" maxlength="15" />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Teléfono</label>
@@ -100,15 +100,15 @@ else
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Email</label>
-                        <input class="form-control" @bind="_form.Email" />
+                        <input class="form-control" @bind="_form.Email" maxlength="150" />
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Dirección</label>
-                        <input class="form-control" @bind="_form.Address" />
+                        <input class="form-control" @bind="_form.Address" maxlength="200" />
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Notas</label>
-                        <input class="form-control" @bind="_form.Notes" />
+                        <input class="form-control" @bind="_form.Notes" maxlength="500" />
                     </div>
                     @if (_errorModal is not null)
                     {

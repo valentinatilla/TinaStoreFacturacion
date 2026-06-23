@@ -14,15 +14,18 @@ public sealed class CustomersController : ControllerBase
     private readonly ICustomerService _service;
     private readonly IValidator<CreateCustomerDto> _createValidator;
     private readonly IValidator<UpdateCustomerDto> _updateValidator;
+    private readonly IExcelService _excel;
 
     public CustomersController(
         ICustomerService service,
         IValidator<CreateCustomerDto> createValidator,
-        IValidator<UpdateCustomerDto> updateValidator)
+        IValidator<UpdateCustomerDto> updateValidator,
+        IExcelService excel)
     {
         _service = service;
         _createValidator = createValidator;
         _updateValidator = updateValidator;
+        _excel = excel;
     }
 
     /// <summary>Obtiene todos los clientes. Parámetro opcional: soloActivos=true.</summary>
@@ -96,5 +99,15 @@ public sealed class CustomersController : ControllerBase
     {
         var eliminado = await _service.DeleteAsync(id);
         return eliminado ? NoContent() : NotFound(new { mensaje = $"Cliente {id} no encontrado." });
+    }
+
+    /// <summary>Exporta todos los clientes a un archivo Excel (.xlsx).</summary>
+    [HttpGet("exportar")]
+    public async Task<IActionResult> Exportar()
+    {
+        var bytes = await _excel.ExportCustomersAsync();
+        return File(bytes,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            $"clientes-{DateTime.Now:yyyyMMdd}.xlsx");
     }
 }

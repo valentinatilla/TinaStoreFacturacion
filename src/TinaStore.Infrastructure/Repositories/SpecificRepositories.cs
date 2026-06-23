@@ -49,6 +49,13 @@ public class ProductRepository(AppDbContext context) : Repository<Product>(conte
     public async Task<Product?> GetBySkuAsync(string sku, CancellationToken ct = default)
         => await DbSet.FirstOrDefaultAsync(p => p.Sku == sku, ct);
 
+    public async Task<Product?> FindByNameAsync(string name, int? excludeId = null, CancellationToken ct = default)
+    {
+        var lower = name.Trim().ToLower();
+        return await DbSet.FirstOrDefaultAsync(
+            p => p.Name.ToLower() == lower && (excludeId == null || p.Id != excludeId.Value), ct);
+    }
+
     public async Task<IReadOnlyList<Product>> SearchAsync(string term, CancellationToken ct = default)
     {
         var lower = term.ToLower();
@@ -64,7 +71,7 @@ public class ProductRepository(AppDbContext context) : Repository<Product>(conte
     public async Task<IReadOnlyList<Product>> GetLowStockAsync(CancellationToken ct = default)
         => await DbSet
             .Include(p => p.Category)
-            .Where(p => p.IsActive && p.CurrentStock <= p.MinimumStock)
+            .Where(p => p.IsActive && p.CurrentStock > 0 && p.CurrentStock <= p.MinimumStock)
             .ToListAsync(ct);
 
     public async Task<IReadOnlyList<Product>> GetActivesAsync(CancellationToken ct = default)

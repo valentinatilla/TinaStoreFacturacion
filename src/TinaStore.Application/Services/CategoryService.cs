@@ -7,6 +7,9 @@ namespace TinaStore.Application.Services;
 
 public sealed class CategoryService : ICategoryService
 {
+    private const int SinCategoriaId   = 99;
+    private const string SinCategoriaNombre = "Sin categoría";
+
     private readonly ICategoryRepository _categories;
 
     public CategoryService(ICategoryRepository categories)
@@ -29,6 +32,9 @@ public sealed class CategoryService : ICategoryService
 
     public async Task<CategoryDto> CreateAsync(CreateCategoryDto dto)
     {
+        if (dto.Name.Trim().Equals(SinCategoriaNombre, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException($"El nombre '{SinCategoriaNombre}' está reservado y no puede usarse.");
+
         var todas = await _categories.GetAllWithProductsAsync();
         if (todas.Any(c => c.Name.Equals(dto.Name.Trim(), StringComparison.OrdinalIgnoreCase)))
             throw new InvalidOperationException($"Ya existe una categoría con el nombre '{dto.Name}'.");
@@ -47,6 +53,9 @@ public sealed class CategoryService : ICategoryService
 
     public async Task<CategoryDto?> UpdateAsync(int id, UpdateCategoryDto dto)
     {
+        if (id == SinCategoriaId)
+            throw new InvalidOperationException($"La categoría '{SinCategoriaNombre}' no puede modificarse.");
+
         var entity = await _categories.GetByIdAsync(id);
         if (entity is null) return null;
 
@@ -61,8 +70,18 @@ public sealed class CategoryService : ICategoryService
 
     public async Task<bool> DeleteAsync(int id)
     {
+        if (id == SinCategoriaId)
+            throw new InvalidOperationException($"La categoría '{SinCategoriaNombre}' no puede eliminarse.");
+
         var entity = await _categories.GetByIdAsync(id);
         if (entity is null) return false;
+
+        // Reasignar productos de esta categoría a "Sin categoría"
+        if (entity.Products?.Count > 0)
+        {
+            foreach (var p in entity.Products)
+                p.CategoryId = SinCategoriaId;
+        }
 
         await _categories.DeleteAsync(entity);
         await _categories.SaveChangesAsync();

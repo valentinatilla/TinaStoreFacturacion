@@ -9,8 +9,10 @@
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h4 class="fw-bold mb-0"><i class="bi bi-box-seam me-2 text-purple"></i>Productos</h4>
     <div class="d-flex gap-2 flex-wrap">
-        <button class="btn btn-outline-success btn-sm" @onclick="ExportarExcel">
-            <i class="bi bi-file-earmark-excel me-1"></i>Exportar Excel
+        <button class="btn btn-outline-success btn-sm" @onclick="ExportarExcel" disabled="@_exportando">
+            @if (_exportando) { <span class="spinner-border spinner-border-sm me-1"></span> }
+            else { <i class="bi bi-file-earmark-excel me-1"></i> }
+            @(_exportando ? "Exportando..." : "Exportar Excel")
         </button>
         <button class="btn btn-outline-purple btn-sm" @onclick="AbrirEdicionMasiva">
             <i class="bi bi-pencil-square me-1"></i>Edición masiva
@@ -213,23 +215,23 @@ else
                 <div class="modal-body row g-3">
                     <div class="col-md-5">
                         <label class="form-label small fw-semibold">Nombre *</label>
-                        <input class="form-control" @bind="_form.Name" />
+                        <input class="form-control" @bind="_form.Name" maxlength="30" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">SKU</label>
-                        <input class="form-control" @bind="_form.Sku" placeholder="Ej: SKU-001" />
+                        <input class="form-control" @bind="_form.Sku" maxlength="30" placeholder="Ej: SKU-001" />
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Descripción</label>
-                        <input class="form-control" @bind="_form.Description" />
+                        <input class="form-control" @bind="_form.Description" maxlength="300" />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Precio de venta *</label>
-                        <input type="number" class="form-control" @bind="_form.SalePrice" min="0" step="0.01" />
+                        <input type="number" class="form-control" @bind="_form.SalePrice" min="0.01" max="999999.99" step="0.01" />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Precio de costo</label>
-                        <input type="number" class="form-control" @bind="_form.PurchasePrice" min="0" step="0.01" />
+                        <input type="number" class="form-control" @bind="_form.PurchasePrice" min="0" max="999999.99" step="0.01" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">% Ganancia</label>
@@ -254,7 +256,7 @@ else
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">Unidad</label>
-                        <input class="form-control" @bind="_form.Unit" placeholder="Ej: unidad, kg…" />
+                        <input class="form-control" @bind="_form.Unit" maxlength="30" placeholder="Ej: unidad, kg…" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">Categoría *</label>
@@ -665,6 +667,7 @@ else
     private bool _mostrarModal;
     private bool _editando;
     private bool _guardando;
+    private bool _exportando;
     private int _editandoId;
     private string? _mensaje;
     private bool _exito;
@@ -672,7 +675,6 @@ else
     private ProductoForm _form = new();
     private IBrowserFile? _imagenSeleccionada;
     private byte[]? _imagenBytes;
-    private bool _dragActivo;
 
     // ── Drag & drop JS interop ──────────────────────────────────────────────────
     private ElementReference _dropZoneRef;
@@ -727,7 +729,6 @@ else
     [JSInvokable]
     public async Task RecibirDropBase64(string base64, string mime, string fileName, long fileSize)
     {
-        _dragActivo = false;
         const long maxBytes = 2 * 1024 * 1024;
 
         var ext = Path.GetExtension(fileName).ToLowerInvariant();
@@ -878,7 +879,6 @@ else
         _mostrarModal = false;
         _imagenSeleccionada = null;
         _imagenBytes = null;
-        _dragActivo = false;
         _dropZoneIniciada = false;
     }
 
@@ -963,14 +963,24 @@ else
             _errorModal = "Debes seleccionar una categoría.";
             return;
         }
-        if (_form.SalePrice < 0)
+        if (_form.SalePrice <= 0)
         {
-            _errorModal = "El precio de venta no puede ser negativo.";
+            _errorModal = "El precio de venta debe ser mayor a cero.";
+            return;
+        }
+        if (_form.SalePrice > 999_999.99m)
+        {
+            _errorModal = "El precio de venta no puede superar $999.999,99.";
             return;
         }
         if (_form.PurchasePrice < 0)
         {
             _errorModal = "El precio de costo no puede ser negativo.";
+            return;
+        }
+        if (_form.PurchasePrice > 999_999.99m)
+        {
+            _errorModal = "El precio de costo no puede superar $999.999,99.";
             return;
         }
         if (_form.CurrentStock < 0)
@@ -983,6 +993,11 @@ else
             _errorModal = "El stock mínimo no puede ser negativo.";
             return;
         }
+        if (!string.IsNullOrWhiteSpace(_form.Unit) && System.Text.RegularExpressions.Regex.IsMatch(_form.Unit, @"\d"))
+        {
+            _errorModal = "La unidad de medida no debe contener números.";
+            return;
+        }
 
         _guardando = true;
         int idProducto;
@@ -990,15 +1005,15 @@ else
         if (_editando)
         {
             var dto = new UpdateProductoDto(_form.Sku, _form.Name, _form.Description, _form.Unit, _form.PurchasePrice, _form.SalePrice, _form.MinimumStock, true, _form.CategoryId, _form.SupplierId, _form.StockEntrada);
-            var ok = await Api.UpdateProductoAsync(_editandoId, dto);
-            if (!ok) { _guardando = false; _errorModal = "Error al guardar el producto."; return; }
+            var (ok, err) = await Api.UpdateProductoAsync(_editandoId, dto);
+            if (!ok) { _guardando = false; _errorModal = err ?? "Error al guardar el producto."; return; }
             idProducto = _editandoId;
         }
         else
         {
             var dto = new CreateProductoDto(_form.Sku, _form.Name, _form.Description, _form.Unit, _form.PurchasePrice, _form.SalePrice, _form.CurrentStock, _form.MinimumStock, _form.CategoryId, _form.SupplierId);
-            var creado = await Api.CreateProductoAsync(dto);
-            if (creado is null) { _guardando = false; _errorModal = "Error al crear el producto."; return; }
+            var (creado, err) = await Api.CreateProductoAsync(dto);
+            if (creado is null) { _guardando = false; _errorModal = err ?? "Error al crear el producto."; return; }
             idProducto = creado.Id;
         }
 
@@ -1063,6 +1078,7 @@ else
 
     private async Task ExportarExcel()
     {
+        _exportando = true;
         try
         {
             var bytes = await Api.ExportarProductosExcelAsync();
@@ -1073,6 +1089,7 @@ else
             }
         }
         catch { _mensaje = "Error al exportar Excel."; _exito = false; }
+        finally { _exportando = false; }
     }
 
     private class ProductoForm
@@ -1188,15 +1205,26 @@ else
             }
 
             // 2) Subida de imágenes
+            var erroresImagen = new List<string>();
             foreach (var fila in filasConImagen)
             {
                 try
                 {
                     using var ms = new MemoryStream(fila.ImagenBytes!);
-                    await Api.SubirImagenProductoAsync(fila.ProductId, ms, fila.ImagenNombreArchivo!);
-                    _bulkImagenesSubidas++;
+                    var resultado = await Api.SubirImagenProductoAsync(fila.ProductId, ms, fila.ImagenNombreArchivo!);
+                    if (resultado is not null)
+                        _bulkImagenesSubidas++;
+                    else
+                    {
+                        _bulkImagenesErrores++;
+                        erroresImagen.Add($"{fila.Nombre}: no se pudo subir la imagen.");
+                    }
                 }
-                catch { _bulkImagenesErrores++; }
+                catch (Exception ex)
+                {
+                    _bulkImagenesErrores++;
+                    erroresImagen.Add($"{fila.Nombre}: {ex.Message}");
+                }
             }
 
             // 3) Evaluar resultado global
@@ -1215,6 +1243,14 @@ else
             if (numErrores > 0)
                 partes.Add($"{numErrores} error(es) numérico(s)");
             _mensaje = "Edición masiva: " + string.Join(" · ", partes) + ".";
+
+            // Mostrar detalle de errores de imagen en el resultado del bulk
+            if (erroresImagen.Count > 0 && _bulkResultado is null)
+            {
+                _bulkResultado = new BulkUpdateResultDto(
+                    filasConImagen.Count, _bulkImagenesSubidas, _bulkImagenesErrores,
+                    erroresImagen.Select(e => new BulkUpdateItemResultDto(0, e, false, e)).ToList());
+            }
 
             if (!hayErrores)
             {

@@ -5,6 +5,55 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [Unreleased] — Fases I–N: Correcciones de Productos (imágenes masivas, validaciones, proveedor, estados, Excel)
+
+### Tipo de cambio
+Corrección de bugs / Validaciones / Mejoras UX / Consistencia de datos
+
+### Módulos afectados
+Productos (Index.razor, Importar.razor), ProductService, ProductValidators, ProductDtos, ExcelService, ProductsController, TinaStoreApiClient, Product (dominio), SpecificRepositories
+
+### Cambios
+
+**BUG-19 — Error silencioso al subir imagen en edición masiva**
+- El `catch` genérico en `GuardarEdicionMasiva` ocultaba el error real. Ahora se captura la excepción por fila y se reporta en la vista del paso 2.
+- `SubirImagenProductoAsync` retorna `null` cuando el servidor responde con error; se contabiliza como `_bulkImagenesErrores` con mensaje visible.
+- Agregados `[RequestSizeLimit(5MB)]` y `[RequestFormLimits]` en el endpoint `POST /{id}/imagen`.
+
+**BUG-20 — Campo Unidad acepta números**
+- Regex `^[a-záéíóúÁÉÍÓÚñÑüÜ\s]+$` agregada en `CreateProductValidator` y `UpdateProductValidator`.
+- Validación frontend en `Guardar()` con mensaje "La unidad de medida no debe contener números."
+
+**BUG-21 — Productos duplicados por nombre o SKU**
+- `ProductService.CreateAsync` y `UpdateAsync` verifican unicidad de `Name` y `Sku` antes de persistir.
+- `FindByNameAsync` agregado a `IProductRepository` e implementado en `ProductRepository`.
+- `DomainException` capturada en `ProductsController` y retornada como HTTP 400.
+- `CreateProductoAsync` y `UpdateProductoAsync` del cliente web devuelven `(resultado, error)` para propagar el mensaje al `_errorModal` del formulario.
+- **Nota**: No se creó índice único en BD porque existen cientos de registros duplicados históricos (importación previa). Deuda técnica registrada en KNOWN_ISSUES.
+
+**BUG-22 — Proveedor en blanco en listado y edición masiva**
+- **Causa raíz**: `ProductSummaryDto` no incluía `SupplierId` ni `SupplierName`. El endpoint `GET /api/products` lo retorna para el listado y la edición masiva.
+- Agregados `int? SupplierId` y `string? SupplierName` a `ProductSummaryDto`.
+- `ToSummaryDto` en `ProductService` actualizado para mapear esos campos.
+
+**BUG-23 — Sin indicador de carga en acciones lentas**
+- Botón "Exportar Excel" en `Index.razor`: variable `_exportando` + spinner Bootstrap + `disabled`.
+- Botón "Descargar plantilla" en `Importar.razor`: variable `_descargandoPlantilla` + spinner.
+- Botón "Previsualizar" en `Importar.razor`: texto cambia a "Analizando..." durante la carga.
+
+**BUG-24 — Producto muestra "Bajo stock" y "Agotado" al mismo tiempo**
+- `IsLowStock` en `Product.cs` corregido: `CurrentStock > 0 && CurrentStock <= MinimumStock`.
+- `GetLowStockAsync` en `ProductRepository` actualizado: `p.CurrentStock > 0 && p.CurrentStock <= p.MinimumStock`.
+- Los estados son ahora mutuamente excluyentes: Agotado (stock=0) y Bajo stock (0 < stock ≤ mínimo).
+
+**BUG-25 — Plantillas Excel de importación y exportación con estructura diferente**
+- Ambas ahora usan 10 columnas en orden: SKU, Nombre, Descripción, Categoría, Proveedor, Costo, Precio de venta, Stock, Stock mínimo, Unidad de medida.
+- Eliminadas columnas obsoletas: ID, Activo, "Precio Costo" (renombrado a Costo), etc.
+- Color de encabezado alineado al tema Tina Store (#DB2777 rosa).
+- `ImportProductsAsync` y `PreviewImportAsync` actualizados para leer la nueva estructura.
+
+---
+
 ## [Unreleased] — 2026-06-22 — Fase H: Drag & drop de imagen + Íconos PWA
 
 ### Tipo de cambio

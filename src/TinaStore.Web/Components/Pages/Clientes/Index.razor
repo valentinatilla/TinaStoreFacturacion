@@ -1,14 +1,22 @@
 @page "/clientes"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
+@inject IJSRuntime JS
 
 <PageTitle>Clientes — Tina Store</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h4 class="fw-bold mb-0"><i class="bi bi-people me-2 text-purple"></i>Clientes</h4>
-    <button class="btn bg-purple text-white" @onclick="() => AbrirModal()">
-        <i class="bi bi-plus-lg me-1"></i>Nuevo cliente
-    </button>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-purple" @onclick="ExportarExcel" disabled="@_exportandoClientes">
+            @if (_exportandoClientes) { <span class="spinner-border spinner-border-sm me-1"></span> }
+            else { <i class="bi bi-file-earmark-excel me-1"></i> }
+            Exportar clientes
+        </button>
+        <button class="btn bg-purple text-white" @onclick="() => AbrirModal()">
+            <i class="bi bi-plus-lg me-1"></i>Nuevo cliente
+        </button>
+    </div>
 </div>
 
 @if (!string.IsNullOrEmpty(_mensaje))
@@ -151,7 +159,7 @@ else
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label small fw-semibold">Nombre completo *</label>
-                            <input class="form-control @(_errNombre is not null ? "is-invalid" : "")" @bind="_form.FullName" />
+                            <input class="form-control @(_errNombre is not null ? "is-invalid" : "")" @bind="_form.FullName" maxlength="30" />
                             @if (_errNombre is not null)
                             {
                                 <div class="invalid-feedback">@_errNombre</div>
@@ -171,11 +179,11 @@ else
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label small fw-semibold">Documento</label>
-                            <input class="form-control" @bind="_form.DocumentNumber" />
+                            <input class="form-control" @bind="_form.DocumentNumber" maxlength="20" />
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label small fw-semibold">Teléfono</label>
-                            <input class="form-control @(_errTelefono is not null ? "is-invalid" : "")" @bind="_form.Phone" placeholder="Ej: 3001234567" />
+                            <input class="form-control @(_errTelefono is not null ? "is-invalid" : "")" @bind="_form.Phone" maxlength="10" placeholder="Ej: 3001234567" inputmode="numeric" />
                             @if (_errTelefono is not null)
                             {
                                 <div class="invalid-feedback">@_errTelefono</div>
@@ -191,11 +199,11 @@ else
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-semibold">Dirección</label>
-                            <input class="form-control" @bind="_form.Address" />
+                            <input class="form-control" @bind="_form.Address" maxlength="200" />
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-semibold">Notas</label>
-                            <input class="form-control" @bind="_form.Notes" />
+                            <input class="form-control" @bind="_form.Notes" maxlength="500" />
                         </div>
                     </div>
                 </div>
@@ -250,6 +258,33 @@ else
     private bool _mostrarModalEliminar;
     private int _idAEliminar;
     private string _nombreAEliminar = "";
+    private bool _exportandoClientes;
+
+    private async Task ExportarExcel()
+    {
+        _exportandoClientes = true;
+        _mensaje = null;
+        try
+        {
+            var bytes = await Api.ExportarClientesExcelAsync();
+            if (bytes is not null)
+            {
+                var base64 = Convert.ToBase64String(bytes);
+                await JS.InvokeVoidAsync("downloadFileFromBase64", base64,
+                    $"clientes-{DateTime.Now:yyyyMMdd}.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+                _exito   = true;
+                _mensaje = "Clientes exportados correctamente.";
+            }
+            else
+            {
+                _exito   = false;
+                _mensaje = "No se pudo generar el archivo Excel.";
+            }
+        }
+        catch { _exito = false; _mensaje = "Error al exportar clientes."; }
+        finally { _exportandoClientes = false; }
+    }
 
     // ── Errores de validación del modal ────────────────────────────────────────────
     private string? _errNombre;
@@ -368,7 +403,7 @@ else
             _errEmail = "Ingresa un correo válido, por ejemplo: cliente@correo.com.";
 
         if (!EsTelefonoValido(_form.Phone))
-            _errTelefono = "Ingresa un número de teléfono válido. Para Colombia debe tener 10 dígitos.";
+            _errTelefono = "El teléfono debe tener exactamente 10 dígitos (sin espacios ni guiones).";
 
         if (_errNombre   is not null) _erroresModal.Add(_errNombre);
         if (_errEmail    is not null) _erroresModal.Add(_errEmail);
@@ -431,9 +466,7 @@ else
     private static bool EsTelefonoValido(string? phone)
     {
         if (string.IsNullOrWhiteSpace(phone)) return true;
-        return System.Text.RegularExpressions.Regex.IsMatch(
-            phone.Trim(),
-            @"^\+?[\d\s\-]{7,20}$");
+        return System.Text.RegularExpressions.Regex.IsMatch(phone.Trim(), @"^\d{10}$");
     }
 
     private class ClienteForm

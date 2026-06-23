@@ -5,6 +5,23 @@ Los issues marcados ✅ ya están resueltos. Los marcados 🔴/🟡/🟢 están 
 
 ---
 
+## Fases I–N — Issues resueltos y deuda técnica registrada
+
+### ✅ BUG-19 — Error silencioso al subir imagen en edición masiva → resuelto (Fase I)
+### ✅ BUG-20 — Campo Unidad acepta números → resuelto (Fase J)
+### ✅ BUG-21 — Productos duplicados por nombre/SKU → resuelto parcialmente (Fase J)
+### ✅ BUG-22 — Proveedor en blanco en listado/edición masiva → resuelto (Fase K)
+### ✅ BUG-23 — Sin indicador de carga en acciones lentas → resuelto (Fase L)
+### ✅ BUG-24 — Bajo stock y Agotado al mismo tiempo → resuelto (Fase M)
+### ✅ BUG-25 — Plantillas Excel inconsistentes → resuelto (Fase N)
+
+### ✅ DEUDA-01 — Índice único en Products(Name) y Products(Sku) → RESUELTO (2026-06-23)
+- **Estado**: ✅ Completado. Se limpiaron 108 registros duplicados con soft-delete y se creó la migración `AddUniqueIndexProductNameSku` con índices únicos filtrados (`WHERE IsDeleted = 0`).
+- **Solución**: Script temporal `tools/DbClean` para limpiar `tinastore-dev.db`; `HasIndex().IsUnique().HasFilter()` en `AppDbContext`; migración EF Core generada y aplicada.
+- **Archivos**: `AppDbContext.cs`, `Data/Migrations/20260623031426_AddUniqueIndexProductNameSku.cs`.
+
+---
+
 ## Sprint Corrección 2026-06-21 — Issues resueltos en Fase A
 
 ### ✅ BUG-A-B02 — Ojito de contraseña no existía → resuelto en Fase A (2026-06-21)

@@ -28,7 +28,7 @@ public sealed class StoreSettingsService : IStoreSettingsService
         var settings = await _repo.GetByIdAsync(1)
             ?? throw new InvalidOperationException("No se encontró la configuración de la tienda.");
 
-        settings.StoreName            = dto.StoreName;
+        settings.StoreName            = "Tina Store"; // nombre fijo, no editable por el usuario
         settings.Address              = dto.Address;
         settings.Phone                = dto.Phone;
         settings.Email                = dto.Email;

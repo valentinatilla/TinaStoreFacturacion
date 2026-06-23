@@ -31,8 +31,10 @@
         </h6>
         <p class="text-muted small mb-3">
             El archivo debe seguir la plantilla oficial.
-            <a href="#" @onclick="DescargarPlantilla" @onclick:preventDefault>
-                <i class="bi bi-download me-1"></i>Descargar plantilla
+            <a href="#" @onclick="DescargarPlantilla" @onclick:preventDefault class="@(_descargandoPlantilla ? "disabled text-muted" : "")">
+                @if (_descargandoPlantilla) { <span class="spinner-border spinner-border-sm me-1" style="width:.9rem;height:.9rem;"></span> }
+                else { <i class="bi bi-download me-1"></i> }
+                @(_descargandoPlantilla ? "Descargando..." : "Descargar plantilla")
             </a>
         </p>
 
@@ -43,8 +45,9 @@
                 @onclick="Previsualizar"
                 disabled="@(_archivo is null || _cargando)">
             @if (_cargando)
-            { <span class="spinner-border spinner-border-sm me-2"></span> }
-            <i class="bi bi-eye me-1"></i>Previsualizar
+            { <span class="spinner-border spinner-border-sm me-2"></span>@("Analizando...") }
+            else
+            { <i class="bi bi-eye me-1"></i>@("Previsualizar") }
         </button>
     </div>
 }
@@ -214,6 +217,7 @@
     private ExcelImportResultDto? _resultado;
     private bool _cargando;
     private bool _guardando;
+    private bool _descargandoPlantilla;
     private string? _mensaje;
     private bool _exito;
 
@@ -348,11 +352,16 @@
 
     private async Task DescargarPlantilla()
     {
-        var bytes = await Api.DescargarPlantillaExcelAsync();
-        if (bytes is null) return;
-        var b64 = Convert.ToBase64String(bytes);
-        await JS.InvokeVoidAsync("downloadFileFromBase64", b64, "plantilla-productos.xlsx",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        _descargandoPlantilla = true;
+        try
+        {
+            var bytes = await Api.DescargarPlantillaExcelAsync();
+            if (bytes is null) return;
+            var b64 = Convert.ToBase64String(bytes);
+            await JS.InvokeVoidAsync("downloadFileFromBase64", b64, "plantilla-productos.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        }
+        finally { _descargandoPlantilla = false; }
     }
 
     private class FilaEditable { }

@@ -14,6 +14,7 @@ public interface IProductRepository : IRepository<Product>
 {
     Task<Product?> GetByInternalCodeAsync(string code, CancellationToken ct = default);
     Task<Product?> GetBySkuAsync(string sku, CancellationToken ct = default);
+    Task<Product?> FindByNameAsync(string name, int? excludeId = null, CancellationToken ct = default);
     Task<IReadOnlyList<Product>> SearchAsync(string term, CancellationToken ct = default);
     Task<IReadOnlyList<Product>> GetLowStockAsync(CancellationToken ct = default);
     Task<IReadOnlyList<Product>> GetActivesAsync(CancellationToken ct = default);

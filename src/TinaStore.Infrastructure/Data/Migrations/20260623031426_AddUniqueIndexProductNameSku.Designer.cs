@@ -2,17 +2,20 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TinaStore.Infrastructure.Data;
 
 #nullable disable
 
-namespace TinaStore.Infrastructure.Migrations
+namespace TinaStore.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260623031426_AddUniqueIndexProductNameSku")]
+    partial class AddUniqueIndexProductNameSku
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
@@ -146,15 +149,6 @@ namespace TinaStore.Infrastructure.Migrations
                             IsActive = true,
                             IsDeleted = false,
                             Name = "General"
-                        },
-                        new
-                        {
-                            Id = 99,
-                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Categoría de reserva para productos sin clasificar",
-                            IsActive = true,
-                            IsDeleted = false,
-                            Name = "Sin categoría"
                         });
                 });
 

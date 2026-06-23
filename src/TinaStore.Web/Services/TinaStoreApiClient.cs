@@ -149,12 +149,16 @@ public class TinaStoreApiClient
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _session.Token);
     }
 
-    // Helper: lee el campo "message" de una respuesta de error de la API
+    // Helper: lee el campo "message" o "mensaje" de una respuesta de error de la API
     private static async Task<string?> LeerMensajeErrorAsync(HttpResponseMessage r)
     {
         try
         {
             var json = await r.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+            // DomainException devuelve { "mensaje": "..." }
+            if (json.TryGetProperty("mensaje", out var msj) && msj.ValueKind == System.Text.Json.JsonValueKind.String)
+                return msj.GetString();
+            // Convención inglesa { "message": "..." }
             if (json.TryGetProperty("message", out var msg) && msg.ValueKind == System.Text.Json.JsonValueKind.String)
                 return msg.GetString();
             // FluentValidation devuelve un array de strings
@@ -299,11 +303,12 @@ public class TinaStoreApiClient
         return (false, await LeerMensajeErrorAsync(r));
     }
 
-    public async Task<bool> DeleteCategoriaAsync(int id)
+    public async Task<(bool Ok, string? Error)> DeleteCategoriaAsync(int id)
     {
         SetAuthHeader();
         var r = await _http.DeleteAsync($"/api/categories/{id}");
-        return r.IsSuccessStatusCode;
+        if (r.IsSuccessStatusCode) return (true, null);
+        return (false, await LeerMensajeErrorAsync(r));
     }
 
     // ── Proveedores ───────────────────────────────────────────────────────────
@@ -344,19 +349,21 @@ public class TinaStoreApiClient
     public Task<ProductoDto?> GetProductoAsync(int id) =>
         GetSafeAsync<ProductoDto>($"/api/products/{id}");
 
-    public async Task<ProductoDto?> CreateProductoAsync(CreateProductoDto dto)
+    public async Task<(ProductoDto? Producto, string? Error)> CreateProductoAsync(CreateProductoDto dto)
     {
         SetAuthHeader();
         var r = await _http.PostAsJsonAsync("/api/products", dto);
-        if (!r.IsSuccessStatusCode) return null;
-        return await r.Content.ReadFromJsonAsync<ProductoDto>();
+        if (!r.IsSuccessStatusCode)
+            return (null, await LeerMensajeErrorAsync(r));
+        return (await r.Content.ReadFromJsonAsync<ProductoDto>(), null);
     }
 
-    public async Task<bool> UpdateProductoAsync(int id, UpdateProductoDto dto)
+    public async Task<(bool Ok, string? Error)> UpdateProductoAsync(int id, UpdateProductoDto dto)
     {
         SetAuthHeader();
         var r = await _http.PutAsJsonAsync($"/api/products/{id}", dto);
-        return r.IsSuccessStatusCode;
+        if (r.IsSuccessStatusCode) return (true, null);
+        return (false, await LeerMensajeErrorAsync(r));
     }
 
     public async Task<bool> DeleteProductoAsync(int id)
@@ -528,6 +535,25 @@ public class TinaStoreApiClient
     {
         SetAuthHeader();
         var r = await _http.GetAsync("/api/documents/productos/excel");
+        return r.IsSuccessStatusCode ? await r.Content.ReadAsByteArrayAsync() : null;
+    }
+
+    public async Task<byte[]?> ExportarClientesExcelAsync()
+    {
+        SetAuthHeader();
+        var r = await _http.GetAsync("/api/customers/exportar");
+        return r.IsSuccessStatusCode ? await r.Content.ReadAsByteArrayAsync() : null;
+    }
+
+    public async Task<byte[]?> ExportarVentasExcelAsync(DateTime? desde = null, DateTime? hasta = null)
+    {
+        SetAuthHeader();
+        var url = "/api/invoices/exportar";
+        var qs  = new List<string>();
+        if (desde.HasValue) qs.Add($"desde={desde.Value:yyyy-MM-dd}");
+        if (hasta.HasValue) qs.Add($"hasta={hasta.Value:yyyy-MM-dd}");
+        if (qs.Count > 0) url += "?" + string.Join("&", qs);
+        var r = await _http.GetAsync(url);
         return r.IsSuccessStatusCode ? await r.Content.ReadAsByteArrayAsync() : null;
     }
 

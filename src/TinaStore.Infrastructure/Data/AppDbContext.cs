@@ -54,6 +54,19 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Invoice>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<Expense>().HasQueryFilter(e => !e.IsDeleted);
 
+        // Índices únicos parciales en Products (solo filas activas, no borradas)
+        modelBuilder.Entity<Product>()
+            .HasIndex(p => p.Name)
+            .IsUnique()
+            .HasDatabaseName("IX_Products_Name_Unique")
+            .HasFilter("\"IsDeleted\" = 0");
+
+        modelBuilder.Entity<Product>()
+            .HasIndex(p => p.Sku)
+            .IsUnique()
+            .HasDatabaseName("IX_Products_Sku_Unique")
+            .HasFilter("\"IsDeleted\" = 0 AND \"Sku\" IS NOT NULL AND \"Sku\" != ''");
+
         // Precisión decimal para columnas de dinero
         foreach (var property in modelBuilder.Model.GetEntityTypes()
             .SelectMany(t => t.GetProperties())
@@ -77,7 +90,8 @@ public class AppDbContext : DbContext
 
         // Datos iniciales: categorías por defecto
         modelBuilder.Entity<Category>().HasData(
-            new Category { Id = 1, Name = "General", Description = "Categoría general", IsActive = true, CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
+            new Category { Id = 1,  Name = "General",        Description = "Categoría general",                         IsActive = true, CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new Category { Id = 99, Name = "Sin categoría",  Description = "Categoría de reserva para productos sin clasificar", IsActive = true, CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
         );
 
         // Datos iniciales: métodos de pago por defecto
