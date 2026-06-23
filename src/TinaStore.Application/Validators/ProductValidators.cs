@@ -15,6 +15,11 @@ public sealed class CreateProductValidator : AbstractValidator<CreateProductDto>
             .NotEmpty().WithMessage("El nombre del producto es obligatorio.")
             .MaximumLength(200).WithMessage("El nombre no puede superar 200 caracteres.");
 
+        RuleFor(x => x.Unit)
+            .Matches(@"^[a-záéíóúÁÉÍÓÚñÑüÜ\s]+$")
+            .WithMessage("La unidad de medida no debe contener números.")
+            .When(x => !string.IsNullOrWhiteSpace(x.Unit));
+
         RuleFor(x => x.PurchasePrice)
             .GreaterThanOrEqualTo(0).WithMessage("El precio de compra no puede ser negativo.");
 
@@ -39,6 +44,11 @@ public sealed class UpdateProductValidator : AbstractValidator<UpdateProductDto>
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("El nombre del producto es obligatorio.")
             .MaximumLength(200).WithMessage("El nombre no puede superar 200 caracteres.");
+
+        RuleFor(x => x.Unit)
+            .Matches(@"^[a-záéíóúÁÉÍÓÚñÑüÜ\s]+$")
+            .WithMessage("La unidad de medida no debe contener números.")
+            .When(x => !string.IsNullOrWhiteSpace(x.Unit));
 
         RuleFor(x => x.PurchasePrice)
             .GreaterThanOrEqualTo(0).WithMessage("El precio de compra no puede ser negativo.");

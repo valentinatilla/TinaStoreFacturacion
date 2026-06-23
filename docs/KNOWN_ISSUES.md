@@ -5,6 +5,25 @@ Los issues marcados ✅ ya están resueltos. Los marcados 🔴/🟡/🟢 están 
 
 ---
 
+## Fases I–N — Issues resueltos y deuda técnica registrada
+
+### ✅ BUG-19 — Error silencioso al subir imagen en edición masiva → resuelto (Fase I)
+### ✅ BUG-20 — Campo Unidad acepta números → resuelto (Fase J)
+### ✅ BUG-21 — Productos duplicados por nombre/SKU → resuelto parcialmente (Fase J)
+### ✅ BUG-22 — Proveedor en blanco en listado/edición masiva → resuelto (Fase K)
+### ✅ BUG-23 — Sin indicador de carga en acciones lentas → resuelto (Fase L)
+### ✅ BUG-24 — Bajo stock y Agotado al mismo tiempo → resuelto (Fase M)
+### ✅ BUG-25 — Plantillas Excel inconsistentes → resuelto (Fase N)
+
+### 🟡 DEUDA-01 — Índice único en Products(Name) y Products(Sku) pendiente
+- **Estado**: Deuda técnica. La validación de unicidad está implementada en `ProductService` (nivel de servicio), pero **no existe** un índice único en la base de datos.
+- **Motivo**: La BD de desarrollo contiene cientos de productos duplicados por nombre, resultado de una importación masiva accidental. Crear el índice ahora rompería el startup de la aplicación.
+- **Impacto**: Si dos usuarios crean el mismo producto simultáneamente (condición de carrera), el servicio no garantiza unicidad absoluta.
+- **Acción requerida**: Limpiar los duplicados de la BD (revisar cuáles son legítimos y cuáles son residuos de importación), luego ejecutar una migración que agregue `HasIndex` con `IsUnique()` en `AppDbContext`.
+- **Prioridad**: Media (no bloquea operación normal).
+
+---
+
 ## Sprint Corrección 2026-06-21 — Issues resueltos en Fase A
 
 ### ✅ BUG-A-B02 — Ojito de contraseña no existía → resuelto en Fase A (2026-06-21)

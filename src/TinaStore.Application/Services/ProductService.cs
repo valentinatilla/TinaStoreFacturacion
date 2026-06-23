@@ -61,6 +61,21 @@ public sealed class ProductService : IProductService
 
     public async Task<ProductDto> CreateAsync(CreateProductDto dto)
     {
+        // Validar unicidad de nombre
+        var existeNombre = await _products.FindByNameAsync(dto.Name);
+        if (existeNombre is not null)
+            throw new DomainException($"Ya existe un producto con el nombre '{dto.Name.Trim()}'.");
+
+        // Validar unicidad de SKU
+        if (!string.IsNullOrWhiteSpace(dto.Sku))
+        {
+            var skuTrim = dto.Sku.Trim();
+            var existeSku = await _products.FindAsync(
+                p => p.Sku != null && p.Sku.ToLower() == skuTrim.ToLower());
+            if (existeSku.Any())
+                throw new DomainException($"Ya existe un producto con el SKU '{skuTrim}'.");
+        }
+
         var categoria = await _categories.GetByIdAsync(dto.CategoryId)
             ?? throw new EntityNotFoundException(nameof(Category), dto.CategoryId);
 
@@ -101,6 +116,21 @@ public sealed class ProductService : IProductService
     {
         var entity = await _products.GetByIdAsync(id);
         if (entity is null) return null;
+
+        // Validar unicidad de nombre (excluir el propio producto)
+        var existeNombre = await _products.FindByNameAsync(dto.Name, excludeId: id);
+        if (existeNombre is not null)
+            throw new DomainException($"Ya existe un producto con el nombre '{dto.Name.Trim()}'.");
+
+        // Validar unicidad de SKU (excluir el propio producto)
+        if (!string.IsNullOrWhiteSpace(dto.Sku))
+        {
+            var skuTrim = dto.Sku.Trim();
+            var existeSku = await _products.FindAsync(
+                p => p.Id != id && p.Sku != null && p.Sku.ToLower() == skuTrim.ToLower());
+            if (existeSku.Any())
+                throw new DomainException($"Ya existe un producto con el SKU '{skuTrim}'.");
+        }
 
         var categoria = await _categories.GetByIdAsync(dto.CategoryId)
             ?? throw new EntityNotFoundException(nameof(Category), dto.CategoryId);
@@ -284,6 +314,8 @@ public sealed class ProductService : IProductService
         p.IsActive,
         p.CategoryId,
         p.Category?.Name ?? string.Empty,
+        p.SupplierId,
+        p.Supplier?.Name,
         p.ImagePath
     );
 

@@ -28,5 +28,9 @@ public class Product : BaseEntity
             ? Math.Round((SalePrice - PurchasePrice) / PurchasePrice * 100, 2)
             : 0;
 
-    public bool IsLowStock => CurrentStock <= MinimumStock;
+    /// <summary>
+    /// Verdadero si hay stock pero está por debajo del mínimo.
+    /// Agotado (stock = 0) NO cuenta como bajo stock.
+    /// </summary>
+    public bool IsLowStock => CurrentStock > 0 && CurrentStock <= MinimumStock;
 }

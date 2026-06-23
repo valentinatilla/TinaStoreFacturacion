@@ -35,6 +35,8 @@ public record ProductSummaryDto(
     bool IsActive,
     int CategoryId,
     string CategoryName,
+    int? SupplierId,
+    string? SupplierName,
     string? ImagePath
 );
 

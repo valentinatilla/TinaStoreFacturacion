@@ -3,6 +3,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using TinaStore.Application.DTOs;
 using TinaStore.Application.Interfaces;
+using TinaStore.Domain.Exceptions;
 
 namespace TinaStore.Api.Controllers;
 
@@ -74,8 +75,15 @@ public sealed class ProductsController : ControllerBase
         if (!validacion.IsValid)
             return BadRequest(validacion.Errors.Select(e => e.ErrorMessage));
 
-        var creado = await _service.CreateAsync(dto);
-        return CreatedAtAction(nameof(GetById), new { id = creado.Id }, creado);
+        try
+        {
+            var creado = await _service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = creado.Id }, creado);
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
     }
 
     /// <summary>Actualiza los datos de un producto existente.</summary>
@@ -86,8 +94,15 @@ public sealed class ProductsController : ControllerBase
         if (!validacion.IsValid)
             return BadRequest(validacion.Errors.Select(e => e.ErrorMessage));
 
-        var actualizado = await _service.UpdateAsync(id, dto);
-        return actualizado is null ? NotFound(new { mensaje = $"Producto {id} no encontrado." }) : Ok(actualizado);
+        try
+        {
+            var actualizado = await _service.UpdateAsync(id, dto);
+            return actualizado is null ? NotFound(new { mensaje = $"Producto {id} no encontrado." }) : Ok(actualizado);
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
     }
 
     /// <summary>Elimina (baja lógica) un producto del inventario.</summary>
@@ -98,8 +113,10 @@ public sealed class ProductsController : ControllerBase
         return eliminado ? NoContent() : NotFound(new { mensaje = $"Producto {id} no encontrado." });
     }
 
-    /// <summary>Sube o reemplaza la imagen de un producto. Máximo 2 MB; JPG, PNG o WEBP.</summary>
+    /// <summary>Sube o reemplaza la imagen de un producto. Máximo 5 MB; JPG, PNG o WEBP.</summary>
     [HttpPost("{id:int}/imagen")]
+    [RequestSizeLimit(5 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 5 * 1024 * 1024)]
     public async Task<IActionResult> UploadImage(int id, IFormFile archivo)
     {
         if (archivo is null || archivo.Length == 0)

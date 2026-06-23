@@ -344,19 +344,21 @@ public class TinaStoreApiClient
     public Task<ProductoDto?> GetProductoAsync(int id) =>
         GetSafeAsync<ProductoDto>($"/api/products/{id}");
 
-    public async Task<ProductoDto?> CreateProductoAsync(CreateProductoDto dto)
+    public async Task<(ProductoDto? Producto, string? Error)> CreateProductoAsync(CreateProductoDto dto)
     {
         SetAuthHeader();
         var r = await _http.PostAsJsonAsync("/api/products", dto);
-        if (!r.IsSuccessStatusCode) return null;
-        return await r.Content.ReadFromJsonAsync<ProductoDto>();
+        if (!r.IsSuccessStatusCode)
+            return (null, await LeerMensajeErrorAsync(r));
+        return (await r.Content.ReadFromJsonAsync<ProductoDto>(), null);
     }
 
-    public async Task<bool> UpdateProductoAsync(int id, UpdateProductoDto dto)
+    public async Task<(bool Ok, string? Error)> UpdateProductoAsync(int id, UpdateProductoDto dto)
     {
         SetAuthHeader();
         var r = await _http.PutAsJsonAsync($"/api/products/{id}", dto);
-        return r.IsSuccessStatusCode;
+        if (r.IsSuccessStatusCode) return (true, null);
+        return (false, await LeerMensajeErrorAsync(r));
     }
 
     public async Task<bool> DeleteProductoAsync(int id)

@@ -4,6 +4,67 @@ Registro detallado de todos los bugs corregidos en el proyecto.
 
 ---
 
+## Fases I–N — Productos: imágenes masivas, validaciones, proveedor, estados, Excel
+
+### BUG-19 — Error silencioso al subir imagen en edición masiva
+- **Módulo**: Productos / Edición masiva
+- **Problema**: Al subir imagen desde el modal de edición masiva, el error no se mostraba al usuario; el `catch` genérico simplemente incrementaba un contador.
+- **Causa raíz**: `catch { _bulkImagenesErrores++; }` sin capturar ni reportar el mensaje real.
+- **Solución**: Se captura la excepción por fila con `catch (Exception ex)` y se acumula en `erroresImagen`. Si solo hay errores de imagen y no numéricos, se construye un `BulkUpdateResultDto` con los errores visibles en el paso 2. Se agregaron `[RequestSizeLimit(5MB)]` y `[RequestFormLimits]` al endpoint de imagen.
+- **Archivos**: `Productos/Index.razor`, `Api/Controllers/ProductsController.cs`
+- **Resultado**: ✅ Corregido
+
+### BUG-20 — Campo Unidad permite números
+- **Módulo**: Productos
+- **Problema**: El campo "Unidad de medida" aceptaba valores como "Caja1", "10 paquetes", etc.
+- **Causa raíz**: No había validación de formato en `ProductValidators` ni en el frontend.
+- **Solución**: Regex `^[a-záéíóúÁÉÍÓÚñÑüÜ\s]+$` en `CreateProductValidator` y `UpdateProductValidator`. Validación frontend en `Guardar()` antes de llamar a la API.
+- **Archivos**: `Application/Validators/ProductValidators.cs`, `Productos/Index.razor`
+- **Resultado**: ✅ Corregido
+
+### BUG-21 — Productos con nombre o SKU duplicado
+- **Módulo**: Productos
+- **Problema**: El sistema permitía crear dos productos con el mismo nombre o SKU.
+- **Causa raíz**: No había validación de unicidad en el servicio ni índice en la BD.
+- **Solución**: `ProductService.CreateAsync` y `UpdateAsync` verifican unicidad antes de persistir. `FindByNameAsync` agregado al repositorio. `DomainException` convertida en HTTP 400 en el controlador. El error llega al `_errorModal` del formulario.
+- **Nota técnica**: No se creó índice único en BD porque existen cientos de registros duplicados por una importación masiva previa. Deuda técnica documentada en KNOWN_ISSUES.
+- **Archivos**: `Application/Services/ProductService.cs`, `Domain/Interfaces/IRepositories.cs`, `Infrastructure/Repositories/SpecificRepositories.cs`, `Api/Controllers/ProductsController.cs`, `Web/Services/TinaStoreApiClient.cs`, `Productos/Index.razor`
+- **Resultado**: ✅ Corregido (validación en servicio)
+
+### BUG-22 — Proveedor en blanco en listado y edición masiva
+- **Módulo**: Productos
+- **Problema**: La columna "Proveedor" aparecía vacía en el listado y la edición masiva, aunque el producto tuviera proveedor asignado.
+- **Causa raíz**: `ProductSummaryDto` (el DTO que retorna `GET /api/products`) no incluía `SupplierId` ni `SupplierName`. El DTO completo `ProductDto` sí los tenía, pero el endpoint de listado usaba el resumido.
+- **Solución**: Agregados `int? SupplierId` y `string? SupplierName` a `ProductSummaryDto`. `ToSummaryDto` en `ProductService` actualizado.
+- **Archivos**: `Application/DTOs/ProductDtos.cs`, `Application/Services/ProductService.cs`
+- **Resultado**: ✅ Corregido
+
+### BUG-23 — Sin indicador de carga en acciones lentas
+- **Módulo**: Productos (Index, Importar)
+- **Problema**: Los botones de exportar y descargar plantilla no daban feedback visual durante la operación.
+- **Causa raíz**: No había variables de estado `_procesando` para esas acciones.
+- **Solución**: `_exportando` en `Index.razor` para el botón Exportar. `_descargandoPlantilla` en `Importar.razor` para Descargar plantilla. Texto dinámico "Exportando..." / "Descargando..." / "Analizando...".
+- **Archivos**: `Productos/Index.razor`, `Productos/Importar.razor`
+- **Resultado**: ✅ Corregido
+
+### BUG-24 — Producto puede mostrar "Bajo stock" y "Agotado" simultáneamente
+- **Módulo**: Productos
+- **Problema**: Un producto con stock=0 y stock mínimo=5 aparecía como "Bajo stock" (porque `0 <= 5`).
+- **Causa raíz**: `IsLowStock = CurrentStock <= MinimumStock` no excluía el caso `CurrentStock == 0`.
+- **Solución**: `IsLowStock = CurrentStock > 0 && CurrentStock <= MinimumStock`. `GetLowStockAsync` actualizado con la misma condición.
+- **Archivos**: `Domain/Entities/Product.cs`, `Infrastructure/Repositories/SpecificRepositories.cs`
+- **Resultado**: ✅ Corregido
+
+### BUG-25 — Plantillas Excel de importación y exportación inconsistentes
+- **Módulo**: Productos / Excel
+- **Problema**: La exportación tenía 11 columnas (ID, Nombre, Desc, SKU, Costo, Venta, Stock, Mín, Cat, Prov, Activo) y la importación tenía 9 (Nombre, Desc, SKU, Costo, Venta, Stock, Mín, Cat, Prov). Ninguna coincidía y no incluían "Unidad de medida".
+- **Causa raíz**: Ambas funciones fueron desarrolladas independientemente sin coordinación.
+- **Solución**: Estructura unificada de 10 columnas: SKU, Nombre, Descripción, Categoría, Proveedor, Costo, Precio de venta, Stock, Stock mínimo, Unidad de medida. `ImportProductsAsync` y `PreviewImportAsync` actualizados para la nueva estructura. Encabezados en rosa (#DB2777) para consistencia con el tema.
+- **Archivos**: `Infrastructure/Services/ExcelService.cs`
+- **Resultado**: ✅ Corregido
+
+---
+
 ## 2026-06-22 — Fase H: Drag & drop de imagen, íconos PWA
 
 ### BUG-B16 — Sin drag & drop de imagen en Productos
