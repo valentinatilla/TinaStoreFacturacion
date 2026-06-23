@@ -44,6 +44,7 @@
                     <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
                     <InputText class="form-control" @bind-Value="_model.Email" placeholder="admin@tinastore.com" autocomplete="email" />
                 </div>
+                <ValidationMessage For="@(() => _model.Email)" class="text-danger small mt-1" />
             </div>
             <div class="mb-4">
                 <label class="form-label small fw-semibold">Contraseña</label>
@@ -132,9 +133,10 @@
 
     private class LoginModel
     {
-        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "El correo es obligatorio.")]
+        [System.ComponentModel.DataAnnotations.EmailAddress(ErrorMessage = "Ingresa un correo electrónico válido.")]
         public string Email { get; set; } = "";
-        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "La contraseña es obligatoria.")]
         public string Password { get; set; } = "";
     }
 }

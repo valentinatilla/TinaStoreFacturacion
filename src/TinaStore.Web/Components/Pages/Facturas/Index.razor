@@ -241,7 +241,15 @@ else
                                             @if (!string.IsNullOrWhiteSpace(detalle.Notes))
                                             {
                                                 <div class="text-muted small mb-2">
-                                                    <i class="bi bi-sticky me-1"></i><strong>Notas:</strong> @detalle.Notes
+                                                    <i class="bi bi-sticky me-1"></i><strong>Nota de creación:</strong> @detalle.Notes
+                                                </div>
+                                            }
+
+                                            <!-- Nota de anulación -->
+                                            @if (!string.IsNullOrWhiteSpace(detalle.CancellationReason))
+                                            {
+                                                <div class="alert alert-danger py-1 small mb-2">
+                                                    <i class="bi bi-slash-circle me-1"></i><strong>Motivo de anulación:</strong> @detalle.CancellationReason
                                                 </div>
                                             }
 

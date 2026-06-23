@@ -5,7 +5,78 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
-## [1.5.0] — 2026-07-09 — Fases V–Y: Estabilización Preproducción (moneda, ventas, egresos, reportes, IVA)
+## [1.6.0] — 2026-07-09 — Fases AA–AE: Validaciones finales, UX y robustez preproducción
+
+### Tipo de cambio
+Corrección de bugs / Mejoras UX / Validaciones de negocio / Robustez de importación
+
+### Módulos afectados
+`Productos/Index.razor`, `Productos/Importar.razor`, `Login.razor`, `Facturas/Nueva.razor`, `Facturas/Index.razor`, `InvoiceDtos.cs`, `InvoiceService.cs`, `TinaStoreApiClient.cs`, `ExcelService.cs`, `PdfService.cs`
+
+---
+
+### FASE AA — Validaciones generales
+
+**AA-1 — Campo Unidad sin números (frontend)**
+- `Productos/Index.razor`: el input de Unidad muestra clase `is-invalid` y mensaje inline "La unidad de medida no debe contener números." en tiempo real si el usuario teclea un dígito.
+- La validación backend (`ProductValidators`) ya existía; se añadió el feedback visual inmediato.
+
+**AA-2 — Stock no negativo (importación Excel)**
+- `ExcelService.cs`: `ImportProductsAsync` y `PreviewImportAsync` rechazan filas con `StockInicial < 0` o `StockMinimo < 0` con mensaje descriptivo por fila.
+- `Productos/Importar.razor`: inputs de StockInicial y StockMinimo añaden `min="0"` para prevención HTML.
+- El backend de ajuste manual y edición masiva ya rechazaba stock negativo.
+
+**AA-3 — Validación de email en login**
+- `Login.razor`: `LoginModel.Email` añade `[EmailAddress]` con mensaje en español "Ingresa un correo electrónico válido." y `[Required]` también en español.
+- `<ValidationMessage>` inline visible bajo el input. `OnValidSubmit` bloquea el envío si el formato es inválido.
+
+---
+
+### FASE AB — Selector de categorías en Nueva Venta
+
+**AB-1 — Chips visuales de categoría**
+- `Facturas/Nueva.razor`: el `<select>` de filtro de categorías fue reemplazado por chips pill (botones `border-radius:20px`).
+- Chip activo: estilo `bg-purple text-white`; resto: `btn-outline-secondary`.
+- Método `SeleccionarCategoria(int)` actualiza el filtro y recarga la lista de productos inmediatamente.
+
+---
+
+### FASE AC — Descuento por producto
+
+**AC-1 — Campo descuento por línea en Nueva Venta**
+- `Facturas/Nueva.razor`: tabla de líneas añade columna "Dto. ($)" con input numérico editable por producto.
+- `DetalleLinea` ampliado con `DescuentoLinea` y propiedad calculada `Subtotal = (Precio × Cant.) − Descuento`.
+- `RecalcularTotales` usa `d.Subtotal` (ya descontado) como base del subtotal total.
+- Al crear la factura, se envía `DiscountAmount` por cada línea al API (`CreateDetalleFacturaDto`).
+
+**AC-2 — PDF ya correcto**
+- `PdfService.cs` ya mostraba columna "Desc." y `d.Subtotal` calculado desde la entidad. Sin cambios necesarios.
+
+---
+
+### FASE AD — Notas de creación y anulación
+
+**AD-1 — CancellationReason en DTO y mapeo**
+- `InvoiceDtos.cs`: `InvoiceDto` añade campo `CancellationReason`.
+- `InvoiceService.cs`: `ToDto` mapea `i.CancellationReason`.
+- `TinaStoreApiClient.cs`: `VentaDetalleDto` añade `CancellationReason`.
+
+**AD-2 — UI y PDF**
+- `Facturas/Index.razor`: detalle expandible muestra "Nota de creación" (sticky) y "Motivo de anulación" (alert-danger rojo).
+- `PdfService.cs`: añade bloque "Nota" y bloque "Motivo anulación" (fondo rojo `#FEE2E2`) al pie del PDF cuando los campos están presentes.
+
+---
+
+### FASE AE — Importación Excel robusta
+
+**AE-1 — Lectura por nombre de columna**
+- `ExcelService.cs`: nuevo método privado `ResolveColumns(IXLWorksheet)` que mapea nombre de cabecera (normalizado: sin asteriscos, minúsculas) → índice de columna.
+- `ImportProductsAsync` y `PreviewImportAsync` usan este mapa, lo que permite: columnas reordenadas, campos extra ignorados y detección de columnas obligatorias faltantes con mensaje claro al usuario.
+- Columnas obligatorias: `Nombre`, `Categoría`, `Costo`, `Precio de venta`, `Stock inicial`.
+
+---
+
+
 
 ### Tipo de cambio
 Corrección de bugs / Mejoras UX / Consistencia de datos / Validaciones de negocio

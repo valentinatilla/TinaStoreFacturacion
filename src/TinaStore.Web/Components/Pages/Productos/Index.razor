@@ -256,7 +256,10 @@ else
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">Unidad</label>
-                        <input class="form-control" @bind="_form.Unit" maxlength="30" placeholder="Ej: unidad, kg…" />
+                        <input class="form-control @(!string.IsNullOrWhiteSpace(_form.Unit) && System.Text.RegularExpressions.Regex.IsMatch(_form.Unit, @"\d") ? "is-invalid" : "")"
+                               @bind="_form.Unit" maxlength="30" placeholder="Ej: unidad, kg…" />
+                        <div class="invalid-feedback">La unidad de medida no debe contener números.</div>
+                        <div class="form-text text-muted">Solo letras, espacios y tildes.</div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">Categoría *</label>

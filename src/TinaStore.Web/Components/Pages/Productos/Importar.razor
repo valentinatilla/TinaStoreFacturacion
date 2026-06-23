@@ -121,12 +121,12 @@
                                        @onchange="e => ActualizarFilaDecimal(fila, nameof(fila.PrecioVenta), e.Value?.ToString())" />
                             </td>
                             <td>
-                                <input type="number" class="form-control form-control-sm"
+                                <input type="number" class="form-control form-control-sm" min="0"
                                        value="@fila.StockInicial"
                                        @onchange="e => ActualizarFilaInt(fila, nameof(fila.StockInicial), e.Value?.ToString())" />
                             </td>
                             <td>
-                                <input type="number" class="form-control form-control-sm"
+                                <input type="number" class="form-control form-control-sm" min="0"
                                        value="@fila.StockMinimo"
                                        @onchange="e => ActualizarFilaInt(fila, nameof(fila.StockMinimo), e.Value?.ToString())" />
                             </td>

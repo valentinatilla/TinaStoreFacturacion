@@ -58,21 +58,29 @@
     <!-- Columna derecha: productos -->
     <div class="col-lg-8">
         <div class="card border-0 shadow-sm p-3">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="fw-bold mb-0">Detalle de productos</h6>
-                <div class="d-flex gap-2 flex-wrap" style="max-width:600px; flex:1; margin-left:1rem;">
-                    <select class="form-select form-select-sm" style="max-width:170px;"
-                            @bind="_filtroCategoriaId"
-                            @bind:after="AplicarFiltros">
-                        <option value="0">Todas las categorías</option>
-                        @foreach (var c in _categorias)
-                        {
-                            <option value="@c.Id">@c.Name</option>
-                        }
-                    </select>
-                    <input class="form-control form-control-sm" placeholder="🔍 Buscar producto..."
-                           @bind="_busquedaProducto" @oninput="FiltrarProductos" />
+            <div class="mb-3">
+                <h6 class="fw-bold mb-2">Detalle de productos</h6>
+                <!-- Chips de categoría -->
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                    <button type="button"
+                            class="btn btn-sm @(_filtroCategoriaId == 0 ? "bg-purple text-white" : "btn-outline-secondary")"
+                            style="border-radius:20px; font-size:.78rem;"
+                            @onclick="() => SeleccionarCategoria(0)">
+                        <i class="bi bi-grid-fill me-1"></i>Todas
+                    </button>
+                    @foreach (var c in _categorias)
+                    {
+                        <button type="button"
+                                class="btn btn-sm @(_filtroCategoriaId == c.Id ? "bg-purple text-white" : "btn-outline-secondary")"
+                                style="border-radius:20px; font-size:.78rem;"
+                                @onclick="() => SeleccionarCategoria(c.Id)">
+                            @c.Name
+                        </button>
+                    }
                 </div>
+                <!-- Búsqueda -->
+                <input class="form-control form-control-sm" placeholder="🔍 Buscar producto..."
+                       @bind="_busquedaProducto" @oninput="FiltrarProductos" />
             </div>
 
             @if (_productosFiltrados.Any() && (!string.IsNullOrEmpty(_busquedaProducto) || _filtroCategoriaId > 0))
@@ -131,7 +139,7 @@
             {
                 <table class="table table-sm mb-3">
                         <thead class="table-light">
-                            <tr><th style="width:44px"></th><th>Producto</th><th class="text-center">Cant.</th><th class="text-end">P. Unit.</th><th class="text-end">Subtotal</th><th></th></tr>
+                            <tr><th style="width:44px"></th><th>Producto</th><th class="text-center">Cant.</th><th class="text-end">P. Unit.</th><th class="text-end" style="width:110px">Dto. ($)</th><th class="text-end">Subtotal</th><th></th></tr>
                         </thead>
                         <tbody>
                             @foreach (var d in _detalles)
@@ -161,7 +169,13 @@
                                     }
                                 </td>
                                 <td class="text-end">$@d.PrecioUnitario.ToString("N0")</td>
-                                <td class="text-end fw-semibold">@((d.Cantidad * d.PrecioUnitario).ToString("N0"))</td>
+                                <td class="text-end">
+                                    <input type="number" class="form-control form-control-sm text-end"
+                                           style="width:90px" min="0" step="1"
+                                           placeholder="0"
+                                           @bind="d.DescuentoLinea" @bind:after="() => RecalcularTotales()" />
+                                </td>
+                                <td class="text-end fw-semibold">$@d.Subtotal.ToString("N0")</td>
                                 <td>
                                     <button class="btn btn-sm btn-link text-danger p-0" @onclick="() => QuitarProducto(d)">
                                         <i class="bi bi-x-lg"></i>
@@ -172,12 +186,12 @@
                     </tbody>
                     <tfoot class="table-light">
                         <tr>
-                            <td colspan="4" class="text-end text-muted small">Subtotal:</td>
+                            <td colspan="5" class="text-end text-muted small">Subtotal:</td>
                             <td class="text-end text-muted small">$@_subtotal.ToString("N0")</td>
                             <td></td>
                         </tr>
                         <tr>
-                            <td colspan="4" class="text-end text-muted small">Descuento (%):</td>
+                            <td colspan="5" class="text-end text-muted small">Descuento (%):</td>
                             <td class="text-end text-muted small">
                                 <div class="d-flex align-items-center justify-content-end gap-2">
                                     <input type="number" class="form-control form-control-sm text-end @(_advertenciaDescuento is not null ? "is-invalid" : "")"
@@ -197,7 +211,7 @@
                             <td></td>
                         </tr>
                         <tr>
-                            <td colspan="4" class="text-end text-muted small">Impuesto (%):</td>
+                            <td colspan="5" class="text-end text-muted small">Impuesto (%):</td>
                             <td class="text-end text-muted small">
                                 <input type="number" class="form-control form-control-sm text-end"
                                        style="width:80px;display:inline-block"
@@ -207,7 +221,7 @@
                             <td></td>
                         </tr>
                         <tr class="fw-bold border-top">
-                            <td colspan="4" class="text-end fw-bold">Total:</td>
+                            <td colspan="5" class="text-end fw-bold">Total:</td>
                             <td class="text-end fw-bold fs-5 text-purple">$@_total.ToString("N0")</td>
                             <td></td>
                         </tr>
@@ -348,6 +362,12 @@
             .ToList();
     }
 
+    private void SeleccionarCategoria(int categoriaId)
+    {
+        _filtroCategoriaId = categoriaId;
+        AplicarFiltros();
+    }
+
     private string? _advertenciaStock;
 
     private void AgregarProducto(ProductoDto p)
@@ -389,7 +409,7 @@
 
     private void RecalcularTotales()
     {
-        _subtotal = _detalles.Sum(d => d.Cantidad * d.PrecioUnitario);
+        _subtotal = _detalles.Sum(d => d.Subtotal);
 
         // Clamp del porcentaje de descuento
         if (_descuentoPct < 0)
@@ -449,7 +469,7 @@
                 DiscountAmount: _descuento,
                 TaxAmount:      taxAmount,
                 Notes:          _notas,
-                Details:        _detalles.Select(d => new CreateDetalleFacturaDto(d.ProductoId, d.Cantidad, d.PrecioUnitario)).ToList(),
+                Details:        _detalles.Select(d => new CreateDetalleFacturaDto(d.ProductoId, d.Cantidad, d.PrecioUnitario, d.DescuentoLinea)).ToList(),
                 PagoInicial:    pagoInicial);
 
             var ok = await Api.CreateFacturaAsync(dto);
@@ -513,5 +533,7 @@
         public decimal PrecioUnitario { get; set; }
         public int Cantidad { get; set; }
         public int StockDisponible { get; set; }
+        public decimal DescuentoLinea { get; set; } // descuento por ítem en pesos
+        public decimal Subtotal => Math.Max(0, PrecioUnitario * Cantidad - DescuentoLinea);
     }
 }
