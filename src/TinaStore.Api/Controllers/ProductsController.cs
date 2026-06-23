@@ -73,7 +73,7 @@ public sealed class ProductsController : ControllerBase
     {
         var validacion = await _createValidator.ValidateAsync(dto);
         if (!validacion.IsValid)
-            return BadRequest(validacion.Errors.Select(e => e.ErrorMessage));
+            return BadRequest(new { mensaje = string.Join(" ", validacion.Errors.Select(e => e.ErrorMessage)) });
 
         try
         {
@@ -92,7 +92,7 @@ public sealed class ProductsController : ControllerBase
     {
         var validacion = await _updateValidator.ValidateAsync(dto);
         if (!validacion.IsValid)
-            return BadRequest(validacion.Errors.Select(e => e.ErrorMessage));
+            return BadRequest(new { mensaje = string.Join(" ", validacion.Errors.Select(e => e.ErrorMessage)) });
 
         try
         {
