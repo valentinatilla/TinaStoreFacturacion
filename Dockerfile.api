@@ -42,6 +42,9 @@ WORKDIR /app
 # Variables de entorno por defecto (se sobreescriben en el servidor)
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ASPNETCORE_HTTP_PORTS=8080
+# Habilitar globalización completa (ICU) en Linux
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+ENV LANG=es_CO.UTF-8
 
 # Copiar la aplicación publicada
 COPY --from=build /app/publish .

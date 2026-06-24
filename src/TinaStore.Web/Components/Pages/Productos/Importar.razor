@@ -4,11 +4,11 @@
 @inject IJSRuntime JS
 @inject NavigationManager Nav
 
-<PageTitle>Importar Productos — Tina Store</PageTitle>
+<PageTitle>Importar Productos â€” Tina Store</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold mb-0">
-        <i class="bi bi-file-earmark-spreadsheet me-2 text-purple"></i>Importación Masiva de Productos
+        <i class="bi bi-file-earmark-spreadsheet me-2 text-purple"></i>ImportaciÃ³n Masiva de Productos
     </h4>
     <a href="/productos" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-arrow-left me-1"></i>Volver
@@ -22,12 +22,12 @@
     </div>
 }
 
-<!-- ── Paso 1: Subir archivo ──────────────────────────────────────────── -->
+<!-- â”€â”€ Paso 1: Subir archivo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
 @if (_paso == 1)
 {
     <div class="card border-0 shadow-sm p-4" style="max-width: 600px;">
         <h6 class="fw-bold mb-3 text-purple">
-            <i class="bi bi-upload me-2"></i>Paso 1 — Selecciona el archivo Excel
+            <i class="bi bi-upload me-2"></i>Paso 1 â€” Selecciona el archivo Excel
         </h6>
         <p class="text-muted small mb-3">
             El archivo debe seguir la plantilla oficial.
@@ -52,16 +52,16 @@
     </div>
 }
 
-<!-- ── Paso 2: Tabla de previsualización ─────────────────────────────── -->
+<!-- â”€â”€ Paso 2: Tabla de previsualizaciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
 @if (_paso == 2 && _preview is not null)
 {
     <div class="card border-0 shadow-sm p-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h6 class="fw-bold mb-0 text-purple">
-                <i class="bi bi-table me-2"></i>Paso 2 — Revisa y edita las filas antes de importar
+                <i class="bi bi-table me-2"></i>Paso 2 â€” Revisa y edita las filas antes de importar
             </h6>
             <div class="d-flex gap-2">
-                <span class="badge bg-success">@_preview.Count(r => r.Valido) válidas</span>
+                <span class="badge bg-success">@_preview.Count(r => r.Valido) vÃ¡lidas</span>
                 <span class="badge bg-danger">@_preview.Count(r => !r.Valido) con error</span>
             </div>
         </div>
@@ -76,8 +76,8 @@
                         <th style="width:110px;">Costo *</th>
                         <th style="width:110px;">Venta *</th>
                         <th style="width:80px;">Stock</th>
-                        <th style="width:80px;">Mín.</th>
-                        <th>Categoría</th>
+                        <th style="width:80px;">MÃ­n.</th>
+                        <th>CategorÃ­a</th>
                         <th>Proveedor</th>
                         <th style="width:40px;"></th>
                     </tr>
@@ -151,7 +151,7 @@
                                 </select>
                                 @if (!fila.Valido && fila.CategoriaId == 0)
                                 {
-                                    <div class="text-danger" style="font-size:.72rem;">Selecciona una categoría válida.</div>
+                                    <div class="text-danger" style="font-size:.72rem;">Selecciona una categorÃ­a vÃ¡lida.</div>
                                 }
                             </td>
                             <td>
@@ -185,12 +185,12 @@
     </div>
 }
 
-<!-- ── Paso 3: Resultado ──────────────────────────────────────────────── -->
+<!-- â”€â”€ Paso 3: Resultado â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
 @if (_paso == 3 && _resultado is not null)
 {
     <div class="card border-0 shadow-sm p-4" style="max-width: 500px;">
         <h6 class="fw-bold mb-3 text-purple">
-            <i class="bi bi-clipboard-check me-2"></i>Resultado de la importación
+            <i class="bi bi-clipboard-check me-2"></i>Resultado de la importaciÃ³n
         </h6>
         <ul class="list-group mb-4">
             <li class="list-group-item d-flex justify-content-between">
@@ -222,7 +222,7 @@
 
         <div class="d-flex gap-2">
             <button class="btn btn-outline-secondary" @onclick="Reiniciar">
-                <i class="bi bi-arrow-counterclockwise me-1"></i>Nueva importación
+                <i class="bi bi-arrow-counterclockwise me-1"></i>Nueva importaciÃ³n
             </button>
             <a href="/productos" class="btn bg-purple text-white">
                 <i class="bi bi-box-seam me-1"></i>Ver productos
@@ -243,7 +243,7 @@
     private bool _exito;
     private List<CategoriaDto> _categorias = [];
 
-    // Copia mutable de las filas para edición en tabla
+    // Copia mutable de las filas para ediciÃ³n en tabla
     private List<FilaEditable> _filas = [];
 
     protected override async Task OnInitializedAsync()
@@ -275,7 +275,7 @@
             if (result is null || result.Count == 0)
             {
                 _exito   = false;
-                _mensaje = "No se encontraron filas en el archivo o el formato no es válido.";
+                _mensaje = "No se encontraron filas en el archivo o el formato no es vÃ¡lido.";
             }
             else
             {
@@ -312,7 +312,7 @@
             else
             {
                 _exito   = false;
-                _mensaje = "Error al confirmar la importación.";
+                _mensaje = "Error al confirmar la importaciÃ³n.";
             }
         }
         catch
@@ -346,7 +346,7 @@
         if (idx < 0) return;
         if (!int.TryParse(valor, out var catId) || catId == 0)
         {
-            _preview[idx] = fila with { CategoriaId = 0, CategoriaNombre = null, Valido = false, MensajeError = "Selecciona una categoría válida." };
+            _preview[idx] = fila with { CategoriaId = 0, CategoriaNombre = null, Valido = false, MensajeError = "Selecciona una categorÃ­a vÃ¡lida." };
             return;
         }
         var cat = _categorias.FirstOrDefault(c => c.Id == catId);
@@ -401,7 +401,7 @@
         _preview[idx] = RevalidarFila(f, idx);
     }
 
-    /// <summary>Revalida localmente una fila según reglas básicas y duplicados de SKU.</summary>
+    /// <summary>Revalida localmente una fila segÃºn reglas bÃ¡sicas y duplicados de SKU.</summary>
     private ImportPreviewRowDto RevalidarFila(ImportPreviewRowDto f, int idx)
     {
         if (string.IsNullOrWhiteSpace(f.Nombre))
@@ -409,7 +409,7 @@
         if (f.PrecioVenta <= 0)
             return f with { Valido = false, MensajeError = "El precio de venta debe ser mayor que 0." };
         if (f.CategoriaId <= 0)
-            return f with { Valido = false, MensajeError = "La categoría no es válida." };
+            return f with { Valido = false, MensajeError = "La categorÃ­a no es vÃ¡lida." };
 
         // Verificar SKU duplicado dentro de la propia lista
         if (!string.IsNullOrWhiteSpace(f.Sku))
@@ -420,7 +420,7 @@
                        && !string.IsNullOrWhiteSpace(x.row.Sku)
                        && string.Equals(x.row.Sku, f.Sku, StringComparison.OrdinalIgnoreCase));
             if (skuDup)
-                return f with { Valido = false, MensajeError = $"El SKU '{f.Sku}' ya existe en otra fila de esta lista. Edítalo para que sea único." };
+                return f with { Valido = false, MensajeError = $"El SKU '{f.Sku}' ya existe en otra fila de esta lista. EdÃ­talo para que sea Ãºnico." };
         }
 
         return f with { Valido = true, MensajeError = null };
