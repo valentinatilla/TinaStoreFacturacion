@@ -225,3 +225,32 @@ Al encontrar un bug o limitación, agregar una entrada con:
 - **Planificado para**: Fase X / Sin fecha
 - **Riesgo**: Alto / Medio / Bajo
 ```
+
+---
+
+## ✅ RESUELTOS EN v1.0.0 — Auditoría final (Fases BE–BK)
+
+### ✅ BE-1 — Validación Name inconsistente Create/Update en productos
+- **Módulo**: `ProductValidators.cs`
+- **Causa**: `CreateProductValidator` limitaba `Name` a 30 chars; `UpdateProductValidator` a 50. La regla de negocio es 50.
+- **Solución**: Unificado en 50 en ambos validadores.
+
+### ✅ BE-3 — N+1 query en importación Excel
+- **Módulo**: `ExcelService.ImportProductsAsync`
+- **Causa**: `_db.Categories.ToListAsync()` y `_db.Suppliers.ToListAsync()` se llamaban dentro del bucle de filas.
+- **Solución**: Ambas consultas movidas fuera del bucle (pre-carga antes de iterar).
+
+### ✅ BH-1 — Clave JWT hardcoded en appsettings.Development.json
+- **Gravedad en el momento**: Alta — clave real subida al repositorio.
+- **Solución**: Placeholder `SET_VIA_USER_SECRETS_OR_ENV_VAR` + instrucciones en `.example.json`.
+
+### ✅ BH-3 — Subida de imágenes sin validación de tipo MIME real
+- **Módulo**: `ProductsController`, `SettingsController`
+- **Causa**: Solo se validaba la extensión del archivo, no su contenido.
+- **Solución**: Validación de magic bytes (primeros 4–8 bytes del archivo) en ambos endpoints.
+
+### 🟡 PENDIENTE — Tests de integración sin implementar
+- **Módulo**: `tests/TinaStore.Tests.Integration/`
+- **Descripción**: El proyecto existe pero está vacío. No hay pruebas de integración reales contra la base de datos.
+- **Riesgo**: Medio — los tests unitarios cubren la lógica de negocio, pero no el stack completo (HTTP → EF Core → SQLite).
+- **Planificado para**: Versión futura (v1.1.0).

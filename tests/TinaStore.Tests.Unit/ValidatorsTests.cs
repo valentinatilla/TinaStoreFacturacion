@@ -117,9 +117,9 @@ public class ValidatorsTests
     }
 
     [Fact]
-    public void Producto_NombreMasDe30Chars_FallaValidacion()
+    public void Producto_NombreMasDe50Chars_FallaValidacion()
     {
-        var nombre = new string('B', 31);
+        var nombre = new string('B', 51); // límite real es 50 chars
         var dto = new CreateProductDto(null, nombre, null, null, 0, 1000, 0, 0, 1, null);
         var resultado = _createProdValidator.Validate(dto);
         resultado.IsValid.Should().BeFalse();

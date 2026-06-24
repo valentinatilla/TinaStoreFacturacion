@@ -1,4 +1,5 @@
 using TinaStore.Application.DTOs;
+using TinaStore.Application.Helpers;
 using TinaStore.Application.Interfaces;
 using TinaStore.Domain.Entities;
 using TinaStore.Domain.Enums;
@@ -301,13 +302,8 @@ public sealed class InvoiceService : IInvoiceService
 
     // ── Mapeos ────────────────────────────────────────────────────────────────
 
-    private static string StatusEnEspanol(InvoiceStatus status) => status switch
-    {
-        InvoiceStatus.Paid      => "Pagada",
-        InvoiceStatus.Partial   => "Parcial",
-        InvoiceStatus.Cancelled => "Anulada",
-        _                       => "Pendiente"
-    };
+    private static string StatusEnEspanol(InvoiceStatus status)
+        => InvoiceStatusHelper.EnEspanol(status);
 
     private static InvoiceSummaryDto ToSummaryDto(Invoice i) => new(
         i.Id,

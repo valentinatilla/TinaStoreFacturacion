@@ -13,7 +13,7 @@ public sealed class CreateProductValidator : AbstractValidator<CreateProductDto>
 
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("El nombre del producto es obligatorio.")
-            .MaximumLength(30).WithMessage("El nombre no puede superar 30 caracteres.");
+            .MaximumLength(50).WithMessage("El nombre del producto permite máximo 50 caracteres.");
 
         RuleFor(x => x.Description)
             .MaximumLength(300).WithMessage("La descripción no puede superar 300 caracteres.")

@@ -1,4 +1,5 @@
 using TinaStore.Application.DTOs;
+using TinaStore.Application.Helpers;
 using TinaStore.Application.Interfaces;
 using TinaStore.Domain.Enums;
 using TinaStore.Domain.Interfaces;
@@ -16,13 +17,8 @@ public sealed class DashboardService : IDashboardService
         _clock = clock;
     }
 
-    private static string StatusEnEspanol(InvoiceStatus status) => status switch
-    {
-        InvoiceStatus.Paid      => "Pagada",
-        InvoiceStatus.Partial   => "Parcial",
-        InvoiceStatus.Cancelled => "Anulada",
-        _                       => "Pendiente"
-    };
+    private static string StatusEnEspanol(InvoiceStatus status)
+        => InvoiceStatusHelper.EnEspanol(status);
 
     public async Task<DashboardDto> GetSummaryAsync()
     {

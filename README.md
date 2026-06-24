@@ -38,12 +38,12 @@ Tina Store es una aplicación web desarrollada en **.NET 10** con **Blazor** que
 | Base de datos (prod) | PostgreSQL (recomendado) |
 | Autenticación | JWT (JSON Web Tokens) |
 | PDF | QuestPDF |
-| Excel | ClosedXML / EPPlus |
+| Excel | ClosedXML |
 | Logs | Serilog |
 | Estilos | Bootstrap 5 + CSS personalizado (tema kawaii rosado 🌸) |
 | Tipografía | Nunito (Google Fonts) |
 | Iconos | Bootstrap Icons |
-| Tests | xUnit + Moq + FluentAssertions |
+| Tests | xUnit + NSubstitute + FluentAssertions |
 
 ---
 
@@ -99,8 +99,8 @@ dotnet run --project src/TinaStore.Web
 | Ambiente | Descripción | Base de datos |
 |---|---|---|
 | `Development` | Local en tu computadora | SQLite (`tinastore-dev.db`) |
-| `Staging` | Servidor de pruebas | PostgreSQL de prueba |
-| `Production` | Servidor real de la tienda | PostgreSQL de producción |
+| `Staging` | Servidor de pruebas | SQLite en servidor |
+| `Production` | Servidor real de la tienda | SQLite en servidor |
 
 Ver detalles en [`docs/ENVIRONMENTS.md`](docs/ENVIRONMENTS.md)
 
@@ -173,18 +173,17 @@ Ver [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md)
 | `v0.5.0` | ✅ Completada | Egresos + proveedores + reportes |
 | `v0.6.0` | ✅ Completada | Exportación Excel + importación |
 | `v0.7.0` | ✅ Completada | Configuración de tienda + administración de usuarios |
-| `v0.8.0` | ✅ Completada | Cobertura de tests unitarios (30 tests — CustomerService, ExpenseService, InvoiceService) |
-| `v1.0.0` | 🔄 En progreso | Primera versión estable para la tienda |
+| `v0.8.0` | ✅ Completada | Cobertura de tests unitarios (78 tests — todos los servicios y validadores) |
+| `v1.0.0` | ✅ Completada | Primera versión estable para producción — auditoría final, seguridad y documentación |
 
 ---
 
 ## 🗓️ Historial de cambios recientes
 
 ### v0.8.0 — Tests unitarios
-- Cobertura unitaria real con **xUnit + Moq + FluentAssertions** (30 tests, 0 fallos).
-- `CustomerServiceTests`: GetAll, filtro activos, GetById, Create, Update, Delete, Search.
-- `ExpenseServiceTests`: ordenamiento, GetById, Create con/sin categoría, Update activo/anulado, Cancel.
-- `InvoiceServiceTests`: CreateAsync (con pago, sin pago, stock insuficiente, descuentos), RegisterPaymentAsync (pago excedente, factura anulada), CancelAsync (reversión de stock y CXC).
+- Cobertura unitaria real con **xUnit + NSubstitute + FluentAssertions** (**78 tests**, 0 fallos).
+- `CustomerServiceTests`, `ExpenseServiceTests`, `InvoiceServiceTests`, `CategoryServiceTests`, `StoreSettingsServiceTests`, `ValidatorsTests`, `SmokeTests`.
+- Reglas de negocio críticas cubiertas: stock insuficiente, anulación con reversión, cuentas por cobrar, validadores de productos/clientes/categorías.
 
 ### v0.7.0 — Administración de usuarios
 - Nueva pantalla `/usuarios` protegida con rol `Admin`.

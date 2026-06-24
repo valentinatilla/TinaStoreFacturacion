@@ -3,15 +3,18 @@ using TinaStore.Application.DTOs;
 
 namespace TinaStore.Application.Validators;
 
-public class CreateExpenseCategoryDtoValidator : AbstractValidator<CreateExpenseCategoryDto>
+/// <summary>Validador compartido para crear y actualizar categorías de egreso.</summary>
+public class ExpenseCategoryDtoValidator : AbstractValidator<CreateExpenseCategoryDto>
 {
-    public CreateExpenseCategoryDtoValidator()
+    public ExpenseCategoryDtoValidator()
     {
         RuleFor(x => x.Name).NotEmpty().WithMessage("El nombre es requerido.").MaximumLength(100);
         RuleFor(x => x.Description).MaximumLength(300).When(x => x.Description != null);
     }
 }
 
+// Alias para mantener compatibilidad con los registros en DependencyInjection
+public class CreateExpenseCategoryDtoValidator : ExpenseCategoryDtoValidator { }
 public class UpdateExpenseCategoryDtoValidator : AbstractValidator<UpdateExpenseCategoryDto>
 {
     public UpdateExpenseCategoryDtoValidator()

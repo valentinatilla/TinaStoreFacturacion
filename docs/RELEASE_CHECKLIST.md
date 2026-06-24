@@ -23,7 +23,7 @@ Cada punto debe estar verificado antes de continuar.
 ## 🧪 Calidad del código
 
 - [ ] El proyecto compila sin errores: `dotnet build -c Release`
-- [ ] Todos los tests unitarios pasan (30 tests): `dotnet test tests/TinaStore.Tests.Unit`
+- [ ] Todos los tests unitarios pasan (**78 tests**): `dotnet test tests/TinaStore.Tests.Unit`
 - [ ] Todos los tests de integración pasan: `dotnet test tests/TinaStore.Tests.Integration`
 - [ ] No hay warnings de seguridad en los paquetes NuGet
 - [ ] No hay código comentado innecesario ni TODOs críticos

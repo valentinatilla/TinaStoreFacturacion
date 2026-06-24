@@ -422,3 +422,18 @@ publish/
 # Configuración local con secretos (no subir al repo)
 src/TinaStore.Web/appsettings.Development.json
 src/TinaStore.Api/appsettings.Development.json
+
+# --- TinaStore: seguridad adicional ---
+*.db
+*.db-shm
+*.db-wal
+src/TinaStore.Api/logs/
+src/TinaStore.Api/wwwroot/uploads/productos/*.jpg
+src/TinaStore.Api/wwwroot/uploads/productos/*.jpeg
+src/TinaStore.Api/wwwroot/uploads/productos/*.png
+src/TinaStore.Api/wwwroot/uploads/productos/*.webp
+!src/TinaStore.Api/wwwroot/uploads/productos/.gitkeep
+src/TinaStore.Api/wwwroot/uploads/logos/logo.jpg
+src/TinaStore.Api/wwwroot/uploads/logos/logo.jpeg
+src/TinaStore.Api/wwwroot/uploads/logos/logo.png
+src/TinaStore.Api/wwwroot/uploads/logos/logo.webp
