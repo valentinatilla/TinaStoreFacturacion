@@ -2,13 +2,13 @@
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 
-<PageTitle>Reportes — Tina Store</PageTitle>
+<PageTitle>Reportes â€” Tina Store</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold mb-0"><i class="bi bi-bar-chart-line me-2 text-purple"></i>Reportes</h4>
 </div>
 
-<!-- Selector de período -->
+<!-- Selector de perÃ­odo -->
 <div class="card border-0 shadow-sm p-3 mb-4">
     <div class="d-flex align-items-end gap-3 flex-wrap">
         <div>
@@ -41,7 +41,7 @@
 else if (_ventasData is null && _gastosData is null && _cxcData is null)
 {
     <div class="alert alert-info py-2">
-        <i class="bi bi-info-circle me-2"></i>Selecciona un período y pulsa <strong>Consultar</strong> para ver los reportes.
+        <i class="bi bi-info-circle me-2"></i>Selecciona un perÃ­odo y pulsa <strong>Consultar</strong> para ver los reportes.
     </div>
 }
 else
@@ -51,7 +51,7 @@ else
         <div class="col-lg-7">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white fw-semibold">
-                    <i class="bi bi-graph-up me-2"></i>Ventas por día
+                    <i class="bi bi-graph-up me-2"></i>Ventas por dÃ­a
                     @if (_ventasData is not null)
                     {
                         <span class="ms-2 badge bg-purple">Total: $@_ventasData.TotalVentas.ToString("N0")</span>
@@ -82,7 +82,7 @@ else
                                 }
                                 @if (!_ventasData.VentasPorDia.Any())
                                 {
-                                    <tr><td colspan="4" class="text-center text-muted py-3">Sin ventas en el período</td></tr>
+                                    <tr><td colspan="4" class="text-center text-muted py-3">Sin ventas en el perÃ­odo</td></tr>
                                 }
                             }
                         </tbody>
@@ -95,7 +95,7 @@ else
         <div class="col-lg-5">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white fw-semibold">
-                    <i class="bi bi-pie-chart me-2"></i>Gastos por categoría
+                    <i class="bi bi-pie-chart me-2"></i>Gastos por categorÃ­a
                     @if (_gastosData is not null)
                     {
                         <span class="ms-2 badge bg-danger">Total: $@_gastosData.TotalGastos.ToString("N0")</span>
@@ -104,7 +104,7 @@ else
                 <div class="table-responsive">
                     <table class="table table-sm table-hover mb-0">
                         <thead class="table-light">
-                            <tr><th>Categoría</th><th class="text-center">N°</th><th class="text-end">Total</th></tr>
+                            <tr><th>CategorÃ­a</th><th class="text-center">NÂ°</th><th class="text-end">Total</th></tr>
                         </thead>
                         <tbody>
                             @if (_gastosData is not null)
@@ -119,7 +119,7 @@ else
                                 }
                                 @if (!_gastosData.PorCategoria.Any())
                                 {
-                                    <tr><td colspan="3" class="text-center text-muted py-3">Sin gastos en el período</td></tr>
+                                    <tr><td colspan="3" class="text-center text-muted py-3">Sin gastos en el perÃ­odo</td></tr>
                                 }
                             }
                         </tbody>
@@ -141,7 +141,7 @@ else
                 <div class="table-responsive">
                     <table class="table table-sm table-hover mb-0">
                         <thead class="table-light">
-                            <tr><th>Cliente</th><th>Documento</th><th class="text-center">Facturas</th><th class="text-end">Saldo</th><th>Última factura</th></tr>
+                            <tr><th>Cliente</th><th>Documento</th><th class="text-center">Facturas</th><th class="text-end">Saldo</th><th>Ãšltima factura</th></tr>
                         </thead>
                         <tbody>
                             @if (_cxcData is not null)

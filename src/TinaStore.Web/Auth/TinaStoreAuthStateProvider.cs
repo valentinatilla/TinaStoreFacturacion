@@ -6,7 +6,7 @@ using TinaStore.Web.Services;
 namespace TinaStore.Web.Auth;
 
 /// <summary>
-/// Proveedor de estado de autenticación para Blazor Server.
+/// Proveedor de estado de autenticaciÃ³n para Blazor Server.
 /// Lee el token JWT almacenado en SessionStateService y construye
 /// el ClaimsPrincipal para que CascadingAuthenticationState lo propague.
 /// </summary>
@@ -30,7 +30,7 @@ public class TinaStoreAuthStateProvider : AuthenticationStateProvider
             var handler = new JwtSecurityTokenHandler();
             var jwt = handler.ReadJwtToken(_session.Token);
 
-            // Verificar expiración básica
+            // Verificar expiraciÃ³n bÃ¡sica
             if (jwt.ValidTo < DateTime.UtcNow)
             {
                 _session.Clear();

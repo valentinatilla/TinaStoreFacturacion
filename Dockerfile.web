@@ -47,6 +47,9 @@ WORKDIR /app
 
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ASPNETCORE_HTTP_PORTS=8080
+# Habilitar globalización completa (ICU) en Linux para que CultureInfo("es-CO") funcione
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+ENV LANG=es_CO.UTF-8
 
 COPY --from=build /app/publish .
 

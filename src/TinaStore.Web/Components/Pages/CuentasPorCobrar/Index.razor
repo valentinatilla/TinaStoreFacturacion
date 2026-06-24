@@ -3,7 +3,7 @@
 @inject TinaStoreApiClient Api
 @inject IJSRuntime JS
 
-<PageTitle>Cuentas por Cobrar — Tina Store</PageTitle>
+<PageTitle>Cuentas por Cobrar â€” Tina Store</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold mb-0"><i class="bi bi-cash-stack me-2 text-purple"></i>Cuentas por Cobrar</h4>
@@ -52,7 +52,7 @@ else if (_data is not null)
                             Cliente <i class="@SortIconClass("cliente") ms-1 small"></i>
                         </th>
                         <th class="ts-table-hide-mobile">Documento</th>
-                        <th class="ts-table-hide-mobile">Teléfono</th>
+                        <th class="ts-table-hide-mobile">TelÃ©fono</th>
                         <th class="text-center ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("facturas")'>
                             Ventas pend. <i class="@SortIconClass("facturas") ms-1 small"></i>
                         </th>
@@ -60,7 +60,7 @@ else if (_data is not null)
                             Saldo <i class="@SortIconClass("saldo") ms-1 small"></i>
                         </th>
                         <th class="ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("fecha")'>
-                            Última venta <i class="@SortIconClass("fecha") ms-1 small"></i>
+                            Ãšltima venta <i class="@SortIconClass("fecha") ms-1 small"></i>
                         </th>
                         <th></th>
                     </tr>
@@ -112,7 +112,7 @@ else if (_data is not null)
                                                 <table class="table table-sm mb-0">
                                                     <thead class="table-light">
                                                         <tr>
-                                                            <th>N° Venta</th>
+                                                            <th>NÂ° Venta</th>
                                                             <th>Fecha</th>
                                                             <th class="text-end">Total</th>
                                                             <th class="text-end">Pagado</th>
@@ -163,7 +163,7 @@ else if (_data is not null)
                         <tr>
                             <td colspan="8" class="text-center text-muted py-4">
                                 <i class="bi bi-check-circle-fill text-success me-2 fs-4"></i>
-                                <div>¡Sin cuentas pendientes! Todos los clientes están al día.</div>
+                                <div>Â¡Sin cuentas pendientes! Todos los clientes estÃ¡n al dÃ­a.</div>
                             </td>
                         </tr>
                     }
@@ -272,7 +272,7 @@ else if (_data is not null)
     {
         var telefono = cxc.Phone?.Replace(" ", "").Replace("-", "").Replace("+", "") ?? "";
         var plantilla = _reminderMessage
-            ?? "Hola {nombre}, te recordamos que tienes un saldo pendiente de {saldo}. Por favor comunícate con nosotros. Gracias 🌸";
+            ?? "Hola {nombre}, te recordamos que tienes un saldo pendiente de {saldo}. Por favor comunÃ­cate con nosotros. Gracias ðŸŒ¸";
         var mensaje = plantilla
             .Replace("{nombre}", cxc.CustomerName)
             .Replace("{saldo}", cxc.SaldoPendiente.ToString("N0"));

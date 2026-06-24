@@ -4,19 +4,19 @@
 @inject SessionStateService Session
 @inject NavigationManager Nav
 
-<PageTitle>Usuarios — Tina Store</PageTitle>
+<PageTitle>Usuarios â€” Tina Store</PageTitle>
 
 @* Solo Admin puede acceder *@
 @if (Session.UserRole != "Admin")
 {
     <div class="alert alert-danger">
-        <i class="bi bi-shield-lock me-2"></i>No tienes permisos para acceder a esta sección.
+        <i class="bi bi-shield-lock me-2"></i>No tienes permisos para acceder a esta secciÃ³n.
     </div>
     return;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-    <h4 class="fw-bold mb-0"><i class="bi bi-people-fill me-2 text-purple"></i>Gestión de Usuarios</h4>
+    <h4 class="fw-bold mb-0"><i class="bi bi-people-fill me-2 text-purple"></i>GestiÃ³n de Usuarios</h4>
     <button class="btn bg-purple text-white" @onclick="AbrirNuevo">
         <i class="bi bi-plus-lg me-1"></i>Nuevo usuario
     </button>
@@ -45,7 +45,7 @@ else
                         <th class="ts-table-hide-mobile">Email</th>
                         <th>Rol</th>
                         <th class="ts-table-hide-mobile">Estado</th>
-                        <th class="ts-table-hide-mobile">Último acceso</th>
+                        <th class="ts-table-hide-mobile">Ãšltimo acceso</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -64,14 +64,14 @@ else
                                 </span>
                             </td>
                             <td class="text-muted small ts-table-hide-mobile">
-                                @(u.LastLoginAt.HasValue ? u.LastLoginAt.Value.ToString("dd/MM/yyyy HH:mm") : "—")
+                                @(u.LastLoginAt.HasValue ? u.LastLoginAt.Value.ToString("dd/MM/yyyy HH:mm") : "â€”")
                             </td>
                             <td class="text-end">
                                 <button class="btn btn-sm btn-outline-secondary me-1" title="Editar"
                                         @onclick="() => AbrirEditar(u)">
                                     <i class="bi bi-pencil"></i>
                                 </button>
-                                <button class="btn btn-sm btn-outline-warning me-1" title="Resetear contraseña"
+                                <button class="btn btn-sm btn-outline-warning me-1" title="Resetear contraseÃ±a"
                                         @onclick="() => AbrirReset(u)">
                                     <i class="bi bi-key"></i>
                                 </button>
@@ -121,18 +121,18 @@ else
                         <input class="form-control" @bind="_form.FullName" />
                     </div>
                     <div class="col-12">
-                        <label class="form-label small fw-semibold">Correo electrónico *</label>
+                        <label class="form-label small fw-semibold">Correo electrÃ³nico *</label>
                         <input type="email" class="form-control" @bind="_form.Email" />
                     </div>
                     @if (_editandoId == 0)
                     {
                         <div class="col-12">
-                            <label class="form-label small fw-semibold">Contraseña *</label>
+                            <label class="form-label small fw-semibold">ContraseÃ±a *</label>
                             <div class="input-group">
                                 <input type="@(_mostrarPassNuevo ? "text" : "password")" class="form-control" @bind="_form.Password"
-                                       placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
+                                       placeholder="MÃ­nimo 6 caracteres" autocomplete="new-password" />
                                 <button type="button" class="btn-password-toggle" @onclick="() => _mostrarPassNuevo = !_mostrarPassNuevo" tabindex="-1"
-                                        title="@(_mostrarPassNuevo ? "Ocultar contraseña" : "Ver contraseña")">
+                                        title="@(_mostrarPassNuevo ? "Ocultar contraseÃ±a" : "Ver contraseÃ±a")">
                                     <i class="bi @(_mostrarPassNuevo ? "bi-eye-slash-fill" : "bi-eye-fill")"></i>
                                 </button>
                             </div>
@@ -174,7 +174,7 @@ else
     </div>
 }
 
-<!-- Modal resetear contraseña -->
+<!-- Modal resetear contraseÃ±a -->
 @if (_mostrarReset)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
@@ -182,32 +182,32 @@ else
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <i class="bi bi-key text-warning me-2"></i>Restablecer contraseña
+                        <i class="bi bi-key text-warning me-2"></i>Restablecer contraseÃ±a
                     </h5>
                     <button class="btn-close" @onclick="() => _mostrarReset = false"></button>
                 </div>
                 <div class="modal-body row g-3">
                     <p class="text-muted small col-12">
-                        Restableciendo contraseña de <strong>@_resetNombre</strong>
+                        Restableciendo contraseÃ±a de <strong>@_resetNombre</strong>
                     </p>
                     <div class="col-12">
-                        <label class="form-label small fw-semibold">Nueva contraseña *</label>
+                        <label class="form-label small fw-semibold">Nueva contraseÃ±a *</label>
                         <div class="input-group">
                             <input type="@(_mostrarPassReset1 ? "text" : "password")" class="form-control" @bind="_resetPass"
                                    autocomplete="new-password" />
                             <button type="button" class="btn-password-toggle" @onclick="() => _mostrarPassReset1 = !_mostrarPassReset1" tabindex="-1"
-                                    title="@(_mostrarPassReset1 ? "Ocultar contraseña" : "Ver contraseña")">
+                                    title="@(_mostrarPassReset1 ? "Ocultar contraseÃ±a" : "Ver contraseÃ±a")">
                                 <i class="bi @(_mostrarPassReset1 ? "bi-eye-slash-fill" : "bi-eye-fill")"></i>
                             </button>
                         </div>
                     </div>
                     <div class="col-12">
-                        <label class="form-label small fw-semibold">Confirmar contraseña *</label>
+                        <label class="form-label small fw-semibold">Confirmar contraseÃ±a *</label>
                         <div class="input-group">
                             <input type="@(_mostrarPassReset2 ? "text" : "password")" class="form-control" @bind="_resetConfirm"
                                    autocomplete="new-password" />
                             <button type="button" class="btn-password-toggle" @onclick="() => _mostrarPassReset2 = !_mostrarPassReset2" tabindex="-1"
-                                    title="@(_mostrarPassReset2 ? "Ocultar contraseña" : "Ver contraseña")">
+                                    title="@(_mostrarPassReset2 ? "Ocultar contraseÃ±a" : "Ver contraseÃ±a")">
                                 <i class="bi @(_mostrarPassReset2 ? "bi-eye-slash-fill" : "bi-eye-fill")"></i>
                             </button>
                         </div>
@@ -241,8 +241,8 @@ else
                     <button class="btn-close" @onclick="() => _mostrarModalDesactivar = false"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-1">¿Confirmas que deseas desactivar al usuario <strong>@_usuarioADesactivar?.FullName</strong>?</p>
-                    <p class="text-muted small mb-0">El usuario no podrá iniciar sesión hasta que sea reactivado desde la edición.</p>
+                    <p class="mb-1">Â¿Confirmas que deseas desactivar al usuario <strong>@_usuarioADesactivar?.FullName</strong>?</p>
+                    <p class="text-muted small mb-0">El usuario no podrÃ¡ iniciar sesiÃ³n hasta que sea reactivado desde la ediciÃ³n.</p>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" @onclick="() => _mostrarModalDesactivar = false">Cancelar</button>
@@ -274,11 +274,11 @@ else
     private bool _reseteando;
     private string? _errorReset;
 
-    // ── Confirmación desactivar ────────────────────────────────────────────────
+    // â”€â”€ ConfirmaciÃ³n desactivar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private bool _mostrarModalDesactivar;
     private UsuarioDto? _usuarioADesactivar;
 
-    // ── Toggles ojito de contraseña ────────────────────────────────────────────
+    // â”€â”€ Toggles ojito de contraseÃ±a â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private bool _mostrarPassNuevo;
     private bool _mostrarPassReset1;
     private bool _mostrarPassReset2;
@@ -334,7 +334,7 @@ else
         }
         if (_editandoId == 0 && string.IsNullOrWhiteSpace(_form.Password))
         {
-            _errorModal = "La contraseña es obligatoria para nuevos usuarios.";
+            _errorModal = "La contraseÃ±a es obligatoria para nuevos usuarios.";
             return;
         }
 
@@ -367,12 +367,12 @@ else
     {
         if (string.IsNullOrWhiteSpace(_resetPass) || _resetPass.Length < 6)
         {
-            _errorReset = "La contraseña debe tener al menos 6 caracteres.";
+            _errorReset = "La contraseÃ±a debe tener al menos 6 caracteres.";
             return;
         }
         if (_resetPass != _resetConfirm)
         {
-            _errorReset = "Las contraseñas no coinciden.";
+            _errorReset = "Las contraseÃ±as no coinciden.";
             return;
         }
 
@@ -385,7 +385,7 @@ else
             _mostrarPassReset1 = false;
             _mostrarPassReset2 = false;
             _exito   = ok;
-            _mensaje = ok ? "Contraseña restablecida correctamente." : "Error al restablecer la contraseña.";
+            _mensaje = ok ? "ContraseÃ±a restablecida correctamente." : "Error al restablecer la contraseÃ±a.";
         }
         catch { _errorReset = "Error al comunicarse con la API."; }
         finally { _reseteando = false; }

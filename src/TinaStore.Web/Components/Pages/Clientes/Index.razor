@@ -3,7 +3,7 @@
 @inject TinaStoreApiClient Api
 @inject IJSRuntime JS
 
-<PageTitle>Clientes — Tina Store</PageTitle>
+<PageTitle>Clientes â€” Tina Store</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h4 class="fw-bold mb-0"><i class="bi bi-people me-2 text-purple"></i>Clientes</h4>
@@ -38,7 +38,7 @@ else
                 <label class="form-label">Buscar</label>
                 <div class="input-group input-group-sm">
                     <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input class="form-control form-control-sm" placeholder="Nombre, documento o teléfono..."
+                    <input class="form-control form-control-sm" placeholder="Nombre, documento o telÃ©fono..."
                            @oninput="e => { _filtroTexto = e.Value?.ToString() ?? string.Empty; Filtrar(); }" value="@_filtroTexto" />
                 </div>
             </div>
@@ -72,14 +72,14 @@ else
                             Nombre <i class="@SortIconClass("nombre") ms-1 small"></i>
                         </th>
                         <th class="ts-table-hide-mobile">Documento</th>
-                        <th class="ts-table-hide-mobile">Teléfono</th>
+                        <th class="ts-table-hide-mobile">TelÃ©fono</th>
                         <th class="ts-table-hide-mobile">Email</th>
                         <th>Estado</th>
                         <th class="ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("saldo")'>
                             Saldo <i class="@SortIconClass("saldo") ms-1 small"></i>
                         </th>
                         <th class="ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("compra")'>
-                            Últ. compra <i class="@SortIconClass("compra") ms-1 small"></i>
+                            Ãšlt. compra <i class="@SortIconClass("compra") ms-1 small"></i>
                         </th>
                         <th></th>
                     </tr>
@@ -115,12 +115,12 @@ else
                                 }
                             </td>
                             <td class="text-end fw-semibold ts-table-hide-mobile @(c.PendingBalance > 0 ? "text-danger" : "text-muted")">
-                                @(c.PendingBalance > 0 ? c.PendingBalance.ToString("N0") : "—")
+                                @(c.PendingBalance > 0 ? c.PendingBalance.ToString("N0") : "â€”")
                             </td>
                             <td class="text-muted small ts-table-hide-mobile">
                                 @(c.LastPurchaseDate.HasValue
                                     ? c.LastPurchaseDate.Value.ToLocalTime().ToString("dd/MM/yyyy")
-                                    : "—")
+                                    : "â€”")
                             </td>
                             <td class="text-end" @onclick:stopPropagation="true">
                                 <div class="d-flex gap-1 justify-content-end">
@@ -193,12 +193,12 @@ else
                         <div class="col-12 col-md-6">
                             <label class="form-label small fw-semibold">Tipo doc.</label>
                             <select class="form-select" @bind="_form.DocumentType">
-                                <option value="">— Selecciona —</option>
-                                <option value="CC">CC — Cédula de ciudadanía</option>
-                                <option value="NIT">NIT — Número de identificación tributaria</option>
-                                <option value="CE">CE — Cédula de extranjería</option>
-                                <option value="PP">PP — Pasaporte</option>
-                                <option value="TI">TI — Tarjeta de identidad</option>
+                                <option value="">â€” Selecciona â€”</option>
+                                <option value="CC">CC â€” CÃ©dula de ciudadanÃ­a</option>
+                                <option value="NIT">NIT â€” NÃºmero de identificaciÃ³n tributaria</option>
+                                <option value="CE">CE â€” CÃ©dula de extranjerÃ­a</option>
+                                <option value="PP">PP â€” Pasaporte</option>
+                                <option value="TI">TI â€” Tarjeta de identidad</option>
                                 <option value="Otro">Otro</option>
                             </select>
                         </div>
@@ -207,7 +207,7 @@ else
                             <input class="form-control" @bind="_form.DocumentNumber" maxlength="20" />
                         </div>
                         <div class="col-12 col-md-6">
-                            <label class="form-label small fw-semibold">Teléfono</label>
+                            <label class="form-label small fw-semibold">TelÃ©fono</label>
                             <input class="form-control @(_errTelefono is not null ? "is-invalid" : "")" @bind="_form.Phone" maxlength="10" placeholder="Ej: 3001234567" inputmode="numeric" @onkeydown="HandleModalKeyDown" />
                             @if (_errTelefono is not null)
                             {
@@ -223,7 +223,7 @@ else
                             }
                         </div>
                         <div class="col-12">
-                            <label class="form-label small fw-semibold">Dirección</label>
+                            <label class="form-label small fw-semibold">DirecciÃ³n</label>
                             <input class="form-control" @bind="_form.Address" maxlength="200" @onkeydown="HandleModalKeyDown" />
                         </div>
                         <div class="col-12">
@@ -244,7 +244,7 @@ else
     </div>
 }
 
-<!-- Modal de confirmación de eliminación -->
+<!-- Modal de confirmaciÃ³n de eliminaciÃ³n -->
 @if (_mostrarModalEliminar)
 {
     <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
@@ -255,7 +255,7 @@ else
                     <button class="btn-close" @onclick="() => _mostrarModalEliminar = false"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-0">¿Seguro que deseas eliminar a <strong>@_nombreAEliminar</strong>? Esta acción no se puede deshacer.</p>
+                    <p class="mb-0">Â¿Seguro que deseas eliminar a <strong>@_nombreAEliminar</strong>? Esta acciÃ³n no se puede deshacer.</p>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" @onclick="() => _mostrarModalEliminar = false">Cancelar</button>
@@ -279,13 +279,13 @@ else
     private string? _mensaje;
     private bool _exito;
     private ClienteForm _form = new();
-    // Confirmación de eliminación
+    // ConfirmaciÃ³n de eliminaciÃ³n
     private bool _mostrarModalEliminar;
     private int _idAEliminar;
     private string _nombreAEliminar = "";
     private bool _exportandoClientes;
 
-    // ── Detalle expandible con nota ────────────────────────────────────────────
+    // â”€â”€ Detalle expandible con nota â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private readonly HashSet<int> _expandidos = [];
 
     private async Task ExportarExcel()
@@ -314,13 +314,13 @@ else
         finally { _exportandoClientes = false; }
     }
 
-    // ── Errores de validación del modal ────────────────────────────────────────────
+    // â”€â”€ Errores de validaciÃ³n del modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private string? _errNombre;
     private string? _errEmail;
     private string? _errTelefono;
     private List<string> _erroresModal = [];
 
-    // ── Filtros ────────────────────────────────────────────────────────────────────
+    // â”€â”€ Filtros â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private string _filtroTexto  = string.Empty;
     private string _filtroEmail  = string.Empty;
     private string _filtroEstado = string.Empty;
@@ -378,7 +378,7 @@ else
         _filtrados    = _clientes;
     }
 
-    // ── Ordenamiento por columna ───────────────────────────────────────────────────
+    // â”€â”€ Ordenamiento por columna â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private string  _ordenCampo = string.Empty;
     private bool    _ordenDesc;
 
@@ -439,10 +439,10 @@ else
             _errNombre = "El nombre completo es obligatorio.";
 
         if (!EsEmailValido(_form.Email))
-            _errEmail = "Ingresa un correo válido, por ejemplo: cliente@correo.com.";
+            _errEmail = "Ingresa un correo vÃ¡lido, por ejemplo: cliente@correo.com.";
 
         if (!EsTelefonoValido(_form.Phone))
-            _errTelefono = "El teléfono debe tener exactamente 10 dígitos (sin espacios ni guiones).";
+            _errTelefono = "El telÃ©fono debe tener exactamente 10 dÃ­gitos (sin espacios ni guiones).";
 
         if (_errNombre   is not null) _erroresModal.Add(_errNombre);
         if (_errEmail    is not null) _erroresModal.Add(_errEmail);

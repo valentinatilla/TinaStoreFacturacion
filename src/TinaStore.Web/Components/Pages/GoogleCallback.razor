@@ -16,9 +16,9 @@
         }
         else
         {
-            <div style="font-size: 2.5rem;" class="mb-3">❌</div>
+            <div style="font-size: 2.5rem;" class="mb-3">âŒ</div>
             <p class="text-danger small fw-semibold">@_error</p>
-            <a href="/login" class="btn btn-outline-secondary btn-sm mt-2">Volver al inicio de sesión</a>
+            <a href="/login" class="btn btn-outline-secondary btn-sm mt-2">Volver al inicio de sesiÃ³n</a>
         }
     </div>
 </div>
@@ -33,14 +33,14 @@
     {
         if (string.IsNullOrWhiteSpace(IdToken))
         {
-            _error = "No se recibió el token de Google. Intenta de nuevo.";
+            _error = "No se recibiÃ³ el token de Google. Intenta de nuevo.";
             return;
         }
 
         var (response, errorMsg) = await Api.LoginConGoogleAsync(IdToken);
         if (response is null)
         {
-            _error = errorMsg ?? "Tu cuenta de Google no está autorizada. Contacta al administrador.";
+            _error = errorMsg ?? "Tu cuenta de Google no estÃ¡ autorizada. Contacta al administrador.";
             return;
         }
 
