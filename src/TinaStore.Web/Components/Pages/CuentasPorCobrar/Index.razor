@@ -272,7 +272,7 @@ else if (_data is not null)
     {
         var telefono = cxc.Phone?.Replace(" ", "").Replace("-", "").Replace("+", "") ?? "";
         var plantilla = _reminderMessage
-            ?? "Hola {nombre}, te recordamos que tienes un saldo pendiente de {saldo}. Por favor comunícate con nosotros. Gracias ðŸŒ¸";
+            ?? "Hola {nombre}, te recordamos que tienes un saldo pendiente de {saldo}. Por favor comunícate con nosotros. Gracias 🌸";
         var mensaje = plantilla
             .Replace("{nombre}", cxc.CustomerName)
             .Replace("{saldo}", cxc.SaldoPendiente.ToString("N0"));

@@ -120,7 +120,7 @@ else if (_cargado)
                 </label>
                 <textarea class="form-control" rows="3" @bind="_modelo.ReminderMessage"
                           maxlength="300" @bind:event="oninput"
-                          placeholder="Hola {nombre}, te recordamos que tienes un saldo pendiente de {saldo}. Por favor comunícate con nosotros. Gracias ðŸŒ¸"></textarea>
+                          placeholder="Hola {nombre}, te recordamos que tienes un saldo pendiente de {saldo}. Por favor comunícate con nosotros. Gracias 🌸"></textarea>
                 <div class="text-muted small mt-1 d-flex justify-content-between">
                     <span>Usa <code>{nombre}</code> y <code>{saldo}</code> como variables.</span>
                     <span class="@(_modelo.ReminderMessage?.Length >= 280 ? "text-danger fw-semibold" : "")">
