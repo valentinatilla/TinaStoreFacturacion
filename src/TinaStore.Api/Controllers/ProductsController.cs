@@ -15,6 +15,32 @@ public sealed class ProductsController : ControllerBase
     private static readonly string[] _extensionesPermitidas = [".jpg", ".jpeg", ".png", ".webp"];
     private const long _tamañoMaximoBytes = 2 * 1024 * 1024; // 2 MB
 
+    /// <summary>
+    /// Firmas de bytes (magic bytes) de los formatos de imagen permitidos.
+    /// Evita que se suban archivos maliciosos con extensión de imagen.
+    /// </summary>
+    private static readonly (byte[] Firma, string Descripcion)[] _firmasPermitidas =
+    [
+        (new byte[] { 0xFF, 0xD8, 0xFF },             "JPEG"),
+        (new byte[] { 0x89, 0x50, 0x4E, 0x47 },       "PNG"),
+        (new byte[] { 0x52, 0x49, 0x46, 0x46 },       "WEBP (RIFF)"),
+    ];
+
+    private static async Task<bool> EsImagenValidaAsync(IFormFile archivo)
+    {
+        var buffer = new byte[8];
+        await using var stream = archivo.OpenReadStream();
+        var leidos = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length));
+        if (leidos < 4) return false;
+
+        foreach (var (firma, _) in _firmasPermitidas)
+        {
+            if (buffer.Take(firma.Length).SequenceEqual(firma))
+                return true;
+        }
+        return false;
+    }
+
     private readonly IProductService _service;
     private readonly IValidator<CreateProductDto> _createValidator;
     private readonly IValidator<UpdateProductDto> _updateValidator;
@@ -128,6 +154,10 @@ public sealed class ProductsController : ControllerBase
         var ext = Path.GetExtension(archivo.FileName).ToLowerInvariant();
         if (!_extensionesPermitidas.Contains(ext))
             return BadRequest(new { mensaje = "Solo se permiten imágenes JPG, PNG o WEBP." });
+
+        // Validar el contenido real del archivo (magic bytes), no solo la extensión
+        if (!await EsImagenValidaAsync(archivo))
+            return BadRequest(new { mensaje = "El archivo no es una imagen válida (JPG, PNG o WEBP)." });
 
         var producto = await _service.GetByIdAsync(id);
         if (producto is null)

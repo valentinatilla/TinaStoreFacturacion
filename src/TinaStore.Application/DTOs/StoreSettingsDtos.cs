@@ -30,20 +30,3 @@ public record UpdateStoreSettingsDto(
     decimal TaxPercentage,
     bool AllowNegativeStock
 );
-
-/// <summary>Configuración completa retornada desde Settings (incluye ReminderMessage).</summary>
-public record StoreSettingsFullDto(
-    int Id,
-    string StoreName,
-    string? LogoPath,
-    string? Address,
-    string? Phone,
-    string? Email,
-    string? TaxId,
-    string? InvoiceFooterMessage,
-    string? ReminderMessage,
-    string Currency,
-    decimal TaxPercentage,
-    int InvoiceConsecutive,
-    bool AllowNegativeStock
-);

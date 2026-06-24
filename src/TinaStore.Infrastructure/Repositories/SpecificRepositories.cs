@@ -43,9 +43,6 @@ public class ProductRepository(AppDbContext context) : Repository<Product>(conte
             .Include(p => p.Supplier)
             .FirstOrDefaultAsync(p => p.Id == id, ct);
 
-    public async Task<Product?> GetByInternalCodeAsync(string code, CancellationToken ct = default)
-        => await DbSet.FirstOrDefaultAsync(p => p.Sku == code, ct);  // redirigido a SKU
-
     public async Task<Product?> GetBySkuAsync(string sku, CancellationToken ct = default)
         => await DbSet.FirstOrDefaultAsync(p => p.Sku == sku, ct);
 

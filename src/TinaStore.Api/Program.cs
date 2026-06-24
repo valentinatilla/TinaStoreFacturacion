@@ -99,6 +99,13 @@ try
     // En producción configura Cors__AllowedOrigins con la URL de Railway del Web.
     // Ejemplo: Cors__AllowedOrigins=https://tinastore-web.up.railway.app
     var allowedOrigins = builder.Configuration["Cors:AllowedOrigins"];
+    var esProduccion   = builder.Environment.IsProduction();
+
+    if (esProduccion && string.IsNullOrWhiteSpace(allowedOrigins))
+        Log.Warning("⚠️  CORS no configurado en producción. " +
+                    "Establece la variable de entorno Cors__AllowedOrigins para restringir los orígenes permitidos. " +
+                    "Actualmente se permite cualquier origen, lo que puede representar un riesgo de seguridad.");
+
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("AllowAll", policy =>
@@ -158,7 +165,12 @@ try
     app.UseAuthorization();
     app.MapControllers();
 
-    app.MapGet("/", () => Results.Ok(new { message = "TinaStore API funcionando ✓", version = "1.0" }));
+    app.MapGet("/", () => Results.Ok(new
+    {
+        message     = "TinaStore API funcionando ✓",
+        version     = "1.0.0",
+        environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"
+    }));
 
     app.Run();
 }

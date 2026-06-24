@@ -5,6 +5,81 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [1.0.0] — 2026-07-25 — Fase BE–BK: Auditoría final, correcciones de cierre y documentación
+
+### Tipo de cambio
+Corrección de bugs / Refactorización segura / Limpieza / Seguridad / Documentación
+
+### Módulos afectados
+`ProductValidators`, `Program.cs`, `ExcelService`, `InvoiceService`, `DashboardService`, `StoreSettingsDtos`, `ExpenseValidators`, `ProductsController`, `SettingsController`, `IRepositories`, `SpecificRepositories`, `README.md`, `docs/`, `.gitignore`
+
+---
+
+### BE — Estabilidad y bugs finales
+
+**BE-1 — Validación de nombre de producto unificada**
+- `ProductValidators.cs`: `CreateProductValidator.Name` corregido de `MaximumLength(30)` a `MaximumLength(50)`, consistente con `UpdateProductValidator` y la regla de negocio.
+- Antes se podía crear un producto con hasta 30 chars pero editarlo con hasta 50, generando doble estándar.
+
+**BE-2 — Protección CORS en producción**
+- `Program.cs`: se agrega advertencia de Serilog cuando `Cors:AllowedOrigins` está vacío en entorno `Production`.
+- El comportamiento (`AllowAnyOrigin` como fallback) no cambia, pero el operador ve la advertencia en los logs al iniciar el servidor.
+
+**BE-3 — Optimización N+1 en importación Excel**
+- `ExcelService.ImportProductsAsync`: las consultas a `Categories` y `Suppliers` se movieron **fuera del bucle** de filas.
+- Antes: hasta 2 queries a la BD por cada fila del archivo Excel importado.
+- Después: 2 queries totales al inicio, sin importar cuántas filas tenga el archivo.
+
+---
+
+### BF — Refactorización segura
+
+**BF-1 — InvoiceStatusHelper compartido**
+- Creado `src/TinaStore.Application/Helpers/InvoiceStatusHelper.cs` con el método estático `EnEspanol(InvoiceStatus)`.
+- `InvoiceService` y `DashboardService` dejaron de tener el mismo `switch` duplicado; ambos delegan en el helper.
+
+**BF-2 — Eliminado StoreSettingsFullDto duplicado**
+- `StoreSettingsDtos.cs`: eliminado `StoreSettingsFullDto` que era idéntico a `StoreSettingsDto` y no tenía ningún uso en controladores ni en Web.
+
+**BF-3 — Validador de categoría de egreso unificado**
+- `ExpenseValidators.cs`: creada clase base `ExpenseCategoryDtoValidator`. `CreateExpenseCategoryDtoValidator` hereda de ella. La duplicación de reglas de validación fue eliminada.
+
+---
+
+### BG — Limpieza de código
+
+**BG-1 — Test vacío reemplazado**
+- `UnitTest1.cs` renombrado a `SmokeTests.cs`: el test placeholder vacío fue reemplazado por 4 casos parametrizados que validan `InvoiceStatusHelper.EnEspanol` con todos los estados posibles.
+
+**BG-2 — GetByInternalCodeAsync eliminado**
+- `IRepositories.cs` e `IProductRepository`: eliminado `GetByInternalCodeAsync` residual de la migración `RemoveInternalCode` de junio 2026. Nunca fue llamado desde ningún servicio o controlador.
+
+---
+
+### BH — Seguridad
+
+**BH-1 — Clave JWT eliminada de appsettings**
+- `appsettings.Development.json`: la clave JWT hardcoded fue reemplazada por el placeholder `SET_VIA_USER_SECRETS_OR_ENV_VAR`.
+- `appsettings.Development.example.json`: actualizado con instrucciones completas de `dotnet user-secrets`.
+
+**BH-2 — .gitignore completado**
+- Agregadas entradas para: `*.db`, `*.db-shm`, `*.db-wal`, `src/TinaStore.Api/logs/`, imágenes de productos (`*.jpg`, `*.jpeg`, `*.png`, `*.webp`) y logo real de la tienda.
+- Se conserva `!.gitkeep` para mantener la estructura de carpetas.
+
+**BH-3 — Validación de magic bytes en subida de imágenes**
+- `ProductsController` y `SettingsController`: además de validar la extensión del archivo, ahora se leen los primeros bytes del archivo para confirmar que es realmente un JPEG, PNG o WEBP.
+- Previene que archivos maliciosos renombrados como `.jpg` sean aceptados por el servidor.
+
+---
+
+### BI — Documentación
+
+- `README.md`: corregidos datos desactualizados (librería de tests era "Moq", Excel era "EPPlus", BD de producción era "PostgreSQL", número de tests era "30"). Actualizado a NSubstitute, ClosedXML, SQLite y 78 tests.
+- `docs/RELEASE_CHECKLIST.md`: actualizado número de tests (30 → 78).
+- `docs/CHANGELOG.md`: entrada `v1.0.0` agregada con descripción completa de todos los cambios de cierre.
+
+---
+
 ## [1.9.0] — 2026-07-14 — Fases AY–BD: UX final, revalidación importación, responsive, validaciones de configuración
 
 ### Tipo de cambio

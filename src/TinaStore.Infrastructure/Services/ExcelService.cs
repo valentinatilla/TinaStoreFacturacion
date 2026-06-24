@@ -396,6 +396,10 @@ public sealed class ExcelService : IExcelService
                                      .Select(NormalizarTexto).ToHashSet(StringComparer.Ordinal);
         var nombresEnArchivoImp = new HashSet<string>(StringComparer.Ordinal);
 
+        // Pre-cargar categorías y proveedores una sola vez (evita N+1 queries)
+        var todasCatsImport  = await _db.Categories.Where(c => !c.IsDeleted).ToListAsync();
+        var todosProvImport  = await _db.Suppliers.Where(s => !s.IsDeleted).ToListAsync();
+
         for (var row = 2; row <= lastRow; row++)
         {
             try
@@ -446,12 +450,11 @@ public sealed class ExcelService : IExcelService
                     continue;
                 }
 
-                // Cargar todas las categorías activas y buscar con comparación normalizada
-                var todasCats = await _db.Categories.Where(c => !c.IsDeleted).ToListAsync();
-                var categoria = todasCats.FirstOrDefault(c =>
+                // Buscar categoría en la lista pre-cargada
+                var categoria = todasCatsImport.FirstOrDefault(c =>
                     NormalizarTexto(c.Name) == NormalizarTexto(categoryRaw));
                 if (categoria is null && int.TryParse(categoryRaw, out var cid))
-                    categoria = todasCats.FirstOrDefault(c => c.Id == cid);
+                    categoria = todasCatsImport.FirstOrDefault(c => c.Id == cid);
                 if (categoria is null)
                 {
                     errores.Add($"Fila {row}: categoría '{categoryRaw}' no encontrada.");
@@ -461,11 +464,10 @@ public sealed class ExcelService : IExcelService
                 int? supplierId = null;
                 if (!string.IsNullOrWhiteSpace(supplierRaw))
                 {
-                    var todosProv = await _db.Suppliers.Where(s => !s.IsDeleted).ToListAsync();
-                    var proveedor = todosProv.FirstOrDefault(s =>
+                    var proveedor = todosProvImport.FirstOrDefault(s =>
                         NormalizarTexto(s.Name) == NormalizarTexto(supplierRaw));
                     if (proveedor is null && int.TryParse(supplierRaw, out var sid))
-                        proveedor = todosProv.FirstOrDefault(s => s.Id == sid);
+                        proveedor = todosProvImport.FirstOrDefault(s => s.Id == sid);
                     supplierId = proveedor?.Id;
                 }
 
