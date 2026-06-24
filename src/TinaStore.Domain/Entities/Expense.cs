@@ -19,4 +19,11 @@ public class Expense : BaseEntity
 
     public int? PaymentMethodId { get; set; }
     public PaymentMethod? PaymentMethod { get; set; }
+
+    /// <summary>Producto asociado a esta compra (para revertir stock al anular).</summary>
+    public int? ProductId { get; set; }
+    public Product? Product { get; set; }
+
+    /// <summary>Cantidad de stock comprada (para revertir al anular).</summary>
+    public int? StockQty { get; set; }
 }

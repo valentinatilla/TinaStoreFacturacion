@@ -5,7 +5,61 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
-## [1.6.0] — 2026-07-09 — Fases AA–AE: Validaciones finales, UX y robustez preproducción
+## [1.9.0] — 2026-07-14 — Fases AY–BD: UX final, revalidación importación, responsive, validaciones de configuración
+
+### Tipo de cambio
+Corrección de bugs / Mejoras UX / Responsive / Validaciones de formulario
+
+### Módulos afectados
+`Facturas/Nueva.razor`, `Facturas/Index.razor`, `NavMenu.razor`, `Productos/Importar.razor`, `Productos/Index.razor`, `Configuracion/StoreSettings.razor`, `wwwroot/app.css`
+
+---
+
+### FASE AY — Ventas y detalle
+
+**AY-1 — Descuento individual por producto alineado**
+- `Facturas/Nueva.razor`: input de descuento ahora usa `w-100` en lugar de `width:70px` fijo; la tabla de detalle se envolvió en `table-responsive`; anchos de columnas optimizados.
+
+**AY-2 — Etiqueta "Descripción" en ventas libres**
+- `Facturas/Index.razor`: el bloque de detalle expandido detecta si todas las líneas tienen `ProductId == null`; en ese caso muestra encabezado "Descripción" en lugar de "Producto" y elimina la columna de imagen. Las ventas normales conservan su tabla con imagen.
+
+---
+
+### FASE AZ — Navegación
+
+**AZ-1 — NavLink activo solo para /productos**
+- `NavMenu.razor`: `<NavLink href="/productos">` ahora lleva `Match="NavLinkMatch.All"` para que al entrar en `/productos/importar` solo resalte "Importar" y no "Productos".
+
+---
+
+### FASE BA — Importación editable con revalidación
+
+**BA-1 — Revalidación local al editar filas**
+- `Productos/Importar.razor`: nuevo método `RevalidarFila()` centraliza validación de Nombre obligatorio, precio de venta > 0, categoría válida y SKU único dentro de la lista. Se invoca desde `ActualizarFila`, `ActualizarFilaDecimal` y `ActualizarFilaInt`.
+- `RevalidarDuplicadosSku()` recorre toda la lista al cambiar un SKU para resolver o detectar duplicados entre filas hermanas.
+- Errores de SKU duplicado muestran mensaje claro: "El SKU 'X' ya existe en otra fila de esta lista. Edítalo para que sea único."
+- Las celdas de Nombre y SKU con error aplican `is-invalid` automáticamente.
+
+---
+
+### FASE BB — Validaciones de configuración
+
+**BB-1 — Correo y teléfono validados antes de guardar**
+- `Configuracion/StoreSettings.razor`: `Guardar()` valida email con regex `^[^@\s]+@[^@\s]+\.[^@\s]+$` y teléfono con `^[\+\d][\d\s\-\(\)]{5,19}$`.
+- Si alguno es inválido, se muestra `is-invalid` y `invalid-feedback` inline sin enviar la solicitud a la API.
+- Se agregaron campos `_errEmail` y `_errPhone` al bloque `@code`.
+- El campo `input` de correo usa `type="email"` para aprovechar validación HTML nativa en navegadores modernos.
+
+---
+
+### FASE BC — Responsive final
+
+**BC-1 — Responsive detalle de venta y edición masiva**
+- `wwwroot/app.css`: nueva sección `FASE AY-BC` con reglas `@media (max-width: 768px)` que ocultan la columna de descuento en `.ts-detalle-venta-tabla` y columnas extra en `.ts-bulk-tabla` y `.ts-import-tabla`.
+- `@media (max-width: 576px)`: input de descuento con `min-width:56px` e imágenes de detalle miniaturizadas.
+- `Productos/Index.razor`: tabla de edición masiva añade clase `ts-bulk-tabla` para que apliquen las reglas responsive.
+
+---
 
 ### Tipo de cambio
 Corrección de bugs / Mejoras UX / Validaciones de negocio / Robustez de importación

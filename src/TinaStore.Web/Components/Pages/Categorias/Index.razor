@@ -33,11 +33,12 @@ else
                 <div class="input-group input-group-sm">
                     <span class="input-group-text"><i class="bi bi-search"></i></span>
                     <input class="form-control form-control-sm" placeholder="Buscar categoría..."
+                           value="@_busqueda"
                            @oninput="e => { _busqueda = e.Value?.ToString() ?? string.Empty; }" />
                 </div>
             </div>
             <div class="col-auto d-flex align-items-end">
-                <button class="btn-limpiar" @onclick="() => _busqueda = string.Empty">
+                <button class="btn-limpiar" @onclick="LimpiarFiltro">
                     <i class="bi bi-x-circle me-1"></i>Limpiar
                 </button>
             </div>
@@ -77,8 +78,7 @@ else
                             <td class="text-end">
                                 @if (cat.Id != 99)
                                 {
-                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => Eliminar(cat.Id)"
-                                            disabled="@(cat.ProductCount > 0)">
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => AbrirConfirmarEliminar(cat)">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 }
@@ -129,6 +129,44 @@ else
     </div>
 }
 
+@if (_mostrarModalEliminar)
+{
+    <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Eliminar categoría
+                    </h5>
+                    <button class="btn-close" @onclick="() => _mostrarModalEliminar = false"></button>
+                </div>
+                <div class="modal-body">
+                    @if (_catAEliminar?.ProductCount > 0)
+                    {
+                        <div class="alert alert-warning py-2 small mb-3">
+                            <i class="bi bi-box-seam me-1"></i>
+                            Esta categoría tiene <strong>@_catAEliminar.ProductCount</strong> producto(s) asociado(s).
+                            Si la eliminas, esos productos pasarán automáticamente a <strong>"Sin categoría"</strong>.
+                            ¿Deseas continuar?
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="mb-1">¿Estás seguro de eliminar la categoría <strong>@_catAEliminar?.Name</strong>?</p>
+                        <p class="text-muted small mb-0">Esta acción no se puede deshacer.</p>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => _mostrarModalEliminar = false">Cancelar</button>
+                    <button class="btn btn-danger" @onclick="ConfirmarEliminar" @ref="_btnConfirmarEliminar">
+                        <i class="bi bi-trash me-1"></i>Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<CategoriaDto> _categorias = [];
     private bool _loading = true;
@@ -141,6 +179,10 @@ else
     private string _busqueda = "";
     private string _ordenCampo = "";
     private bool   _ordenDesc;
+
+    // ── Modal de confirmación de eliminación ──────────────────────────────────
+    private bool _mostrarModalEliminar;
+    private CategoriaDto? _catAEliminar;
 
     private IEnumerable<CategoriaDto> CategoriasOrdenadas
     {
@@ -173,8 +215,8 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender) return;
-        await Cargar();
+        if (firstRender) await Cargar();
+        if (_focusBtnEliminar) { _focusBtnEliminar = false; await _btnConfirmarEliminar.FocusAsync(); }
     }
 
     private async Task Cargar()
@@ -186,6 +228,31 @@ else
     }
 
     private void AbrirModal() { _nombre = ""; _descripcion = null; _errorModal = null; _mostrarModal = true; }
+
+    private void LimpiarFiltro()
+    {
+        _busqueda   = string.Empty;
+        _ordenCampo = string.Empty;
+        _ordenDesc  = false;
+    }
+
+    private void AbrirConfirmarEliminar(CategoriaDto cat)
+    {
+        _catAEliminar       = cat;
+        _mostrarModalEliminar = true;
+        _focusBtnEliminar   = true;
+    }
+
+    private async Task ConfirmarEliminar()
+    {
+        if (_catAEliminar is null) return;
+        _mostrarModalEliminar = false;
+        var (ok, error) = await Api.DeleteCategoriaAsync(_catAEliminar.Id);
+        _exito   = ok;
+        _mensaje = ok ? "Categoría eliminada correctamente." : (error ?? "No se pudo eliminar la categoría.");
+        if (ok) await Cargar();
+        _catAEliminar = null;
+    }
 
     private async Task Guardar()
     {
@@ -210,11 +277,6 @@ else
         if (e.Key == "Enter") await Guardar();
     }
 
-    private async Task Eliminar(int id)
-    {
-        var (ok, error) = await Api.DeleteCategoriaAsync(id);
-        _exito   = ok;
-        _mensaje = ok ? "Categoría eliminada." : (error ?? "No se pudo eliminar la categoría.");
-        if (ok) await Cargar();
-    }
+    private ElementReference _btnConfirmarEliminar;
+    private bool _focusBtnEliminar;
 }

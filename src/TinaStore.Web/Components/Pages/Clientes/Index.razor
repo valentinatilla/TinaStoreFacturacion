@@ -87,8 +87,18 @@ else
                 <tbody>
                     @foreach (var c in _filtrados)
                     {
-                        <tr>
-                            <td class="fw-semibold">@c.FullName</td>
+                        var expandido = _expandidos.Contains(c.Id);
+                        <tr style="cursor:pointer" class="@(expandido ? "table-active" : "")"
+                            @onclick="() => ToggleCliente(c.Id)">
+                            <td class="fw-semibold">
+                                <span class="d-inline-flex align-items-center gap-1">
+                                    @if (!string.IsNullOrWhiteSpace(c.Notes))
+                                    {
+                                        <i class="bi @(expandido ? "bi-chevron-down text-purple" : "bi-chevron-right text-muted") small"></i>
+                                    }
+                                    @c.FullName
+                                </span>
+                            </td>
                             <td class="ts-table-hide-mobile">@c.DocumentNumber</td>
                             <td class="ts-table-hide-mobile">@c.Phone</td>
                             <td class="ts-table-hide-mobile">@c.Email</td>
@@ -112,15 +122,28 @@ else
                                     ? c.LastPurchaseDate.Value.ToLocalTime().ToString("dd/MM/yyyy")
                                     : "—")
                             </td>
-                            <td class="text-end">
-                                <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => AbrirModal(c)">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmarEliminar(c)">
-                                    <i class="bi bi-trash"></i>
-                                </button>
+                            <td class="text-end" @onclick:stopPropagation="true">
+                                <div class="d-flex gap-1 justify-content-end">
+                                    <button class="btn btn-sm btn-outline-primary" @onclick="() => AbrirModal(c)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmarEliminar(c)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
+                        @if (expandido && !string.IsNullOrWhiteSpace(c.Notes))
+                        {
+                            <tr class="detalle-expandido">
+                                <td colspan="8" class="py-2 px-4">
+                                    <div class="text-muted small">
+                                        <i class="bi bi-sticky me-1 text-purple"></i>
+                                        <strong>Nota:</strong> @c.Notes
+                                    </div>
+                                </td>
+                            </tr>
+                        }
                     }
                     @if (!_filtrados.Any())
                     {
@@ -159,7 +182,9 @@ else
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label small fw-semibold">Nombre completo *</label>
-                            <input class="form-control @(_errNombre is not null ? "is-invalid" : "")" @bind="_form.FullName" maxlength="30" />
+                            <input class="form-control @(_errNombre is not null ? "is-invalid" : "")"
+                                   @bind="_form.FullName" maxlength="30"
+                                   @onkeydown="HandleModalKeyDown" />
                             @if (_errNombre is not null)
                             {
                                 <div class="invalid-feedback">@_errNombre</div>
@@ -183,7 +208,7 @@ else
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label small fw-semibold">Teléfono</label>
-                            <input class="form-control @(_errTelefono is not null ? "is-invalid" : "")" @bind="_form.Phone" maxlength="10" placeholder="Ej: 3001234567" inputmode="numeric" />
+                            <input class="form-control @(_errTelefono is not null ? "is-invalid" : "")" @bind="_form.Phone" maxlength="10" placeholder="Ej: 3001234567" inputmode="numeric" @onkeydown="HandleModalKeyDown" />
                             @if (_errTelefono is not null)
                             {
                                 <div class="invalid-feedback">@_errTelefono</div>
@@ -191,7 +216,7 @@ else
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label small fw-semibold">Email</label>
-                            <input class="form-control @(_errEmail is not null ? "is-invalid" : "")" @bind="_form.Email" placeholder="Ej: cliente@correo.com" />
+                            <input class="form-control @(_errEmail is not null ? "is-invalid" : "")" @bind="_form.Email" placeholder="Ej: cliente@correo.com" @onkeydown="HandleModalKeyDown" />
                             @if (_errEmail is not null)
                             {
                                 <div class="invalid-feedback">@_errEmail</div>
@@ -199,7 +224,7 @@ else
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-semibold">Dirección</label>
-                            <input class="form-control" @bind="_form.Address" maxlength="200" />
+                            <input class="form-control" @bind="_form.Address" maxlength="200" @onkeydown="HandleModalKeyDown" />
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-semibold">Notas</label>
@@ -234,7 +259,7 @@ else
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" @onclick="() => _mostrarModalEliminar = false">Cancelar</button>
-                    <button class="btn btn-danger" @onclick="EjecutarEliminar">
+                    <button class="btn btn-danger" @onclick="EjecutarEliminar" @ref="_btnConfirmarEliminarCliente">
                         <i class="bi bi-trash me-1"></i>Eliminar
                     </button>
                 </div>
@@ -259,6 +284,9 @@ else
     private int _idAEliminar;
     private string _nombreAEliminar = "";
     private bool _exportandoClientes;
+
+    // ── Detalle expandible con nota ────────────────────────────────────────────
+    private readonly HashSet<int> _expandidos = [];
 
     private async Task ExportarExcel()
     {
@@ -300,6 +328,17 @@ else
     protected override async Task OnInitializedAsync()
     {
         await Cargar();
+    }
+
+    private void ToggleCliente(int id)
+    {
+        if (_expandidos.Contains(id)) _expandidos.Remove(id);
+        else _expandidos.Add(id);
+    }
+
+    private async Task HandleModalKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !_guardando) await Guardar();
     }
 
     private async Task Cargar()
@@ -444,6 +483,7 @@ else
         _idAEliminar = c.Id;
         _nombreAEliminar = c.FullName;
         _mostrarModalEliminar = true;
+        _focusBtnEliminarCliente = true;
     }
 
     private async Task EjecutarEliminar()
@@ -453,6 +493,14 @@ else
         _exito = ok;
         _mensaje = ok ? "Cliente eliminado." : "No se pudo eliminar el cliente.";
         if (ok) await Cargar();
+    }
+
+    private ElementReference _btnConfirmarEliminarCliente;
+    private bool _focusBtnEliminarCliente;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focusBtnEliminarCliente) { _focusBtnEliminarCliente = false; await _btnConfirmarEliminarCliente.FocusAsync(); }
     }
 
     private static bool EsEmailValido(string? email)

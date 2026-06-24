@@ -72,36 +72,61 @@ else if (_cargado)
             </div>
             <div class="col-12">
                 <label class="form-label small fw-semibold">Dirección</label>
-                <input class="form-control" @bind="_modelo.Address" />
+                <input class="form-control" @bind="_modelo.Address" @onkeydown="HandleKeyDown" />
             </div>
             <div class="col-md-6">
                 <label class="form-label small fw-semibold">Teléfono</label>
-                <input class="form-control" @bind="_modelo.Phone" />
+                <input class="form-control @(_errPhone ? "is-invalid" : "")" @bind="_modelo.Phone" @onkeydown="HandleKeyDown" />
+                @if (_errPhone)
+                {
+                    <div class="invalid-feedback">Ingresa un teléfono válido (solo números, espacios y + permitidos).</div>
+                }
             </div>
             <div class="col-md-6">
                 <label class="form-label small fw-semibold">Correo</label>
-                <input class="form-control" @bind="_modelo.Email" />
+                <input type="email" class="form-control @(_errEmail ? "is-invalid" : "")" @bind="_modelo.Email" @onkeydown="HandleKeyDown" />
+                @if (_errEmail)
+                {
+                    <div class="invalid-feedback">Ingresa un correo electrónico válido.</div>
+                }
             </div>
             <div class="col-md-6">
                 <label class="form-label small fw-semibold">NIT / RUT</label>
-                <input class="form-control" @bind="_modelo.TaxId" />
+                <input class="form-control-plaintext fw-semibold ps-2 border rounded bg-light"
+                       value="@_modelo.TaxId" readonly />
+                <div class="text-muted small mt-1">
+                    <i class="bi bi-lock-fill me-1"></i>El NIT no puede modificarse.
+                </div>
             </div>
             <div class="col-md-6">
                 <label class="form-label small fw-semibold">IVA (%)</label>
-                <input type="number" class="form-control" @bind="_modelo.TaxPercentage" min="0" max="100" step="0.01" />
+                <input type="number" class="form-control" @bind="_modelo.TaxPercentage" min="0" max="100" step="0.01" @onkeydown="HandleKeyDown" />
                 <div class="text-muted small mt-1">Valor entre 0 y 100. Ejemplo: 19 para IVA del 19%.</div>
             </div>
             <div class="col-12">
                 <label class="form-label small fw-semibold">Mensaje pie de factura</label>
-                <textarea class="form-control" rows="2" @bind="_modelo.InvoiceFooterMessage"></textarea>
+                <textarea class="form-control" rows="2" @bind="_modelo.InvoiceFooterMessage"
+                          maxlength="300" @bind:event="oninput"></textarea>
+                <div class="text-muted small mt-1 d-flex justify-content-between">
+                    <span>Texto que aparece al pie de cada factura impresa.</span>
+                    <span class="@(_modelo.InvoiceFooterMessage?.Length >= 280 ? "text-danger fw-semibold" : "")">
+                        @(_modelo.InvoiceFooterMessage?.Length ?? 0)/300
+                    </span>
+                </div>
             </div>
             <div class="col-12">
                 <label class="form-label small fw-semibold">
                     <i class="bi bi-whatsapp text-success me-1"></i>Mensaje de recordatorio (WhatsApp)
                 </label>
                 <textarea class="form-control" rows="3" @bind="_modelo.ReminderMessage"
+                          maxlength="300" @bind:event="oninput"
                           placeholder="Hola {nombre}, te recordamos que tienes un saldo pendiente de {saldo}. Por favor comunícate con nosotros. Gracias 🌸"></textarea>
-                <div class="text-muted small mt-1">Usa <code>{nombre}</code> y <code>{saldo}</code> como variables.</div>
+                <div class="text-muted small mt-1 d-flex justify-content-between">
+                    <span>Usa <code>{nombre}</code> y <code>{saldo}</code> como variables.</span>
+                    <span class="@(_modelo.ReminderMessage?.Length >= 280 ? "text-danger fw-semibold" : "")">
+                        @(_modelo.ReminderMessage?.Length ?? 0)/300
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -121,6 +146,8 @@ else if (_cargado)
     private string? _logoUrl;
     private string? _mensaje;
     private bool _exito;
+    private bool _errEmail;
+    private bool _errPhone;
 
     protected override async Task OnInitializedAsync()
     {
@@ -174,13 +201,22 @@ else if (_cargado)
         finally { _subiendoLogo = false; }
     }
 
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !_guardando) await Guardar();
+    }
+
     private async Task Guardar()
     {
         _guardando = true;
         _mensaje = null;
+        _errEmail = false;
+        _errPhone = false;
+
         // Garantizar moneda por defecto
         if (string.IsNullOrWhiteSpace(_modelo.Currency))
             _modelo.Currency = "COP";
+
         // Validar IVA
         if (_modelo.TaxPercentage < 0 || _modelo.TaxPercentage > 100)
         {
@@ -189,6 +225,31 @@ else if (_cargado)
             _guardando = false;
             return;
         }
+
+        // Validar correo
+        if (!string.IsNullOrWhiteSpace(_modelo.Email) &&
+            !System.Text.RegularExpressions.Regex.IsMatch(_modelo.Email.Trim(),
+                @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+        {
+            _errEmail = true;
+            _mensaje = "El correo electrónico no tiene un formato válido.";
+            _exito = false;
+            _guardando = false;
+            return;
+        }
+
+        // Validar teléfono
+        if (!string.IsNullOrWhiteSpace(_modelo.Phone) &&
+            !System.Text.RegularExpressions.Regex.IsMatch(_modelo.Phone.Trim(),
+                @"^[\+\d][\d\s\-\(\)]{5,19}$"))
+        {
+            _errPhone = true;
+            _mensaje = "El teléfono no tiene un formato válido.";
+            _exito = false;
+            _guardando = false;
+            return;
+        }
+
         try
         {
             _modelo.AllowNegativeStock = false; // el stock negativo no está permitido

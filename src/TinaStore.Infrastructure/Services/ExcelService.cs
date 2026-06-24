@@ -386,6 +386,16 @@ public sealed class ExcelService : IExcelService
         var importados = 0;
         var errores = new List<string>();
 
+        // Pre-cargar SKUs ya existentes en BD y detectar duplicados dentro del archivo
+        var skusEnBd    = await _db.Products.Where(p => !p.IsDeleted && p.Sku != null)
+                                            .Select(p => p.Sku!.ToLower()).ToHashSetAsync();
+        var skusEnArchivo = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // Pre-cargar nombres existentes en BD y rastrear duplicados dentro del archivo
+        var nombresEnBdImport  = (await _db.Products.Where(p => !p.IsDeleted).Select(p => p.Name).ToListAsync())
+                                     .Select(NormalizarTexto).ToHashSet(StringComparer.Ordinal);
+        var nombresEnArchivoImp = new HashSet<string>(StringComparer.Ordinal);
+
         for (var row = 2; row <= lastRow; row++)
         {
             try
@@ -400,7 +410,23 @@ public sealed class ExcelService : IExcelService
                 var minStock    = cols.TryGetValue("stock mínimo", out var cMin)    ? SafeInt(ws, row, cMin)        : 0;
                 var categoryRaw = cols.TryGetValue("categoría", out var cCat)       ? SafeStr(ws, row, cCat)        : string.Empty;
                 var supplierRaw = cols.TryGetValue("proveedor", out var cProv)      ? SafeStr(ws, row, cProv)       : string.Empty;
-                var sku         = cols.TryGetValue("sku", out var cSku)             ? SafeStr(ws, row, cSku)        : string.Empty;
+                var sku  = cols.TryGetValue("sku", out var cSku) ? SafeStr(ws, row, cSku) : string.Empty;
+
+                // Validar SKU duplicado
+                if (!string.IsNullOrWhiteSpace(sku))
+                {
+                    if (skusEnArchivo.Contains(sku))
+                    { errores.Add($"Fila {row}: el SKU '{sku}' aparece más de una vez en el archivo."); continue; }
+                    if (skusEnBd.Contains(sku.ToLower()))
+                    { errores.Add($"Fila {row}: el SKU '{sku}' ya existe en el catálogo."); continue; }
+                    skusEnArchivo.Add(sku);
+                }
+
+                // Validar nombre duplicado
+                if (nombresEnArchivoImp.Contains(NormalizarTexto(nombre)))
+                { errores.Add($"Fila {row}: el nombre '{nombre}' ya aparece en otra fila de este archivo."); continue; }
+                if (nombresEnBdImport.Contains(NormalizarTexto(nombre)))
+                { errores.Add($"Fila {row}: ya existe un producto llamado '{nombre}' en el catálogo."); continue; }
                 var desc        = cols.TryGetValue("descripción", out var cDesc)    ? SafeStr(ws, row, cDesc)       : string.Empty;
                 var unit        = cols.TryGetValue("unidad de medida", out var cUnit)? SafeStr(ws, row, cUnit)      : string.Empty;
 
@@ -420,11 +446,12 @@ public sealed class ExcelService : IExcelService
                     continue;
                 }
 
-                var categoria = await _db.Categories
-                    .FirstOrDefaultAsync(c => !c.IsDeleted && c.Name.ToLower() == categoryRaw.ToLower());
+                // Cargar todas las categorías activas y buscar con comparación normalizada
+                var todasCats = await _db.Categories.Where(c => !c.IsDeleted).ToListAsync();
+                var categoria = todasCats.FirstOrDefault(c =>
+                    NormalizarTexto(c.Name) == NormalizarTexto(categoryRaw));
                 if (categoria is null && int.TryParse(categoryRaw, out var cid))
-                    categoria = await _db.Categories
-                        .FirstOrDefaultAsync(c => !c.IsDeleted && c.Id == cid);
+                    categoria = todasCats.FirstOrDefault(c => c.Id == cid);
                 if (categoria is null)
                 {
                     errores.Add($"Fila {row}: categoría '{categoryRaw}' no encontrada.");
@@ -434,11 +461,11 @@ public sealed class ExcelService : IExcelService
                 int? supplierId = null;
                 if (!string.IsNullOrWhiteSpace(supplierRaw))
                 {
-                    var proveedor = await _db.Suppliers
-                        .FirstOrDefaultAsync(s => !s.IsDeleted && s.Name.ToLower() == supplierRaw.ToLower());
+                    var todosProv = await _db.Suppliers.Where(s => !s.IsDeleted).ToListAsync();
+                    var proveedor = todosProv.FirstOrDefault(s =>
+                        NormalizarTexto(s.Name) == NormalizarTexto(supplierRaw));
                     if (proveedor is null && int.TryParse(supplierRaw, out var sid))
-                        proveedor = await _db.Suppliers
-                            .FirstOrDefaultAsync(s => !s.IsDeleted && s.Id == sid);
+                        proveedor = todosProv.FirstOrDefault(s => s.Id == sid);
                     supplierId = proveedor?.Id;
                 }
 
@@ -459,6 +486,7 @@ public sealed class ExcelService : IExcelService
 
                 await _db.Products.AddAsync(producto);
                 importados++;
+                nombresEnArchivoImp.Add(NormalizarTexto(nombre));
             }
             catch (Exception ex)
             {
@@ -467,7 +495,16 @@ public sealed class ExcelService : IExcelService
         }
 
         if (importados > 0)
-            await _db.SaveChangesAsync();
+        {
+            try { await _db.SaveChangesAsync(); }
+            catch (Exception ex) when (ex.InnerException?.Message.Contains("UNIQUE") == true)
+            {
+                foreach (var entry in _db.ChangeTracker.Entries().ToList())
+                    entry.State = Microsoft.EntityFrameworkCore.EntityState.Detached;
+                return new ExcelImportResultDto(lastRow - 1, 0, 1,
+                    ["Error al guardar: uno o más SKU duplicados detectados. Revisa el archivo e intenta de nuevo."]);
+            }
+        }
 
         return new ExcelImportResultDto(lastRow - 1, importados, errores.Count, errores);
     }
@@ -482,6 +519,16 @@ public sealed class ExcelService : IExcelService
         var cols    = ResolveColumns(ws);
         var lastRow = ws.LastRowUsed()?.RowNumber() ?? 1;
         var preview = new List<ImportPreviewRowDto>();
+
+        // Pre-cargar SKUs existentes en BD y rastrear duplicados dentro del archivo
+        var skusEnBdPreview   = await _db.Products.Where(p => !p.IsDeleted && p.Sku != null)
+                                                  .Select(p => p.Sku!.ToLower()).ToHashSetAsync();
+        var skusEnArchivoPreview = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // Pre-cargar nombres existentes en BD (normalizados) y rastrear duplicados en el archivo
+        var nombresEnBd       = (await _db.Products.Where(p => !p.IsDeleted).Select(p => p.Name).ToListAsync())
+                                    .Select(NormalizarTexto).ToHashSet(StringComparer.Ordinal);
+        var nombresEnArchivo  = new HashSet<string>(StringComparer.Ordinal);
 
         // Si faltan columnas obligatorias, devolver una sola fila de error
         var faltantes = new[] { "nombre", "categoría", "costo", "precio de venta", "stock inicial" }
@@ -525,20 +572,38 @@ public sealed class ExcelService : IExcelService
             {
                 error = "El stock no puede ser negativo.";
             }
+            else if (!string.IsNullOrWhiteSpace(sku) && skusEnArchivoPreview.Contains(sku))
+            {
+                error = $"SKU '{sku}' duplicado dentro del archivo.";
+            }
+            else if (!string.IsNullOrWhiteSpace(sku) && skusEnBdPreview.Contains(sku.ToLower()))
+            {
+                error = $"SKU '{sku}' ya existe en el catálogo de productos.";
+            }
+            else if (nombresEnArchivo.Contains(NormalizarTexto(nombre)))
+            {
+                error = $"El nombre '{nombre}' ya aparece en otra fila de este archivo.";
+            }
+            else if (nombresEnBd.Contains(NormalizarTexto(nombre)))
+            {
+                error = $"Ya existe un producto llamado '{nombre}' en el catálogo.";
+            }
             else if (string.IsNullOrWhiteSpace(categoryRaw))
             {
                 error = "Categoría es requerida.";
             }
             else
             {
-                var categoria = await _db.Categories
-                    .FirstOrDefaultAsync(c => !c.IsDeleted && c.Name.ToLower() == categoryRaw.ToLower());
+                // Cargar todas las categorías activas y buscar con comparación normalizada
+                // (sin tildes, case-insensitive) para tolerar "Ropa" = "ropa" = "ROPA"
+                var todasCats = await _db.Categories.Where(c => !c.IsDeleted).ToListAsync();
+                var categoria = todasCats.FirstOrDefault(c =>
+                    NormalizarTexto(c.Name) == NormalizarTexto(categoryRaw));
                 if (categoria is null && int.TryParse(categoryRaw, out var cid))
-                    categoria = await _db.Categories
-                        .FirstOrDefaultAsync(c => !c.IsDeleted && c.Id == cid);
+                    categoria = todasCats.FirstOrDefault(c => c.Id == cid);
 
                 if (categoria is null)
-                    error = $"Categoría '{categoryRaw}' no encontrada.";
+                    error = $"Categoría '{categoryRaw}' no encontrada. Verifica el nombre exacto o usa el desplegable.";
                 else
                 {
                     categoryId      = categoria.Id;
@@ -547,11 +612,11 @@ public sealed class ExcelService : IExcelService
 
                 if (!string.IsNullOrWhiteSpace(supplierRaw))
                 {
-                    var proveedor = await _db.Suppliers
-                        .FirstOrDefaultAsync(s => !s.IsDeleted && s.Name.ToLower() == supplierRaw.ToLower());
+                    var todosProv = await _db.Suppliers.Where(s => !s.IsDeleted).ToListAsync();
+                    var proveedor = todosProv.FirstOrDefault(s =>
+                        NormalizarTexto(s.Name) == NormalizarTexto(supplierRaw));
                     if (proveedor is null && int.TryParse(supplierRaw, out var sid))
-                        proveedor = await _db.Suppliers
-                            .FirstOrDefaultAsync(s => !s.IsDeleted && s.Id == sid);
+                        proveedor = todosProv.FirstOrDefault(s => s.Id == sid);
                     if (proveedor is not null)
                     {
                         supplierId      = proveedor.Id;
@@ -568,9 +633,31 @@ public sealed class ExcelService : IExcelService
                 Valido: error is null,
                 MensajeError: error
             ));
+
+            if (error is null && !string.IsNullOrWhiteSpace(sku))
+                skusEnArchivoPreview.Add(sku);
+            if (error is null)
+                nombresEnArchivo.Add(NormalizarTexto(nombre));
         }
 
         return preview;
+    }
+
+    // ── Normalización para comparaciones flexibles (sin tildes, minúsculas) ─────
+    private static string NormalizarTexto(string? texto)
+    {
+        if (string.IsNullOrWhiteSpace(texto)) return string.Empty;
+        var normalizado = texto.Trim().ToLowerInvariant();
+        // Eliminar diacríticos (tildes, diéresis, etc.)
+        var form = normalizado.Normalize(System.Text.NormalizationForm.FormD);
+        var sb = new System.Text.StringBuilder();
+        foreach (var c in form)
+        {
+            var cat = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c);
+            if (cat != System.Globalization.UnicodeCategory.NonSpacingMark)
+                sb.Append(c);
+        }
+        return sb.ToString().Normalize(System.Text.NormalizationForm.FormC);
     }
 
     // ── Importar desde vista previa confirmada (sin re-leer el Excel) ─────────
@@ -611,12 +698,45 @@ public sealed class ExcelService : IExcelService
     // ── Importar desde vista previa confirmada (sin re-leer el Excel) ─────────
     public async Task<ExcelImportResultDto> ImportFromPreviewAsync(List<ImportPreviewRowDto> filas)
     {
-        var validas  = filas.Where(f => f.Valido).ToList();
-        var errores  = filas.Where(f => !f.Valido)
-                            .Select(f => $"Fila {f.Fila}: {f.MensajeError}").ToList();
+        var validas  = filas.Where(f => f.Valido && f.CategoriaId > 0).ToList();
+        var errores  = filas.Where(f => !f.Valido || f.CategoriaId == 0)
+                            .Select(f => $"Fila {f.Fila}: {f.MensajeError ?? "Categoría no válida."}").ToList();
         var importados = 0;
 
+        // ── Revalidar contra BD antes de intentar guardar ────────────────────
+        // Evita que el SaveChangesAsync explote con un error UNIQUE genérico.
+        var nombresEnBd = (await _db.Products.Where(p => !p.IsDeleted).Select(p => p.Name).ToListAsync())
+                              .Select(NormalizarTexto).ToHashSet(StringComparer.Ordinal);
+        var skusEnBd    = await _db.Products.Where(p => !p.IsDeleted && p.Sku != null)
+                                            .Select(p => p.Sku!.ToLower()).ToHashSetAsync();
+
+        var nombresEnLote = new HashSet<string>(StringComparer.Ordinal);
+        var skusEnLote    = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        var filasAInsertar = new List<ImportPreviewRowDto>();
         foreach (var fila in validas)
+        {
+            var nombreNorm = NormalizarTexto(fila.Nombre);
+
+            if (nombresEnBd.Contains(nombreNorm) || nombresEnLote.Contains(nombreNorm))
+            {
+                errores.Add($"Fila {fila.Fila}: ya existe un producto llamado '{fila.Nombre}' en el catálogo.");
+                continue;
+            }
+            if (!string.IsNullOrWhiteSpace(fila.Sku))
+            {
+                if (skusEnBd.Contains(fila.Sku.ToLower()) || skusEnLote.Contains(fila.Sku))
+                {
+                    errores.Add($"Fila {fila.Fila}: el SKU '{fila.Sku}' ya existe en el catálogo.");
+                    continue;
+                }
+                skusEnLote.Add(fila.Sku);
+            }
+            nombresEnLote.Add(nombreNorm);
+            filasAInsertar.Add(fila);
+        }
+
+        foreach (var fila in filasAInsertar)
         {
             try
             {
@@ -643,7 +763,37 @@ public sealed class ExcelService : IExcelService
         }
 
         if (importados > 0)
-            await _db.SaveChangesAsync();
+        {
+            try
+            {
+                await _db.SaveChangesAsync();
+            }
+            catch (Exception ex) when (ex.InnerException?.Message.Contains("UNIQUE") == true
+                                    || ex.Message.Contains("UNIQUE"))
+            {
+                foreach (var entry in _db.ChangeTracker.Entries().ToList())
+                    entry.State = Microsoft.EntityFrameworkCore.EntityState.Detached;
+
+                // Determinar si el duplicado es de nombre o de SKU para dar un mensaje preciso
+                var rawMsg = ex.InnerException?.Message ?? ex.Message;
+                var msgDetalle = rawMsg.Contains("IX_Products_Name_Unique")
+                    ? "uno o más productos tienen el mismo nombre que un producto existente"
+                    : rawMsg.Contains("IX_Products_Sku_Unique")
+                        ? "uno o más productos tienen un SKU que ya existe en el catálogo"
+                        : "uno o más productos tienen nombre o SKU duplicado";
+
+                return new ExcelImportResultDto(filas.Count, 0, filas.Count,
+                    [$"Error al guardar: {msgDetalle}. Corrige los campos marcados en rojo y vuelve a importar."]);
+            }
+            catch (Exception ex)
+            {
+                foreach (var entry in _db.ChangeTracker.Entries().ToList())
+                    entry.State = Microsoft.EntityFrameworkCore.EntityState.Detached;
+
+                return new ExcelImportResultDto(filas.Count, 0, filas.Count,
+                    [$"Error al guardar los productos: {ex.InnerException?.Message ?? ex.Message}"]);
+            }
+        }
 
         return new ExcelImportResultDto(filas.Count, importados, errores.Count, errores);
     }

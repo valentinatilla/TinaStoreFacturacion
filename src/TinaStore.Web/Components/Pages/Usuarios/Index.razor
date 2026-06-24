@@ -76,12 +76,19 @@ else
                                     <i class="bi bi-key"></i>
                                 </button>
                                 @if (u.Email != Session.UserEmail)
-                                {
-                                    <button class="btn btn-sm btn-outline-danger" title="Desactivar"
-                                            @onclick="() => Desactivar(u.Id)">
-                                        <i class="bi bi-person-dash"></i>
-                                    </button>
-                                }
+                                                {
+                                                    @if (u.IsActive)
+                                                    {
+                                                        <button class="btn btn-sm btn-outline-danger" title="Desactivar"
+                                                                @onclick="() => PedirConfirmacionDesactivar(u)">
+                                                            <i class="bi bi-person-dash"></i>
+                                                        </button>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-secondary">Inactivo</span>
+                                                    }
+                                                }
                             </td>
                         </tr>
                     }
@@ -222,6 +229,32 @@ else
     </div>
 }
 
+@if (_mostrarModalDesactivar)
+{
+    <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">
+                        <i class="bi bi-person-dash me-2"></i>Desactivar usuario
+                    </h5>
+                    <button class="btn-close" @onclick="() => _mostrarModalDesactivar = false"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-1">¿Confirmas que deseas desactivar al usuario <strong>@_usuarioADesactivar?.FullName</strong>?</p>
+                    <p class="text-muted small mb-0">El usuario no podrá iniciar sesión hasta que sea reactivado desde la edición.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => _mostrarModalDesactivar = false">Cancelar</button>
+                    <button class="btn btn-danger" @onclick="ConfirmarDesactivar" @ref="_btnConfirmarDesactivar">
+                        <i class="bi bi-person-dash me-1"></i>Desactivar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<UsuarioDto> _usuarios = [];
     private bool _loading = true;
@@ -240,6 +273,10 @@ else
     private string _resetConfirm = "";
     private bool _reseteando;
     private string? _errorReset;
+
+    // ── Confirmación desactivar ────────────────────────────────────────────────
+    private bool _mostrarModalDesactivar;
+    private UsuarioDto? _usuarioADesactivar;
 
     // ── Toggles ojito de contraseña ────────────────────────────────────────────
     private bool _mostrarPassNuevo;
@@ -362,6 +399,21 @@ else
         if (ok) await Cargar();
     }
 
+    private void PedirConfirmacionDesactivar(UsuarioDto u)
+    {
+        _usuarioADesactivar     = u;
+        _mostrarModalDesactivar = true;
+        _focusBtnDesactivar     = true;
+    }
+
+    private async Task ConfirmarDesactivar()
+    {
+        _mostrarModalDesactivar = false;
+        if (_usuarioADesactivar is null) return;
+        await Desactivar(_usuarioADesactivar.Id);
+        _usuarioADesactivar = null;
+    }
+
     private static string RolBadge(string role) => role switch
     {
         "Admin"    => "bg-purple",
@@ -385,5 +437,13 @@ else
         public string? Password { get; set; }
         public string  Role     { get; set; } = "Seller";
         public bool    IsActive { get; set; } = true;
+    }
+
+    private ElementReference _btnConfirmarDesactivar;
+    private bool _focusBtnDesactivar;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focusBtnDesactivar) { _focusBtnDesactivar = false; await _btnConfirmarDesactivar.FocusAsync(); }
     }
 }

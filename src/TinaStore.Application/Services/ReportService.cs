@@ -53,9 +53,12 @@ public sealed class ReportService : IReportService
         var toFin = to.Date.AddDays(1).AddTicks(-1);
         var gastos = await _repo.GetExpensesByRangeAsync(from.Date, toFin);
 
-        var totalMonto = gastos.Sum(e => e.Amount);
+        // Excluir egresos anulados del total y del reporte
+        var gastosActivos = gastos.Where(e => e.Status != ExpenseStatus.Cancelled).ToList();
 
-        var porCategoria = gastos
+        var totalMonto = gastosActivos.Sum(e => e.Amount);
+
+        var porCategoria = gastosActivos
             .GroupBy(e => new { e.ExpenseCategoryId, Name = e.ExpenseCategory?.Name ?? "Sin categoría" })
             .OrderByDescending(g => g.Sum(e => e.Amount))
             .Select(g => new ResumenGastosPorCategoriaDto(
@@ -65,7 +68,7 @@ public sealed class ReportService : IReportService
                 g.Sum(e => e.Amount)))
             .ToList();
 
-        return new ReporteGastosDto(from, to, totalMonto, gastos.Count, porCategoria);
+        return new ReporteGastosDto(from, to, totalMonto, gastosActivos.Count, porCategoria);
     }
 
     public async Task<ReporteCuentasPorCobrarDto> GetReceivablesReportAsync(DateTime from, DateTime to)
@@ -78,7 +81,7 @@ public sealed class ReportService : IReportService
             {
                 // Solo facturas del período con saldo pendiente
                 var facturasPeriodo = a.Customer?.Invoices?
-                    .Where(i => i.Balance > 0
+                    .Where(i => i.Total > i.AmountPaid
                              && i.Status != InvoiceStatus.Cancelled
                              && i.InvoiceDate >= from.Date
                              && i.InvoiceDate <= toFin)

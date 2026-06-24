@@ -46,7 +46,7 @@
             </div>
             <div class="mb-2">
                 <label class="form-label small fw-semibold">Pago inicial (opcional)</label>
-                <input type="number" class="form-control" @bind="_pagoInicial" min="0" step="0.01" />
+                <input type="number" class="form-control" @bind="_pagoInicial" min="0" step="0.01" @onkeydown="HandleVentaKeyDown" />
             </div>
             <div>
                 <label class="form-label small fw-semibold">Notas</label>
@@ -137,9 +137,10 @@
 
             @if (_detalles.Any())
             {
+                <div class="table-responsive">
                 <table class="table table-sm mb-3">
                         <thead class="table-light">
-                            <tr><th style="width:44px"></th><th>Producto</th><th class="text-center">Cant.</th><th class="text-end">P. Unit.</th><th class="text-end" style="width:110px">Dto. (%)</th><th class="text-end">Subtotal</th><th></th></tr>
+                            <tr><th style="width:44px"></th><th>Producto</th><th class="text-center" style="width:80px">Cant.</th><th class="text-end" style="width:90px">P. Unit.</th><th class="text-end" style="width:100px">Dto. (%)</th><th class="text-end" style="width:90px">Subtotal</th><th style="width:32px"></th></tr>
                         </thead>
                         <tbody>
                             @foreach (var d in _detalles)
@@ -170,8 +171,8 @@
                                 </td>
                                 <td class="text-end">$@d.PrecioUnitario.ToString("N0")</td>
                                 <td class="text-end">
-                                    <input type="number" class="form-control form-control-sm text-end"
-                                           style="width:70px" min="0" max="100" step="0.1"
+                                    <input type="number" class="form-control form-control-sm text-end w-100"
+                                           min="0" max="100" step="0.1"
                                            placeholder="0"
                                            @bind="d.DescuentoPct" @bind:after="() => RecalcularTotales()" />
                                     @if (d.DescuentoMonto > 0)
@@ -231,6 +232,7 @@
                         </tr>
                     </tfoot>
                 </table>
+                </div>
             }
             else
             {
@@ -340,6 +342,11 @@
         _metodosPago  = (t2.Result ?? []).Where(m => m.Type != 5).ToList();
         _productos    = t3.Result ?? [];
         _categorias   = t4.Result ?? [];
+    }
+
+    private async Task HandleVentaKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !_creando) await CrearFactura();
     }
 
     private void FiltrarProductos(ChangeEventArgs e)
