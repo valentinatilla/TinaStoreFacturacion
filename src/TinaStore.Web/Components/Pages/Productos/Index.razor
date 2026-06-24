@@ -15,7 +15,7 @@
             @(_exportando ? "Exportando..." : "Exportar Excel")
         </button>
         <button class="btn btn-outline-purple btn-sm" @onclick="AbrirEdicionMasiva">
-            <i class="bi bi-pencil-square me-1"></i>EdiciÃ³n masiva
+            <i class="bi bi-pencil-square me-1"></i>Edición masiva
         </button>
         <button class="btn bg-purple text-white" @onclick="() => AbrirModal()">
             <i class="bi bi-plus-lg me-1"></i>Nuevo producto
@@ -62,7 +62,7 @@ else
                         <div class="text-muted small">Costo total del inventario</div>
                         <div class="fw-bold fs-4 text-purple">$@_costoInventario.ToString("N0")</div>
                         <div class="text-muted" style="font-size:.75rem;">
-                            suma de costo Ã— stock por producto activo
+                            suma de costo — stock por producto activo
                         </div>
                     </div>
                 </div>
@@ -83,7 +83,7 @@ else
                 </div>
             </div>
             <div class="col-sm-6 col-md-2">
-                <label class="form-label">CategorÃ­a</label>
+                <label class="form-label">Categoría</label>
                 <select class="form-select form-select-sm" @onchange="e => { _filtroCategoriaId = int.TryParse(e.Value?.ToString(), out var v) ? v : 0; Filtrar(); }">
                     <option value="0">Todas</option>
                     @foreach (var c in _categorias)
@@ -133,7 +133,7 @@ else
                         <th></th>
                         <th class="ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("sku")'>SKU <i class="@SortIconClass("sku") ms-1 small"></i></th>
                         <th style="cursor:pointer" @onclick='() => OrdenarPor("nombre")'>Producto <i class="@SortIconClass("nombre") ms-1 small"></i></th>
-                        <th class="ts-table-hide-mobile">CategorÃ­a</th>
+                        <th class="ts-table-hide-mobile">Categoría</th>
                         <th class="ts-table-hide-mobile">Proveedor</th>
                         <th class="text-end ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("costo")'>Costo <i class="@SortIconClass("costo") ms-1 small"></i></th>
                         <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("precio")'>Precio venta <i class="@SortIconClass("precio") ms-1 small"></i></th>
@@ -218,14 +218,14 @@ else
                     <div class="col-md-5">
                         <label class="form-label small fw-semibold">Nombre *</label>
                         <input class="form-control" @bind="_form.Name" maxlength="50" @onkeydown="HandleModalKeyDown" />
-                        <div class="form-text text-muted">MÃ¡ximo 50 caracteres.</div>
+                        <div class="form-text text-muted">Máximo 50 caracteres.</div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">SKU</label>
                         <input class="form-control" @bind="_form.Sku" maxlength="30" placeholder="Ej: SKU-001" @onkeydown="HandleModalKeyDown" />
                     </div>
                     <div class="col-12">
-                        <label class="form-label small fw-semibold">DescripciÃ³n</label>
+                        <label class="form-label small fw-semibold">Descripción</label>
                         <input class="form-control" @bind="_form.Description" maxlength="300" @onkeydown="HandleModalKeyDown" />
                     </div>
                     <div class="col-md-6">
@@ -255,18 +255,18 @@ else
                         <div class="form-text text-muted">Unidades disponibles en inventario.</div>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label small fw-semibold">Stock mÃ­nimo</label>
+                        <label class="form-label small fw-semibold">Stock mínimo</label>
                         <input type="number" class="form-control" @bind="_form.MinimumStock" min="0" @onkeydown="HandleModalKeyDown" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">Unidad</label>
                         <input class="form-control @(!string.IsNullOrWhiteSpace(_form.Unit) && System.Text.RegularExpressions.Regex.IsMatch(_form.Unit, @"\d") ? "is-invalid" : "")"
                                @bind="_form.Unit" maxlength="30" placeholder="Ej: unidad, kgâ€¦" @onkeydown="HandleModalKeyDown" />
-                        <div class="invalid-feedback">La unidad de medida no debe contener nÃºmeros.</div>
+                        <div class="invalid-feedback">La unidad de medida no debe contener números.</div>
                         <div class="form-text text-muted">Solo letras, espacios y tildes.</div>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label small fw-semibold">CategorÃ­a *</label>
+                        <label class="form-label small fw-semibold">Categoría *</label>
                         <select class="form-select" @bind="_form.CategoryId">
                             <option value="0">Seleccione...</option>
                             @foreach (var c in _categorias)
@@ -310,7 +310,7 @@ else
                             {
                                 <div class="ts-image-placeholder">
                                     <i class="bi bi-cloud-arrow-up fs-3 d-block mb-1"></i>
-                                    <span class="small">Arrastra una imagen aquÃ­ o haz clic para seleccionar</span>
+                                    <span class="small">Arrastra una imagen aquí o haz clic para seleccionar</span>
                                 </div>
                             }
                         </div>
@@ -318,7 +318,7 @@ else
                         <input type="file" id="nativeImgProducto" accept=".jpg,.jpeg,.png,.webp" style="display:none" />
                         @if (_form.ImagePathActual is null && _form.ImagenPreviewUrl is null)
                         {
-                            <p class="text-muted small mt-1">JPG, PNG o WEBP Â· MÃ¡ximo 2 MB</p>
+                            <p class="text-muted small mt-1">JPG, PNG o WEBP Â· Máximo 2 MB</p>
                         }
                     </div>
                 </div>
@@ -342,7 +342,7 @@ else
     </div>
 }
 
-<!-- Modal de confirmaciÃ³n de eliminaciÃ³n -->
+<!-- Modal de confirmación de eliminación -->
 @if (_mostrarModalEliminar && _productoAEliminar is not null)
 {
     <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
@@ -353,7 +353,7 @@ else
                     <button class="btn-close" @onclick="CerrarModalEliminar"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-0">Â¿Seguro que deseas eliminar a <strong>@_productoAEliminar.Name</strong>? Esta acciÃ³n no se puede deshacer.</p>
+                    <p class="mb-0">Â¿Seguro que deseas eliminar a <strong>@_productoAEliminar.Name</strong>? Esta acción no se puede deshacer.</p>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" @onclick="CerrarModalEliminar">Cancelar</button>
@@ -367,7 +367,7 @@ else
     </div>
 }
 
-<!-- â•â•â• Modal ediciÃ³n masiva â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- â•â•â• Modal edición masiva â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 @if (_mostrarEdicionMasiva)
 {
     <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
@@ -377,7 +377,7 @@ else
                 <!-- Encabezado -->
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold">
-                        <i class="bi bi-pencil-square me-2 text-purple"></i>EdiciÃ³n masiva de productos
+                        <i class="bi bi-pencil-square me-2 text-purple"></i>Edición masiva de productos
                         @if (_bulkPaso == 2)
                         {
                             <span class="badge bg-purple ms-2" style="font-size:.75rem;">Paso 2 â€” Confirmar</span>
@@ -395,7 +395,7 @@ else
                     <!-- â”€â”€ PASO 1: tabla editable â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
                     <div class="modal-body p-0">
 
-                        <!-- Barra de bÃºsqueda -->
+                        <!-- Barra de búsqueda -->
                         <div class="px-3 pt-3 pb-2 border-bottom">
                             <div class="row g-2 align-items-center">
                                 <div class="col">
@@ -521,7 +521,7 @@ else
                 }
                 else
                 {
-                    <!-- â”€â”€ PASO 2: resumen y confirmaciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+                    <!-- â”€â”€ PASO 2: resumen y confirmación â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
                     <div class="modal-body">
                         @{
                             var _resumenNumericos = FilasConCambiosNumericos.ToList();
@@ -531,11 +531,11 @@ else
                             <i class="bi bi-exclamation-triangle me-2"></i>
                             @if (_resumenNumericos.Count > 0)
                             {
-                                <span>Se actualizarÃ¡n <strong>@_resumenNumericos.Count</strong> producto(s) con cambios de precio/stock.</span>
+                                <span>Se actualizarán <strong>@_resumenNumericos.Count</strong> producto(s) con cambios de precio/stock.</span>
                             }
                             @if (_resumenImagenes.Count > 0)
                             {
-                                <span class="@(_resumenNumericos.Count > 0 ? "ms-2" : "")">Se subirÃ¡n <strong>@_resumenImagenes.Count</strong> imagen(es).</span>
+                                <span class="@(_resumenNumericos.Count > 0 ? "ms-2" : "")">Se subirán <strong>@_resumenImagenes.Count</strong> imagen(es).</span>
                             }
                         </div>
 
@@ -596,7 +596,7 @@ else
 
                         @if (_resumenImagenes.Count > 0)
                         {
-                            <h6 class="fw-semibold text-purple mb-2"><i class="bi bi-images me-1"></i>ImÃ¡genes a subir</h6>
+                            <h6 class="fw-semibold text-purple mb-2"><i class="bi bi-images me-1"></i>Imágenes a subir</h6>
                             <div class="d-flex flex-wrap gap-3 mb-3">
                                 @foreach (var fila in _resumenImagenes)
                                 {
@@ -693,8 +693,8 @@ else
             _dotNetRef ??= DotNetObjectReference.Create(this);
             try
             {
-                // PequeÃ±o delay para que el <input type="file"> (Blazor lo renderiza
-                // de forma asÃ­ncrona) ya estÃ© en el DOM antes de que el JS lo busque
+                // Pequeño delay para que el <input type="file"> (Blazor lo renderiza
+                // de forma asíncrona) ya esté en el DOM antes de que el JS lo busque
                 await Task.Delay(50);
                 await JS.InvokeVoidAsync("tinaDropZone.init", _dropZoneRef, "nativeImgProducto", _dotNetRef);
                 _dropZoneIniciada = true;
@@ -725,7 +725,7 @@ else
         var ext = Path.GetExtension(fileName).ToLowerInvariant();
         if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp"))
         {
-            _errorModal = "Solo se permiten imÃ¡genes JPG, PNG o WEBP.";
+            _errorModal = "Solo se permiten imágenes JPG, PNG o WEBP.";
             await InvokeAsync(StateHasChanged);
             return;
         }
@@ -883,16 +883,16 @@ else
         var archivo = e.File;
         const long maxBytes = 2 * 1024 * 1024; // 2 MB
 
-        // Validar extensiÃ³n
+        // Validar extensión
         var ext = Path.GetExtension(archivo.Name).ToLowerInvariant();
         if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp"))
         {
-            _mensaje = "Solo se permiten imÃ¡genes JPG, PNG o WEBP.";
+            _mensaje = "Solo se permiten imágenes JPG, PNG o WEBP.";
             _exito = false;
             return;
         }
 
-        // Validar tamaÃ±o
+        // Validar tamaño
         if (archivo.Size > maxBytes)
         {
             _mensaje = "La imagen no puede superar 2 MB.";
@@ -956,7 +956,7 @@ else
         }
         if (_form.CategoryId == 0)
         {
-            _errorModal = "Debes seleccionar una categorÃ­a.";
+            _errorModal = "Debes seleccionar una categoría.";
             return;
         }
         if (_form.SalePrice <= 0)
@@ -986,12 +986,12 @@ else
         }
         if (_form.MinimumStock < 0)
         {
-            _errorModal = "El stock mÃ­nimo no puede ser negativo.";
+            _errorModal = "El stock mínimo no puede ser negativo.";
             return;
         }
         if (!string.IsNullOrWhiteSpace(_form.Unit) && System.Text.RegularExpressions.Regex.IsMatch(_form.Unit, @"\d"))
         {
-            _errorModal = "La unidad de medida no debe contener nÃºmeros.";
+            _errorModal = "La unidad de medida no debe contener números.";
             return;
         }
 
@@ -1014,7 +1014,7 @@ else
             idProducto = creado.Id;
         }
 
-        // GestiÃ³n de imagen
+        // Gestión de imagen
         if (_imagenBytes is not null)
         {
             var nombreArchivo = _imagenSeleccionada?.Name ?? "imagen.jpg";
@@ -1113,7 +1113,7 @@ else
         public int StockEntrada { get; set; }
     }
 
-    // â”€â”€ EdiciÃ³n masiva â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â”€â”€ Edición masiva â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private bool               _mostrarEdicionMasiva;
     private int                _bulkPaso = 1;
     private string             _bulkFiltro = "";
@@ -1195,7 +1195,7 @@ else
         _bulkImagenesErrores = 0;
         try
         {
-            // 1) Bulk update numÃ©rico
+            // 1) Bulk update numérico
             if (filasConCambios.Any())
             {
                 var items = filasConCambios.Select(f => new BulkUpdateItemDto(
@@ -1207,7 +1207,7 @@ else
                 _bulkResultado = await Api.BulkUpdateProductosAsync(items);
             }
 
-            // 2) Subida de imÃ¡genes
+            // 2) Subida de imágenes
             var erroresImagen = new List<string>();
             foreach (var fila in filasConImagen)
             {
@@ -1244,8 +1244,8 @@ else
             if (_bulkImagenesErrores > 0)
                 partes.Add($"{_bulkImagenesErrores} imagen(es) con error");
             if (numErrores > 0)
-                partes.Add($"{numErrores} error(es) numÃ©rico(s)");
-            _mensaje = "EdiciÃ³n masiva: " + string.Join(" Â· ", partes) + ".";
+                partes.Add($"{numErrores} error(es) numérico(s)");
+            _mensaje = "Edición masiva: " + string.Join(" Â· ", partes) + ".";
 
             // Mostrar detalle de errores de imagen en el resultado del bulk
             if (erroresImagen.Count > 0 && _bulkResultado is null)

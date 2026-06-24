@@ -52,7 +52,7 @@ else if (_data is not null)
                             Cliente <i class="@SortIconClass("cliente") ms-1 small"></i>
                         </th>
                         <th class="ts-table-hide-mobile">Documento</th>
-                        <th class="ts-table-hide-mobile">TelÃ©fono</th>
+                        <th class="ts-table-hide-mobile">Teléfono</th>
                         <th class="text-center ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("facturas")'>
                             Ventas pend. <i class="@SortIconClass("facturas") ms-1 small"></i>
                         </th>
@@ -60,7 +60,7 @@ else if (_data is not null)
                             Saldo <i class="@SortIconClass("saldo") ms-1 small"></i>
                         </th>
                         <th class="ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("fecha")'>
-                            Ãšltima venta <i class="@SortIconClass("fecha") ms-1 small"></i>
+                            Última venta <i class="@SortIconClass("fecha") ms-1 small"></i>
                         </th>
                         <th></th>
                     </tr>
@@ -163,7 +163,7 @@ else if (_data is not null)
                         <tr>
                             <td colspan="8" class="text-center text-muted py-4">
                                 <i class="bi bi-check-circle-fill text-success me-2 fs-4"></i>
-                                <div>Â¡Sin cuentas pendientes! Todos los clientes estÃ¡n al dÃ­a.</div>
+                                <div>Â¡Sin cuentas pendientes! Todos los clientes están al día.</div>
                             </td>
                         </tr>
                     }
@@ -272,7 +272,7 @@ else if (_data is not null)
     {
         var telefono = cxc.Phone?.Replace(" ", "").Replace("-", "").Replace("+", "") ?? "";
         var plantilla = _reminderMessage
-            ?? "Hola {nombre}, te recordamos que tienes un saldo pendiente de {saldo}. Por favor comunÃ­cate con nosotros. Gracias ðŸŒ¸";
+            ?? "Hola {nombre}, te recordamos que tienes un saldo pendiente de {saldo}. Por favor comunícate con nosotros. Gracias ðŸŒ¸";
         var mensaje = plantilla
             .Replace("{nombre}", cxc.CustomerName)
             .Replace("{saldo}", cxc.SaldoPendiente.ToString("N0"));

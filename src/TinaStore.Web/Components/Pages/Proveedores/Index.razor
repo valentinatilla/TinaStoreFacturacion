@@ -28,7 +28,7 @@ else
                 <label class="form-label">Buscar</label>
                 <div class="input-group input-group-sm">
                     <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input class="form-control form-control-sm" placeholder="Nombre, NIT o telÃ©fono..."
+                    <input class="form-control form-control-sm" placeholder="Nombre, NIT o teléfono..."
                            value="@_filtroTexto"
                            @oninput="Filtrar" />
                 </div>
@@ -44,7 +44,7 @@ else
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
-                    <tr><th>Nombre</th><th>NIT</th><th>TelÃ©fono</th><th>Email</th><th></th></tr>
+                    <tr><th>Nombre</th><th>NIT</th><th>Teléfono</th><th>Email</th><th></th></tr>
                 </thead>
                 <tbody>
                     @foreach (var p in _filtrados)
@@ -95,7 +95,7 @@ else
                                @onkeypress="SoloNumerosNIT" placeholder="Ej: 900123456" maxlength="15" />
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold">TelÃ©fono</label>
+                        <label class="form-label small fw-semibold">Teléfono</label>
                         <input class="form-control" @bind="_form.Phone" inputmode="numeric"
                                @onkeypress="SoloNumerosTel" placeholder="Ej: 3001234567" maxlength="10" />
                     </div>
@@ -104,7 +104,7 @@ else
                         <input class="form-control" @bind="_form.Email" maxlength="150" @onkeydown="HandleModalKeyDown" />
                     </div>
                     <div class="col-12">
-                        <label class="form-label small fw-semibold">DirecciÃ³n</label>
+                        <label class="form-label small fw-semibold">Dirección</label>
                         <input class="form-control" @bind="_form.Address" maxlength="200" @onkeydown="HandleModalKeyDown" />
                     </div>
                     @if (_errorModal is not null)
@@ -145,14 +145,14 @@ else
                         <div class="alert alert-warning py-2 small mb-3">
                             <i class="bi bi-box-seam me-1"></i>
                             Este proveedor tiene <strong>@_proveedorAEliminar.ProductCount</strong> producto(s) asociado(s).
-                            Si lo eliminas, esos productos quedarÃ¡n sin proveedor asignado.
+                            Si lo eliminas, esos productos quedarán sin proveedor asignado.
                             Â¿Deseas continuar?
                         </div>
                     }
                     else
                     {
-                        <p class="mb-1">Â¿EstÃ¡s seguro de eliminar al proveedor <strong>@_proveedorAEliminar?.Name</strong>?</p>
-                        <p class="text-muted small mb-0">Esta acciÃ³n no se puede deshacer.</p>
+                        <p class="mb-1">Â¿Estás seguro de eliminar al proveedor <strong>@_proveedorAEliminar?.Name</strong>?</p>
+                        <p class="text-muted small mb-0">Esta acción no se puede deshacer.</p>
                     }
                 </div>
                 <div class="modal-footer">
@@ -179,7 +179,7 @@ else
     private int _editandoId;
     private string _filtroTexto = "";
 
-    // â”€â”€ Modal confirmaciÃ³n eliminar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â”€â”€ Modal confirmación eliminar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private bool _mostrarModalEliminar;
     private ProveedorDto? _proveedorAEliminar;
 
@@ -231,11 +231,11 @@ else
         _proveedorAEliminar = null;
     }
 
-    // Permite solo dÃ­gitos en el campo NIT
+    // Permite solo dígitos en el campo NIT
     private void SoloNumerosNIT(KeyboardEventArgs e)
     {
-        // La prevenciÃ³n real en Blazor requiere JS interop; aquÃ­ validamos en Guardar.
-        // Este mÃ©todo queda como punto de extensiÃ³n visual.
+        // La prevención real en Blazor requiere JS interop; aquí validamos en Guardar.
+        // Este método queda como punto de extensión visual.
     }
 
     private ElementReference _btnConfirmarEliminar;
@@ -246,10 +246,10 @@ else
         if (_focusBtnEliminar) { _focusBtnEliminar = false; await _btnConfirmarEliminar.FocusAsync(); }
     }
 
-    // Permite solo dÃ­gitos en el campo TelÃ©fono
+    // Permite solo dígitos en el campo Teléfono
     private void SoloNumerosTel(KeyboardEventArgs e)
     {
-        // La prevenciÃ³n real en Blazor requiere JS interop; aquÃ­ validamos en Guardar.
+        // La prevención real en Blazor requiere JS interop; aquí validamos en Guardar.
     }
 
     private void AbrirModal()
@@ -283,7 +283,7 @@ else
 
         if (!string.IsNullOrWhiteSpace(_form.TaxId) && !System.Text.RegularExpressions.Regex.IsMatch(_form.TaxId, @"^\d+$"))
         {
-            _errorModal = "El NIT debe contener solo nÃºmeros.";
+            _errorModal = "El NIT debe contener solo números.";
             return;
         }
 
@@ -291,12 +291,12 @@ else
         {
             if (!System.Text.RegularExpressions.Regex.IsMatch(_form.Phone, @"^\d+$"))
             {
-                _errorModal = "El telÃ©fono debe contener solo nÃºmeros.";
+                _errorModal = "El teléfono debe contener solo números.";
                 return;
             }
             if (_form.Phone.Length != 10)
             {
-                _errorModal = "El telÃ©fono debe tener exactamente 10 dÃ­gitos.";
+                _errorModal = "El teléfono debe tener exactamente 10 dígitos.";
                 return;
             }
         }

@@ -40,7 +40,7 @@ else
                        @onchange="e => { _filtroHastaStr = e.Value?.ToString(); Filtrar(); }" />
             </div>
             <div class="col-sm-6 col-md-3">
-                <label class="form-label">CategorÃ­a <span class="fw-normal">(otros egresos)</span></label>
+                <label class="form-label">Categoría <span class="fw-normal">(otros egresos)</span></label>
                 <select class="form-select form-select-sm"
                         @onchange="e => { _filtroCategoriaId = int.TryParse(e.Value?.ToString(), out var v) ? v : 0; Filtrar(); }">
                     <option value="0">Todas</option>
@@ -69,7 +69,7 @@ else
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
-                    <tr><th>Fecha</th><th>DescripciÃ³n</th><th>Proveedor</th><th class="text-end">Monto</th><th></th></tr>
+                    <tr><th>Fecha</th><th>Descripción</th><th>Proveedor</th><th class="text-end">Monto</th><th></th></tr>
                 </thead>
                 <tbody>
                     @foreach (var e in _filtradosCompras)
@@ -100,7 +100,7 @@ else
                     }
                     @if (!_filtradosCompras.Any())
                     {
-                        <tr><td colspan="5" class="text-center text-muted py-3">Sin compras de productos en el perÃ­odo</td></tr>
+                        <tr><td colspan="5" class="text-center text-muted py-3">Sin compras de productos en el período</td></tr>
                     }
                 </tbody>
             </table>
@@ -115,7 +115,7 @@ else
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
-                    <tr><th>Fecha</th><th>DescripciÃ³n</th><th>CategorÃ­a</th><th class="ts-table-hide-mobile">MÃ©todo de pago</th><th class="text-end">Monto</th><th></th></tr>
+                    <tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th class="ts-table-hide-mobile">Método de pago</th><th class="text-end">Monto</th><th></th></tr>
                 </thead>
                 <tbody>
                     @foreach (var e in _filtradosOtros)
@@ -172,7 +172,7 @@ else
                 </div>
                 <div class="modal-body row g-3">
                     <div class="col-12">
-                        <label class="form-label small fw-semibold">DescripciÃ³n *</label>
+                        <label class="form-label small fw-semibold">Descripción *</label>
                         <input class="form-control" @bind="_form.Descripcion" @onkeydown="HandleModalKeyDown" />
                     </div>
                     <div class="col-md-6">
@@ -185,7 +185,7 @@ else
                                min="2020-01-01" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold">CategorÃ­a</label>
+                        <label class="form-label small fw-semibold">Categoría</label>
                         <select class="form-select" @bind="_form.CategoriaGastoId">
                             <option value="0">Seleccione...</option>
                             @foreach (var c in _categoriasGasto.Where(c => !c.Name.Equals(CategoriaCompras, StringComparison.OrdinalIgnoreCase)))
@@ -195,7 +195,7 @@ else
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold">MÃ©todo de pago</label>
+                        <label class="form-label small fw-semibold">Método de pago</label>
                         <select class="form-select" @bind="_form.MetodoPagoId">
                             <option value="0">Seleccione...</option>
                             @foreach (var mp in _metodosPago)
@@ -238,7 +238,7 @@ else
                 </div>
                 <div class="modal-body">
                     <p class="mb-1">Â¿Confirmas que deseas anular el egreso <strong>@_egresoAAnular?.Description</strong>?</p>
-                    <p class="text-muted small mb-0">Esta acciÃ³n no se puede deshacer y el egreso quedarÃ¡ excluido de los totales.</p>
+                    <p class="text-muted small mb-0">Esta acción no se puede deshacer y el egreso quedará excluido de los totales.</p>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" @onclick="() => _mostrarModalAnular = false">Cancelar</button>
@@ -267,7 +267,7 @@ else
     private string? _errorModal;
     private EgresoForm _form = new();
 
-    // â”€â”€ ConfirmaciÃ³n de anulaciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â”€â”€ Confirmación de anulación â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private bool _mostrarModalAnular;
     private EgresoDto? _egresoAAnular;
     private int _editandoId;
@@ -385,7 +385,7 @@ else
         _errorModal = null;
         if (string.IsNullOrWhiteSpace(_form.Descripcion))
         {
-            _errorModal = "La descripciÃ³n es obligatoria.";
+            _errorModal = "La descripción es obligatoria.";
             return;
         }
         if (_form.Monto <= 0)

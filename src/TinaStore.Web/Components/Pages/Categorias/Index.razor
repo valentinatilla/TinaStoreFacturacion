@@ -3,12 +3,12 @@
 @inject TinaStoreApiClient Api
 @using System.Globalization
 
-<PageTitle>CategorÃ­as â€” Tina Store</PageTitle>
+<PageTitle>Categorías â€” Tina Store</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-    <h4 class="fw-bold mb-0"><i class="bi bi-tags me-2 text-purple"></i>CategorÃ­as de Productos</h4>
+    <h4 class="fw-bold mb-0"><i class="bi bi-tags me-2 text-purple"></i>Categorías de Productos</h4>
     <button class="btn bg-purple text-white" @onclick="() => AbrirModal()">
-        <i class="bi bi-plus-lg me-1"></i>Nueva categorÃ­a
+        <i class="bi bi-plus-lg me-1"></i>Nueva categoría
     </button>
 </div>
 
@@ -25,14 +25,14 @@
 }
 else
 {
-    <!-- Barra de bÃºsqueda -->
+    <!-- Barra de búsqueda -->
     <div class="ts-filter-bar">
         <div class="row g-2 align-items-end">
             <div class="col">
                 <label class="form-label">Buscar</label>
                 <div class="input-group input-group-sm">
                     <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input class="form-control form-control-sm" placeholder="Buscar categorÃ­a..."
+                    <input class="form-control form-control-sm" placeholder="Buscar categoría..."
                            value="@_busqueda"
                            @oninput="e => { _busqueda = e.Value?.ToString() ?? string.Empty; }" />
                 </div>
@@ -53,7 +53,7 @@ else
                         <th style="cursor:pointer" @onclick='() => OrdenarPor("nombre")'>
                             Nombre <i class="@SortIconClass("nombre") ms-1 small"></i>
                         </th>
-                        <th class="ts-table-hide-mobile">DescripciÃ³n</th>
+                        <th class="ts-table-hide-mobile">Descripción</th>
                         <th style="cursor:pointer" @onclick='() => OrdenarPor("productos")'>
                             Productos <i class="@SortIconClass("productos") ms-1 small"></i>
                         </th>
@@ -68,7 +68,7 @@ else
                                 @cat.Name
                                 @if (cat.Id == 99)
                                 {
-                                    <span class="badge bg-secondary ms-2" title="CategorÃ­a del sistema, no se puede eliminar">
+                                    <span class="badge bg-secondary ms-2" title="Categoría del sistema, no se puede eliminar">
                                         <i class="bi bi-lock-fill me-1"></i>Sistema
                                     </span>
                                 }
@@ -87,7 +87,7 @@ else
                     }
                     @if (!CategoriasOrdenadas.Any())
                     {
-                        <tr><td colspan="4" class="text-center text-muted py-4">Sin categorÃ­as</td></tr>
+                        <tr><td colspan="4" class="text-center text-muted py-4">Sin categorías</td></tr>
                     }
                 </tbody>
             </table>
@@ -101,7 +101,7 @@ else
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Nueva categorÃ­a</h5>
+                    <h5 class="modal-title">Nueva categoría</h5>
                     <button class="btn-close" @onclick="() => _mostrarModal = false"></button>
                 </div>
                 <div class="modal-body">
@@ -116,7 +116,7 @@ else
                         <input class="form-control" @bind="_nombre" @onkeydown="HandleKeyDown" maxlength="30" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">DescripciÃ³n</label>
+                        <label class="form-label small fw-semibold">Descripción</label>
                         <input class="form-control" @bind="_descripcion" @onkeydown="HandleKeyDown" maxlength="200" />
                     </div>
                 </div>
@@ -136,7 +136,7 @@ else
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title text-danger">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Eliminar categorÃ­a
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Eliminar categoría
                     </h5>
                     <button class="btn-close" @onclick="() => _mostrarModalEliminar = false"></button>
                 </div>
@@ -145,15 +145,15 @@ else
                     {
                         <div class="alert alert-warning py-2 small mb-3">
                             <i class="bi bi-box-seam me-1"></i>
-                            Esta categorÃ­a tiene <strong>@_catAEliminar.ProductCount</strong> producto(s) asociado(s).
-                            Si la eliminas, esos productos pasarÃ¡n automÃ¡ticamente a <strong>"Sin categorÃ­a"</strong>.
+                            Esta categoría tiene <strong>@_catAEliminar.ProductCount</strong> producto(s) asociado(s).
+                            Si la eliminas, esos productos pasarán automáticamente a <strong>"Sin categoría"</strong>.
                             Â¿Deseas continuar?
                         </div>
                     }
                     else
                     {
-                        <p class="mb-1">Â¿EstÃ¡s seguro de eliminar la categorÃ­a <strong>@_catAEliminar?.Name</strong>?</p>
-                        <p class="text-muted small mb-0">Esta acciÃ³n no se puede deshacer.</p>
+                        <p class="mb-1">Â¿Estás seguro de eliminar la categoría <strong>@_catAEliminar?.Name</strong>?</p>
+                        <p class="text-muted small mb-0">Esta acción no se puede deshacer.</p>
                     }
                 </div>
                 <div class="modal-footer">
@@ -180,7 +180,7 @@ else
     private string _ordenCampo = "";
     private bool   _ordenDesc;
 
-    // â”€â”€ Modal de confirmaciÃ³n de eliminaciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // â”€â”€ Modal de confirmación de eliminación â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private bool _mostrarModalEliminar;
     private CategoriaDto? _catAEliminar;
 
@@ -249,7 +249,7 @@ else
         _mostrarModalEliminar = false;
         var (ok, error) = await Api.DeleteCategoriaAsync(_catAEliminar.Id);
         _exito   = ok;
-        _mensaje = ok ? "CategorÃ­a eliminada correctamente." : (error ?? "No se pudo eliminar la categorÃ­a.");
+        _mensaje = ok ? "Categoría eliminada correctamente." : (error ?? "No se pudo eliminar la categoría.");
         if (ok) await Cargar();
         _catAEliminar = null;
     }
@@ -262,13 +262,13 @@ else
         if (ok)
         {
             _exito = true;
-            _mensaje = "CategorÃ­a creada.";
+            _mensaje = "Categoría creada.";
             _mostrarModal = false;
             await Cargar();
         }
         else
         {
-            _errorModal = error ?? "Error al crear la categorÃ­a.";
+            _errorModal = error ?? "Error al crear la categoría.";
         }
     }
 

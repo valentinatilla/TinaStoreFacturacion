@@ -39,7 +39,7 @@
         <EditForm Model="_model" OnValidSubmit="HandleLogin">
             <DataAnnotationsValidator />
             <div class="mb-3">
-                <label class="form-label small fw-semibold">Correo electrÃ³nico</label>
+                <label class="form-label small fw-semibold">Correo electrónico</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
                     <InputText class="form-control" @bind-Value="_model.Email" placeholder="admin@tinastore.com" autocomplete="email" />
@@ -47,11 +47,11 @@
                 <ValidationMessage For="@(() => _model.Email)" class="text-danger small mt-1" />
             </div>
             <div class="mb-4">
-                <label class="form-label small fw-semibold">ContraseÃ±a</label>
+                <label class="form-label small fw-semibold">Contraseña</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
                     <InputText type="@(_mostrarPassword ? "text" : "password")" class="form-control" @bind-Value="_model.Password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" autocomplete="current-password" />
-                    <button type="button" class="btn-password-toggle" @onclick="() => _mostrarPassword = !_mostrarPassword" tabindex="-1" title="@(_mostrarPassword ? "Ocultar contraseÃ±a" : "Ver contraseÃ±a")">
+                    <button type="button" class="btn-password-toggle" @onclick="() => _mostrarPassword = !_mostrarPassword" tabindex="-1" title="@(_mostrarPassword ? "Ocultar contraseña" : "Ver contraseña")">
                         <i class="bi @(_mostrarPassword ? "bi-eye-slash-fill" : "bi-eye-fill")"></i>
                     </button>
                 </div>
@@ -97,9 +97,9 @@
 
         _error = ErrorParam switch
         {
-            "google_failed"           => "No se pudo completar el inicio de sesiÃ³n con Google. Intenta de nuevo.",
-            "no_id_token"             => "Google no devolviÃ³ un token vÃ¡lido. Intenta de nuevo.",
-            "google_not_configured"   => "El inicio de sesiÃ³n con Google no estÃ¡ disponible en este momento.",
+            "google_failed"           => "No se pudo completar el inicio de sesión con Google. Intenta de nuevo.",
+            "no_id_token"             => "Google no devolvió un token válido. Intenta de nuevo.",
+            "google_not_configured"   => "El inicio de sesión con Google no está disponible en este momento.",
             _                         => null
         };
     }
@@ -114,7 +114,7 @@
             var response = await Api.LoginAsync(_model.Email, _model.Password);
             if (response is null)
             {
-                _error = "Credenciales invÃ¡lidas. Verifique su correo y contraseÃ±a.";
+                _error = "Credenciales inválidas. Verifique su correo y contraseña.";
                 return;
             }
             Session.SetSession(response.AccessToken, response.User.FullName, response.User.Email, response.User.Role);
@@ -123,7 +123,7 @@
         }
         catch
         {
-            _error = "No se pudo conectar con el servidor. Verifique que la API estÃ© en ejecuciÃ³n.";
+            _error = "No se pudo conectar con el servidor. Verifique que la API esté en ejecución.";
         }
         finally
         {
@@ -134,9 +134,9 @@
     private class LoginModel
     {
         [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "El correo es obligatorio.")]
-        [System.ComponentModel.DataAnnotations.EmailAddress(ErrorMessage = "Ingresa un correo electrÃ³nico vÃ¡lido.")]
+        [System.ComponentModel.DataAnnotations.EmailAddress(ErrorMessage = "Ingresa un correo electrónico válido.")]
         public string Email { get; set; } = "";
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "La contraseÃ±a es obligatoria.")]
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "La contraseña es obligatoria.")]
         public string Password { get; set; } = "";
     }
 }
