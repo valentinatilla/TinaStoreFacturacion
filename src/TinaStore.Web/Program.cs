@@ -79,7 +79,7 @@ builder.Services.AddSingleton(new GoogleAuthConfig(googleEnabled));
 // Servicio singleton para propagar cambios de logo entre componentes sin recargar la app.
 builder.Services.AddSingleton<LogoStateService>();
 
-// â”€â”€â”€ HttpClient apuntando a la API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── HttpClient apuntando a la API ───────────────────────────────────────────
 var apiBaseUrl    = builder.Configuration["ApiBaseUrl"]   ?? "http://localhost:5172";
 var publicApiUrl  = builder.Configuration["PublicApiUrl"] ?? apiBaseUrl;
 builder.Services.AddScoped(sp =>
@@ -91,7 +91,7 @@ builder.Services.AddScoped(sp =>
         publicApiUrl);
 });
 
-// â”€â”€â”€ ForwardedHeaders (Railway termina TLS en el edge) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── ForwardedHeaders (Railway termina TLS en el edge) ─────────────────────
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -115,7 +115,7 @@ if (app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-// UseStaticFiles sirve los archivos fÃ­sicos de wwwroot.
+// UseStaticFiles sirve los archivos físicos de wwwroot.
 // Los archivos de _framework (blazor.web.js etc.) los sirve
 // directamente el middleware de Blazor mediante MapRazorComponents.
 app.UseStaticFiles();
@@ -124,9 +124,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
 
-// â”€â”€â”€ RestauraciÃ³n de sesiÃ³n desde cookie â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Restauración de sesión desde cookie ─────────────────────────────────────
 // En cada request HTTP, si existe la cookie tinastore_session, se pasa como
-// query-string a la pÃ¡gina de arranque para que App.razor restaure SessionStateService.
+// query-string a la página de arranque para que App.razor restaure SessionStateService.
 app.Use(async (ctx, next) =>
 {
     if (ctx.Request.Cookies.TryGetValue("tinastore_session", out var jwt)
@@ -139,8 +139,8 @@ app.Use(async (ctx, next) =>
     await next();
 });
 
-// â”€â”€â”€ Rutas OAuth de Google â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Solo se registran si Google estÃ¡ configurado con ClientId y ClientSecret.
+// ─── Rutas OAuth de Google ────────────────────────────────────────────────────
+// Solo se registran si Google está configurado con ClientId y ClientSecret.
 app.MapGet("/auth/google", async (HttpContext ctx) =>
 {
     if (!googleEnabled)
@@ -156,8 +156,8 @@ app.MapGet("/auth/google", async (HttpContext ctx) =>
     await ctx.ChallengeAsync(GoogleDefaults.AuthenticationScheme, props);
 });
 
-// El middleware OAuth intercepta /auth/google-callback (CallbackPath), intercambia el cÃ³digo
-// por tokens, firma la cookie y redirige aquÃ­ con la sesiÃ³n ya establecida.
+// El middleware OAuth intercepta /auth/google-callback (CallbackPath), intercambia el código
+// por tokens, firma la cookie y redirige aquí con la sesión ya establecida.
 app.MapGet("/auth/google-complete", async (HttpContext ctx) =>
 {
     var result = await ctx.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -182,8 +182,8 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AllowAnonymous();
 
-// â”€â”€â”€ Endpoints de cookie de sesiÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Permiten que Blazor (vÃ­a JS fetch) persista y borre el JWT en una cookie HTTP-only.
+// ─── Endpoints de cookie de sesión ───────────────────────────────────────────
+// Permiten que Blazor (vía JS fetch) persista y borre el JWT en una cookie HTTP-only.
 
 app.MapPost("/session/set", (HttpContext ctx, SessionTokenDto dto) =>
 {
@@ -204,7 +204,7 @@ app.MapPost("/session/clear", (HttpContext ctx) =>
     return Results.Ok();
 }).AllowAnonymous();
 
-// Devuelve el token almacenado en la cookie (HTTP-only) para restaurar la sesiÃ³n en Blazor.
+// Devuelve el token almacenado en la cookie (HTTP-only) para restaurar la sesión en Blazor.
 app.MapGet("/session/get", (HttpContext ctx) =>
 {
     var token = ctx.Request.Cookies["tinastore_session"] ?? string.Empty;
@@ -213,7 +213,7 @@ app.MapGet("/session/get", (HttpContext ctx) =>
 
 app.Run();
 
-// DTO interno para el endpoint de sesiÃ³n
+// DTO interno para el endpoint de sesión
 record SessionTokenDto(string Token);
 
 
