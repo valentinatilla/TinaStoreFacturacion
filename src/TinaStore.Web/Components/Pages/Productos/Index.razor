@@ -188,12 +188,14 @@ else
                                 }
                             </td>
                             <td class="text-end">
-                                <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => AbrirModal(p)">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger" @onclick="() => AbrirModalEliminar(p)">
-                                    <i class="bi bi-trash"></i>
-                                </button>
+                                <div class="d-flex gap-1 justify-content-end">
+                                    <button class="btn btn-sm btn-outline-primary" @onclick="() => AbrirModal(p)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => AbrirModalEliminar(p)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     }
@@ -215,23 +217,24 @@ else
                 <div class="modal-body row g-3">
                     <div class="col-md-5">
                         <label class="form-label small fw-semibold">Nombre *</label>
-                        <input class="form-control" @bind="_form.Name" maxlength="30" />
+                        <input class="form-control" @bind="_form.Name" maxlength="50" @onkeydown="HandleModalKeyDown" />
+                        <div class="form-text text-muted">Máximo 50 caracteres.</div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">SKU</label>
-                        <input class="form-control" @bind="_form.Sku" maxlength="30" placeholder="Ej: SKU-001" />
+                        <input class="form-control" @bind="_form.Sku" maxlength="30" placeholder="Ej: SKU-001" @onkeydown="HandleModalKeyDown" />
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Descripción</label>
-                        <input class="form-control" @bind="_form.Description" maxlength="300" />
+                        <input class="form-control" @bind="_form.Description" maxlength="300" @onkeydown="HandleModalKeyDown" />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Precio de venta *</label>
-                        <input type="number" class="form-control" @bind="_form.SalePrice" min="0.01" max="999999.99" step="0.01" />
+                        <input type="number" class="form-control" @bind="_form.SalePrice" min="0.01" max="999999.99" step="0.01" @onkeydown="HandleModalKeyDown" />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Precio de costo</label>
-                        <input type="number" class="form-control" @bind="_form.PurchasePrice" min="0" max="999999.99" step="0.01" />
+                        <input type="number" class="form-control" @bind="_form.PurchasePrice" min="0" max="999999.99" step="0.01" @onkeydown="HandleModalKeyDown" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">% Ganancia</label>
@@ -247,17 +250,18 @@ else
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label small fw-semibold">Stock inicial</label>
-                        <input type="number" class="form-control" @bind="_form.CurrentStock" min="0" />
+                        <label class="form-label small fw-semibold">Stock</label>
+                        <input type="number" class="form-control" @bind="_form.CurrentStock" min="0" @onkeydown="HandleModalKeyDown" />
+                        <div class="form-text text-muted">Unidades disponibles en inventario.</div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">Stock mínimo</label>
-                        <input type="number" class="form-control" @bind="_form.MinimumStock" min="0" />
+                        <input type="number" class="form-control" @bind="_form.MinimumStock" min="0" @onkeydown="HandleModalKeyDown" />
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">Unidad</label>
                         <input class="form-control @(!string.IsNullOrWhiteSpace(_form.Unit) && System.Text.RegularExpressions.Regex.IsMatch(_form.Unit, @"\d") ? "is-invalid" : "")"
-                               @bind="_form.Unit" maxlength="30" placeholder="Ej: unidad, kg…" />
+                               @bind="_form.Unit" maxlength="30" placeholder="Ej: unidad, kg…" @onkeydown="HandleModalKeyDown" />
                         <div class="invalid-feedback">La unidad de medida no debe contener números.</div>
                         <div class="form-text text-muted">Solo letras, espacios y tildes.</div>
                     </div>
@@ -281,24 +285,6 @@ else
                             }
                         </select>
                     </div>
-                    @if (_editando)
-                    {
-                        <div class="col-md-4">
-                            <label class="form-label small fw-semibold">Ingresar unidades</label>
-                            <input type="number" class="form-control" @bind="_form.StockEntrada" min="0"
-                                   placeholder="0" title="Unidades que se están comprando ahora" />
-                            @if (_form.StockEntrada > 0 && _form.PurchasePrice > 0)
-                            {
-                                <p class="text-success small mt-1 mb-0">
-                                    <i class="bi bi-bag-check me-1"></i>Egreso: @((_form.StockEntrada * _form.PurchasePrice).ToString("N0"))
-                                </p>
-                            }
-                            else
-                            {
-                                <p class="text-muted small mt-1 mb-0">Deja en 0 si no hay compra nueva</p>
-                            }
-                        </div>
-                    }
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Imagen del producto</label>
                         <div @ref="_dropZoneRef" class="ts-image-upload-area" style="cursor:pointer">
@@ -371,7 +357,7 @@ else
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" @onclick="CerrarModalEliminar">Cancelar</button>
-                    <button class="btn btn-danger" @onclick="ConfirmarEliminar" disabled="@_eliminando">
+                    <button class="btn btn-danger" @onclick="ConfirmarEliminar" disabled="@_eliminando" @ref="_btnConfirmarEliminar">
                         @if (_eliminando) { <span class="spinner-border spinner-border-sm me-1"></span> }
                         <i class="bi bi-trash me-1"></i>Eliminar
                     </button>
@@ -424,8 +410,8 @@ else
                         </div>
 
                         <!-- Tabla -->
-                        <div style="max-height:55vh; overflow-y:auto;">
-                            <table class="table table-sm mb-0 bulk-table">
+                        <div style="max-height:55vh; overflow-y:auto; overflow-x:auto;">
+                            <table class="table table-sm mb-0 bulk-table ts-bulk-tabla">
                                 <thead class="table-light sticky-top">
                                     <tr>
                                         <th>Producto</th>
@@ -700,6 +686,8 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (_focusBtnEliminar) { _focusBtnEliminar = false; await _btnConfirmarEliminar.FocusAsync(); }
+
         if (_mostrarModal && !_dropZoneIniciada)
         {
             _dotNetRef ??= DotNetObjectReference.Create(this);
@@ -830,6 +818,8 @@ else
         _filtrados         = _productos;
     }
 
+    private int _stockOriginalEdicion;
+
     private async Task AbrirModal(ProductoDto? p = null)
     {
         _editando = p is not null;
@@ -837,6 +827,7 @@ else
         _mensaje = null;
         _errorModal = null;
         _imagenSeleccionada = null;
+        _stockOriginalEdicion = 0;
 
         if (p is null)
         {
@@ -872,6 +863,8 @@ else
                     SupplierId       = completo.SupplierId,
                     ImagePathActual  = completo.ImagePath
                 };
+
+            _stockOriginalEdicion = _form.CurrentStock;
         }
 
         _mostrarModal = true;
@@ -1007,7 +1000,8 @@ else
 
         if (_editando)
         {
-            var dto = new UpdateProductoDto(_form.Sku, _form.Name, _form.Description, _form.Unit, _form.PurchasePrice, _form.SalePrice, _form.MinimumStock, true, _form.CategoryId, _form.SupplierId, _form.StockEntrada);
+            var stockDelta = _form.CurrentStock - _stockOriginalEdicion;
+            var dto = new UpdateProductoDto(_form.Sku, _form.Name, _form.Description, _form.Unit, _form.PurchasePrice, _form.SalePrice, _form.MinimumStock, true, _form.CategoryId, _form.SupplierId, stockDelta);
             var (ok, err) = await Api.UpdateProductoAsync(_editandoId, dto);
             if (!ok) { _guardando = false; _errorModal = err ?? "Error al guardar el producto."; return; }
             idProducto = _editandoId;
@@ -1055,10 +1049,16 @@ else
     private ProductoDto? _productoAEliminar;
     private bool         _eliminando;
 
+    private async Task HandleModalKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !_guardando) await Guardar();
+    }
+
     private void AbrirModalEliminar(ProductoDto p)
     {
         _productoAEliminar    = p;
         _mostrarModalEliminar = true;
+        _focusBtnEliminar     = true;
     }
 
     private void CerrarModalEliminar()
@@ -1345,10 +1345,17 @@ else
 
         public void Recalcular()
         {
-            ErrorCosto  = _costo < 0       ? "El costo no puede ser negativo."            : null;
-            ErrorPrecio = _precioVenta < 0  ? "El precio de venta no puede ser negativo."  : null;
-            ErrorStock  = _stock < 0        ? "El stock no puede ser negativo."            : null;
+            ErrorCosto  = _costo < 0           ? "El costo no puede ser negativo."
+                        : _costo > 999_999m    ? "El precio de costo no puede ser mayor a 999.999."
+                        : null;
+            ErrorPrecio = _precioVenta <= 0     ? "El precio de venta debe ser mayor a cero."
+                        : _precioVenta > 999_999m ? "El precio de venta no puede ser mayor a 999.999."
+                        : null;
+            ErrorStock  = _stock < 0            ? "El stock no puede ser negativo." : null;
             ValorInventario = _costo * Math.Max(0, _stock);
         }
     }
+
+    private ElementReference _btnConfirmarEliminar;
+    private bool _focusBtnEliminar;
 }

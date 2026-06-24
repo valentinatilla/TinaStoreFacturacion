@@ -28,12 +28,14 @@ else
             <div class="col-sm-6 col-md-3">
                 <label class="form-label">Desde</label>
                 <input type="date" class="form-control form-control-sm"
+                       min="2020-01-01" max="@DateTime.Today.ToString("yyyy-MM-dd")"
                        value="@_filtroDesdeStr"
                        @onchange="e => { _filtroDesdeStr = e.Value?.ToString(); Filtrar(); }" />
             </div>
             <div class="col-sm-6 col-md-3">
                 <label class="form-label">Hasta</label>
                 <input type="date" class="form-control form-control-sm"
+                       min="2020-01-01" max="@DateTime.Today.ToString("yyyy-MM-dd")"
                        value="@_filtroHastaStr"
                        @onchange="e => { _filtroHastaStr = e.Value?.ToString(); Filtrar(); }" />
             </div>
@@ -85,7 +87,7 @@ else
                                 @if (e.Status == 0)
                                 {
                                     <button class="btn btn-sm btn-outline-danger" title="Anular"
-                                            @onclick="() => AnularEgreso(e.Id)">
+                                            @onclick="() => PedirConfirmacionAnular(e)">
                                         <i class="bi bi-x-circle"></i>
                                     </button>
                                 }
@@ -113,7 +115,7 @@ else
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
-                    <tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th class="text-end">Monto</th><th></th></tr>
+                    <tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th class="ts-table-hide-mobile">Método de pago</th><th class="text-end">Monto</th><th></th></tr>
                 </thead>
                 <tbody>
                     @foreach (var e in _filtradosOtros)
@@ -124,6 +126,9 @@ else
                             <td class="text-muted small">@e.ExpenseDate.ToString("dd/MM/yyyy")</td>
                             <td>@if (anulado){<s>@e.Description</s>}else{@e.Description}</td>
                             <td><span class="badge @(anulado ? "bg-danger" : "bg-secondary")">@e.ExpenseCategoryName</span></td>
+                            <td class="text-muted small ts-table-hide-mobile">
+                                @(string.IsNullOrWhiteSpace(e.PaymentMethodName) ? "—" : e.PaymentMethodName)
+                            </td>
                             <td class="text-end fw-semibold">
                                 @if (anulado){<s>$@e.Amount.ToString("N0")</s>}else{<span>$@e.Amount.ToString("N0")</span>}
                             </td>
@@ -135,7 +140,7 @@ else
                                         <i class="bi bi-pencil"></i>
                                     </button>
                                     <button class="btn btn-sm btn-outline-danger" title="Anular"
-                                            @onclick="() => AnularEgreso(e.Id)">
+                                            @onclick="() => PedirConfirmacionAnular(e)">
                                         <i class="bi bi-x-circle"></i>
                                     </button>
                                 }
@@ -148,7 +153,7 @@ else
                     }
                     @if (!_filtradosOtros.Any())
                     {
-                        <tr><td colspan="5" class="text-center text-muted py-3">Sin egresos registrados</td></tr>
+                        <tr><td colspan="6" class="text-center text-muted py-3">Sin egresos registrados</td></tr>
                     }
                 </tbody>
             </table>
@@ -168,7 +173,7 @@ else
                 <div class="modal-body row g-3">
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Descripción *</label>
-                        <input class="form-control" @bind="_form.Descripcion" />
+                        <input class="form-control" @bind="_form.Descripcion" @onkeydown="HandleModalKeyDown" />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Monto *</label>
@@ -176,7 +181,8 @@ else
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Fecha</label>
-                        <input type="date" class="form-control" @bind="_form.Fecha" />
+                        <input type="date" class="form-control" @bind="_form.Fecha"
+                               min="2020-01-01" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Categoría</label>
@@ -197,10 +203,6 @@ else
                                 <option value="@mp.Id">@mp.Name</option>
                             }
                         </select>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label small fw-semibold">Notas</label>
-                        <input class="form-control" @bind="_form.Notas" />
                     </div>
                     @if (_errorModal is not null)
                     {
@@ -223,6 +225,32 @@ else
     </div>
 }
 
+@if (_mostrarModalAnular)
+{
+    <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Anular egreso
+                    </h5>
+                    <button class="btn-close" @onclick="() => _mostrarModalAnular = false"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-1">¿Confirmas que deseas anular el egreso <strong>@_egresoAAnular?.Description</strong>?</p>
+                    <p class="text-muted small mb-0">Esta acción no se puede deshacer y el egreso quedará excluido de los totales.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => _mostrarModalAnular = false">Cancelar</button>
+                    <button class="btn btn-danger" @onclick="ConfirmarAnulacionEgreso" @ref="_btnConfirmarAnular">
+                        <i class="bi bi-x-circle me-1"></i>Anular
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private const string CategoriaCompras = "Compras a proveedor";
 
@@ -238,6 +266,10 @@ else
     private bool _exito;
     private string? _errorModal;
     private EgresoForm _form = new();
+
+    // ── Confirmación de anulación ─────────────────────────────────────────────
+    private bool _mostrarModalAnular;
+    private EgresoDto? _egresoAAnular;
     private int _editandoId;
 
     // ── Filtros ───────────────────────────────────────────────────────────────
@@ -303,6 +335,11 @@ else
 
     private void AbrirModal() { _editandoId = 0; _form = new() { Fecha = DateTime.Today }; _errorModal = null; _mostrarModal = true; _mensaje = null; }
 
+    private async Task HandleModalKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !_guardando) await Guardar();
+    }
+
     private void AbrirEditar(EgresoDto e)
     {
         _editandoId = e.Id;
@@ -326,6 +363,21 @@ else
         _exito   = ok;
         _mensaje = ok ? "Egreso anulado." : "No se pudo anular el egreso.";
         if (ok) await RecargarYFiltrar();
+    }
+
+    private void PedirConfirmacionAnular(EgresoDto egreso)
+    {
+        _egresoAAnular     = egreso;
+        _mostrarModalAnular = true;
+        _focusBtnAnular    = true;
+    }
+
+    private async Task ConfirmarAnulacionEgreso()
+    {
+        _mostrarModalAnular = false;
+        if (_egresoAAnular is null) return;
+        await AnularEgreso(_egresoAAnular.Id);
+        _egresoAAnular = null;
     }
 
     private async Task Guardar()
@@ -375,5 +427,13 @@ else
         public int CategoriaGastoId { get; set; }
         public int MetodoPagoId { get; set; }
         public string? Notas { get; set; }
+    }
+
+    private ElementReference _btnConfirmarAnular;
+    private bool _focusBtnAnular;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focusBtnAnular) { _focusBtnAnular = false; await _btnConfirmarAnular.FocusAsync(); }
     }
 }

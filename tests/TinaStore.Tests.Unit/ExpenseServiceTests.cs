@@ -13,6 +13,7 @@ public class ExpenseServiceTests
 {
     private readonly Mock<IExpenseRepository> _expenseRepoMock;
     private readonly Mock<IRepository<ExpenseCategory>> _categoryRepoMock;
+    private readonly Mock<IProductRepository> _productRepoMock;
     private readonly ExpenseService _sut;
 
     private static readonly ExpenseCategory _categoria = new()
@@ -24,7 +25,8 @@ public class ExpenseServiceTests
     {
         _expenseRepoMock  = new Mock<IExpenseRepository>();
         _categoryRepoMock = new Mock<IRepository<ExpenseCategory>>();
-        _sut = new ExpenseService(_expenseRepoMock.Object, _categoryRepoMock.Object);
+        _productRepoMock  = new Mock<IProductRepository>();
+        _sut = new ExpenseService(_expenseRepoMock.Object, _categoryRepoMock.Object, _productRepoMock.Object);
     }
 
     // ── GetAllAsync ───────────────────────────────────────────────────────────

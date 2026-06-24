@@ -4,6 +4,52 @@ Registro detallado de todos los bugs corregidos en el proyecto.
 
 ---
 
+## Fases AY–BD — UX final, revalidación importación, responsive, validaciones configuración
+
+### BUG-AY1 — Input de descuento individual desalineado en Nueva Venta
+- **Módulo**: Facturas / Nueva Venta
+- **Problema**: El input de descuento tenía `style="width:70px"` fijo, rompiendo la alineación en dispositivos medianos y pequeños.
+- **Solución**: Cambiado a `w-100` y tabla envuelta en `table-responsive`.
+- **Archivos**: `Facturas/Nueva.razor`
+- **Resultado**: ✅ Corregido
+
+### BUG-AY2 — Detalle de venta libre mostraba columna "Producto" en lugar de "Descripción"
+- **Módulo**: Facturas / Listado
+- **Problema**: Todas las ventas (libres y normales) compartían la misma tabla con cabecera "Producto"; en una venta libre no hay producto asociado sino una descripción libre.
+- **Solución**: Al expandir el detalle se detecta si todas las líneas tienen `ProductId == null`; si es venta libre se renderiza tabla con "Descripción" y sin columna de imagen; si es venta normal se mantiene la tabla con imagen y "Producto".
+- **Archivos**: `Facturas/Index.razor`
+- **Resultado**: ✅ Corregido
+
+### BUG-AZ1 — Menú "Productos" quedaba activo al entrar a "Importar"
+- **Módulo**: Navegación lateral
+- **Problema**: `<NavLink href="/productos">` sin `Match="NavLinkMatch.All"` activaba el enlace de "Productos" también para la ruta `/productos/importar`.
+- **Solución**: Añadido `Match="NavLinkMatch.All"` al `NavLink` de Productos.
+- **Archivos**: `NavMenu.razor`
+- **Resultado**: ✅ Corregido
+
+### BUG-BA1 — Importación no revalidaba errores al editar campos en tabla
+- **Módulo**: Productos / Importación Excel
+- **Problema**: Al editar Nombre o SKU en la tabla de previsualización, las columnas `Valido` y `MensajeError` no se actualizaban; si se corregía un SKU duplicado, la fila permanecía marcada en rojo.
+- **Solución**: `RevalidarFila()` centraliza la lógica de validación local; se invoca desde todos los métodos `ActualizarFila*`. `RevalidarDuplicadosSku()` propaga la detección a filas hermanas al cambiar un SKU.
+- **Archivos**: `Productos/Importar.razor`
+- **Resultado**: ✅ Corregido
+
+### BUG-BB1 — Correo y teléfono de la tienda sin validación de formato
+- **Módulo**: Configuración
+- **Problema**: Los campos Email y Phone en Configuración aceptaban cualquier texto y lo enviaban directamente a la API.
+- **Solución**: Regex de email (`^[^@\s]+@[^@\s]+\.[^@\s]+$`) y teléfono (`^[\+\d][\d\s\-\(\)]{5,19}$`) validados en `Guardar()`; si son inválidos se muestra `is-invalid` + `invalid-feedback` inline y no se realiza la petición.
+- **Archivos**: `Configuracion/StoreSettings.razor`
+- **Resultado**: ✅ Corregido
+
+### BUG-BC1 — Detalle de venta y edición masiva no responsive en móvil
+- **Módulo**: Facturas / Listado, Productos / Edición masiva
+- **Problema**: Las tablas de detalle expandido y edición masiva generaban scroll horizontal innecesario en pantallas < 768px.
+- **Solución**: Reglas `@media` en `app.css` con clases semánticas `ts-detalle-venta-tabla` y `ts-bulk-tabla`; se ocultan columnas secundarias en móvil y se ajusta el tamaño del input de descuento.
+- **Archivos**: `wwwroot/app.css`, `Productos/Index.razor`
+- **Resultado**: ✅ Corregido
+
+---
+
 ## Fases AA–AE — Validaciones finales y robustez preproducción
 
 ### BUG-AA1 — Campo Unidad sin feedback visual en frontend

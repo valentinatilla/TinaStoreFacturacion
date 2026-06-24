@@ -150,6 +150,30 @@ body {
     text-transform: uppercase;
 }
 
+/* Subitem indentado (Por cobrar bajo Ventas, Importar bajo Productos) */
+.ts-nav-subitem > a {
+    padding-left: 2.75rem !important;
+    font-size: .82rem !important;
+    color: rgba(249,168,212,.75) !important;
+}
+
+.ts-nav-subitem > a::before {
+    content: "└";
+    margin-right: .35rem;
+    font-size: .75rem;
+    opacity: .55;
+}
+
+.ts-nav-subitem > a:hover {
+    background: rgba(244,114,182,.10) !important;
+    color: var(--ts-accent) !important;
+}
+
+.ts-nav-subitem > a.active {
+    color: var(--ts-accent) !important;
+    border-left: 3px solid var(--ts-primary);
+}
+
 /* ── Contenido principal ───────────────────────────────────────────── */
 .ts-main {
     margin-left: var(--ts-sidebar-width);
@@ -258,6 +282,20 @@ a.kpi-card-link:hover .fw-bold {
 .ts-table td, .ts-table th {
     border-color: #F9D5EA;
     vertical-align: middle;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    max-width: 280px;
+}
+
+/* Evitar scroll horizontal en tablas responsivas */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table td, .table th {
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 /* ── Botones ────────────────────────────────────────────────────────── */
@@ -1346,6 +1384,76 @@ tr.bulk-row-modified td:first-child {
     overflow-x: auto;
 }
 
+/* ── Responsive: módulo Ventas ────────────────────────────────────── */
+@media (max-width: 768px) {
+    /* Tabla principal de ventas: sin min-width para evitar scroll horizontal */
+    .ts-tabla-ventas {
+        width: 100%;
+    }
+
+    /* Compactar columna de acciones */
+    .ts-tabla-ventas td:last-child,
+    .ts-tabla-ventas th:last-child {
+        padding-left: .25rem !important;
+        padding-right: .25rem !important;
+    }
+
+    /* Botones de acción más pequeños en móvil */
+    .ts-tabla-ventas .btn-sm {
+        width: 30px;
+        height: 30px;
+        min-height: 30px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .8rem;
+    }
+
+    /* Panel de detalle expandido de venta */
+    .detalle-venta-panel {
+        padding: .75rem !important;
+    }
+
+    .detalle-venta-panel .table {
+        font-size: .8rem;
+    }
+
+    /* Chips de pagos: una por fila */
+    .pago-chip {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    /* Modal de edición masiva: scroll horizontal en tabla */
+    .modal-xl .table-responsive {
+        overflow-x: auto;
+    }
+
+    .modal-xl .table {
+        min-width: 700px;
+        font-size: .82rem;
+    }
+
+    /* Inputs de edición masiva más compactos */
+    .modal-xl .form-control-sm {
+        min-height: 32px;
+        font-size: .82rem;
+        width: 80px !important;
+    }
+
+    /* Barra de filtros de ventas: apilar en columna */
+    .ts-filtros-ventas {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .ts-filtros-ventas .form-control,
+    .ts-filtros-ventas .form-select {
+        width: 100% !important;
+    }
+}
+
 /* ── Modales: ocupar casi toda la pantalla en móvil ─────────────── */
 @media (max-width: 576px) {
     .modal-dialog {
@@ -1605,4 +1713,42 @@ h6.fw-bold {
 /* Cuando está dentro de .login-card, adaptamos el radio */
 .login-card .btn-password-toggle {
     border-radius: 0 12px 12px 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FASE AY-BC — Responsive: detalle de venta + edición masiva
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Ocultar columnas no esenciales del detalle de venta en móvil */
+@media (max-width: 768px) {
+    .ts-detalle-venta-tabla thead th:nth-child(5),
+    .ts-detalle-venta-tabla tbody td:nth-child(5) {
+        display: none; /* oculta columna Descuento en móvil */
+    }
+
+    /* Tabla de edición masiva de productos */
+    .ts-bulk-tabla thead th:nth-child(n+5),
+    .ts-bulk-tabla tbody td:nth-child(n+5) {
+        display: none; /* oculta columnas extra (costo, categoría, proveedor) en móvil */
+    }
+
+    /* Etiquetas de importación: columnas menos relevantes */
+    .ts-import-tabla thead th:nth-child(n+8),
+    .ts-import-tabla tbody td:nth-child(n+8) {
+        display: none;
+    }
+}
+
+@media (max-width: 576px) {
+    /* Detalle de venta: miniaturizar imagen en listado */
+    .ts-detalle-venta-tabla td img {
+        width: 24px !important;
+        height: 24px !important;
+    }
+
+    /* Input descuento de detalle de nueva venta */
+    .table input[type="number"].form-control-sm {
+        min-width: 56px;
+        font-size: .8rem;
+    }
 }

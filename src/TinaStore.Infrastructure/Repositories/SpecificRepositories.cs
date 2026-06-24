@@ -324,7 +324,7 @@ public class ReportRepository(AppDbContext context) : IReportRepository
             .Include(a => a.Customer)
                 .ThenInclude(c => c.Invoices)
             .Where(a => a.Customer.Invoices.Any(i =>
-                i.Balance > 0
+                i.Total > i.AmountPaid
                 && i.Status != Domain.Enums.InvoiceStatus.Cancelled
                 && i.InvoiceDate >= from
                 && i.InvoiceDate <= to))

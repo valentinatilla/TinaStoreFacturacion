@@ -11,11 +11,13 @@ public sealed class ExpenseService : IExpenseService
 {
     private readonly IExpenseRepository _expenses;
     private readonly IRepository<ExpenseCategory> _categories;
+    private readonly IProductRepository _products;
 
-    public ExpenseService(IExpenseRepository expenses, IRepository<ExpenseCategory> categories)
+    public ExpenseService(IExpenseRepository expenses, IRepository<ExpenseCategory> categories, IProductRepository products)
     {
         _expenses = expenses;
         _categories = categories;
+        _products = products;
     }
 
     public async Task<IEnumerable<ExpenseDto>> GetAllAsync()
@@ -94,6 +96,18 @@ public sealed class ExpenseService : IExpenseService
         var entity = await _expenses.GetByIdAsync(id);
         if (entity is null) return false;
         entity.Status = ExpenseStatus.Cancelled;
+
+        // Si el egreso tiene producto y cantidad, revertir el stock
+        if (entity.ProductId.HasValue && entity.StockQty.HasValue && entity.StockQty.Value > 0)
+        {
+            var producto = await _products.GetByIdAsync(entity.ProductId.Value);
+            if (producto is not null)
+            {
+                producto.CurrentStock = Math.Max(0, producto.CurrentStock - entity.StockQty.Value);
+                await _products.UpdateAsync(producto);
+            }
+        }
+
         await _expenses.UpdateAsync(entity);
         await _expenses.SaveChangesAsync();
         return true;

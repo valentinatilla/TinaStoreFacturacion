@@ -29,6 +29,7 @@ else
                 <div class="input-group input-group-sm">
                     <span class="input-group-text"><i class="bi bi-search"></i></span>
                     <input class="form-control form-control-sm" placeholder="Nombre, NIT o teléfono..."
+                           value="@_filtroTexto"
                            @oninput="Filtrar" />
                 </div>
             </div>
@@ -55,12 +56,12 @@ else
                             <td>@p.Email</td>
                             <td class="text-end">
                                 <button class="btn btn-sm btn-outline-secondary me-1" title="Editar"
-                                        @onclick="() => AbrirEditar(p)">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger" @onclick="() => Eliminar(p.Id)">
-                                    <i class="bi bi-trash"></i>
-                                </button>
+                                                    @onclick="() => AbrirEditar(p)">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => AbrirConfirmarEliminar(p)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
                             </td>
                         </tr>
                     }
@@ -86,7 +87,7 @@ else
                 <div class="modal-body row g-3">
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Nombre *</label>
-                        <input class="form-control" @bind="_form.Name" maxlength="30" />
+                        <input class="form-control" @bind="_form.Name" maxlength="30" @onkeydown="HandleModalKeyDown" />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">NIT / RUT</label>
@@ -100,15 +101,11 @@ else
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Email</label>
-                        <input class="form-control" @bind="_form.Email" maxlength="150" />
+                        <input class="form-control" @bind="_form.Email" maxlength="150" @onkeydown="HandleModalKeyDown" />
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Dirección</label>
-                        <input class="form-control" @bind="_form.Address" maxlength="200" />
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label small fw-semibold">Notas</label>
-                        <input class="form-control" @bind="_form.Notes" maxlength="500" />
+                        <input class="form-control" @bind="_form.Address" maxlength="200" @onkeydown="HandleModalKeyDown" />
                     </div>
                     @if (_errorModal is not null)
                     {
@@ -131,6 +128,44 @@ else
     </div>
 }
 
+@if (_mostrarModalEliminar)
+{
+    <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Eliminar proveedor
+                    </h5>
+                    <button class="btn-close" @onclick="() => _mostrarModalEliminar = false"></button>
+                </div>
+                <div class="modal-body">
+                    @if (_proveedorAEliminar?.ProductCount > 0)
+                    {
+                        <div class="alert alert-warning py-2 small mb-3">
+                            <i class="bi bi-box-seam me-1"></i>
+                            Este proveedor tiene <strong>@_proveedorAEliminar.ProductCount</strong> producto(s) asociado(s).
+                            Si lo eliminas, esos productos quedarán sin proveedor asignado.
+                            ¿Deseas continuar?
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="mb-1">¿Estás seguro de eliminar al proveedor <strong>@_proveedorAEliminar?.Name</strong>?</p>
+                        <p class="text-muted small mb-0">Esta acción no se puede deshacer.</p>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => _mostrarModalEliminar = false">Cancelar</button>
+                    <button class="btn btn-danger" @onclick="ConfirmarEliminar" @ref="_btnConfirmarEliminar">
+                        <i class="bi bi-trash me-1"></i>Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<ProveedorDto> _proveedores = [];
     private List<ProveedorDto> _filtrados = [];
@@ -142,6 +177,11 @@ else
     private string? _errorModal;
     private ProveedorForm _form = new();
     private int _editandoId;
+    private string _filtroTexto = "";
+
+    // ── Modal confirmación eliminar ───────────────────────────────────────────
+    private bool _mostrarModalEliminar;
+    private ProveedorDto? _proveedorAEliminar;
 
     protected override async Task OnInitializedAsync() => await Cargar();
 
@@ -155,7 +195,8 @@ else
 
     private void Filtrar(ChangeEventArgs e)
     {
-        var q = e.Value?.ToString()?.ToLower() ?? "";
+        _filtroTexto = e.Value?.ToString() ?? "";
+        var q = _filtroTexto.ToLower();
         _filtrados = string.IsNullOrWhiteSpace(q)
             ? _proveedores
             : _proveedores.Where(p =>
@@ -166,7 +207,28 @@ else
 
     private void LimpiarFiltro()
     {
+        _filtroTexto = "";
         _filtrados = _proveedores;
+    }
+
+    private async Task HandleModalKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !_guardando) await Guardar();
+    }
+
+    private void AbrirConfirmarEliminar(ProveedorDto p)
+    {
+        _proveedorAEliminar  = p;
+        _mostrarModalEliminar = true;
+        _focusBtnEliminar    = true;
+    }
+
+    private async Task ConfirmarEliminar()
+    {
+        if (_proveedorAEliminar is null) return;
+        _mostrarModalEliminar = false;
+        await Eliminar(_proveedorAEliminar.Id);
+        _proveedorAEliminar = null;
     }
 
     // Permite solo dígitos en el campo NIT
@@ -174,6 +236,14 @@ else
     {
         // La prevención real en Blazor requiere JS interop; aquí validamos en Guardar.
         // Este método queda como punto de extensión visual.
+    }
+
+    private ElementReference _btnConfirmarEliminar;
+    private bool _focusBtnEliminar;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focusBtnEliminar) { _focusBtnEliminar = false; await _btnConfirmarEliminar.FocusAsync(); }
     }
 
     // Permite solo dígitos en el campo Teléfono

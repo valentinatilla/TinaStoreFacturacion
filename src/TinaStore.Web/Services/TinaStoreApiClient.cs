@@ -55,7 +55,7 @@ public record CreateFacturaDto(int CustomerId, decimal DiscountAmount, decimal T
 public record CreateDetalleFacturaDto(int? ProductId, int Quantity, decimal UnitPrice, decimal DiscountAmount = 0, string? FreeDescription = null);
 public record CreatePagoInicialDto(int PaymentMethodId, decimal Amount, string? Reference, string? Notes);
 
-public record DetalleLineaVentaDto(int Id, int ProductId, string ProductName, int Quantity, decimal UnitPrice, decimal DiscountAmount, decimal Subtotal, string? ImagePath = null);
+public record DetalleLineaVentaDto(int Id, int? ProductId, string ProductName, int Quantity, decimal UnitPrice, decimal DiscountAmount, decimal Subtotal, string? ImagePath = null);
 public record PagoRegistradoDto(int Id, int PaymentMethodId, string PaymentMethodName, DateTime PaymentDate, decimal Amount, string? Reference, string? Notes);
 public record VentaDetalleDto(int Id, string InvoiceNumber, DateTime InvoiceDate, string CustomerName, decimal Subtotal, decimal DiscountAmount, decimal TaxAmount, decimal Total, decimal AmountPaid, decimal Balance, int Status, string StatusName, string? Notes, string? CancellationReason, List<DetalleLineaVentaDto> Details, List<PagoRegistradoDto> Payments);
 

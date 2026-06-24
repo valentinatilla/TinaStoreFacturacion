@@ -147,7 +147,7 @@ public sealed class ProductService : IProductService
         entity.Category = categoria;
         entity.SupplierId = dto.SupplierId;
 
-        if (dto.StockEntrada > 0)
+        if (dto.StockEntrada != 0)
             entity.CurrentStock += dto.StockEntrada;
 
         await _products.UpdateAsync(entity);
@@ -204,6 +204,10 @@ public sealed class ProductService : IProductService
         await _products.UpdateAsync(entity);
         await _movements.AddAsync(movimiento);
         await _products.SaveChangesAsync();
+
+        // Registrar egreso de compra si el producto tiene precio de costo
+        if (entity.PurchasePrice > 0)
+            await RegistrarEgresoCompraAsync(entity, dto.Cantidad, entity.PurchasePrice);
 
         return ToDto(entity);
     }
@@ -295,7 +299,9 @@ public sealed class ProductService : IProductService
             Notes             = product.Sku is not null ? $"SKU: {product.Sku}" : null,
             Status            = ExpenseStatus.Active,
             ExpenseCategoryId = categoria.Id,
-            SupplierId        = product.SupplierId
+            SupplierId        = product.SupplierId,
+            ProductId         = product.Id,
+            StockQty          = cantidad
         };
 
         await _expenses.AddAsync(egreso);

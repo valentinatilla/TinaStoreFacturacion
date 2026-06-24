@@ -50,7 +50,7 @@ public sealed class UpdateProductValidator : AbstractValidator<UpdateProductDto>
     {
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("El nombre del producto es obligatorio.")
-            .MaximumLength(30).WithMessage("El nombre no puede superar 30 caracteres.");
+            .MaximumLength(50).WithMessage("El nombre del producto permite máximo 50 caracteres.");
 
         RuleFor(x => x.Unit)
             .MaximumLength(30).WithMessage("La unidad de medida no puede superar 30 caracteres.")
