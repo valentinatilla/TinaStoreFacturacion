@@ -2,7 +2,7 @@ using System.Net.Http.Json;
 
 namespace TinaStore.Web.Services;
 
-// â”€â”€â”€ DTOs de respuesta de la API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── DTOs de respuesta de la API ──────────────────────────────────────────────
 
 public record TokenResponseDto(string AccessToken, string TokenType, int ExpiresInMinutes, UserInfoDto User);
 public record UserInfoDto(int Id, string FullName, string Email, string Role, bool IsActive);
@@ -117,7 +117,7 @@ public record ReporteCuentasPorCobrarDto(decimal TotalPorCobrar, int TotalClient
 
 /// <summary>
 /// Wrapper centralizado de HttpClient para consumir la API de TinaStore.
-/// Inyecta el token JWT en cada peticiÃ³n autenticada.
+/// Inyecta el token JWT en cada petición autenticada.
 /// </summary>
 public class TinaStoreApiClient
 {
@@ -125,13 +125,13 @@ public class TinaStoreApiClient
     private readonly SessionStateService _session;
 
     /// <summary>
-    /// URL base de la API para llamadas servidor-a-servidor (puede ser URL interna en producciÃ³n).
+    /// URL base de la API para llamadas servidor-a-servidor (puede ser URL interna en producción).
     /// </summary>
     public string BaseUrl => _http.BaseAddress?.ToString().TrimEnd('/') ?? string.Empty;
 
     /// <summary>
-    /// URL pÃºblica de la API que el BROWSER puede usar para cargar imÃ¡genes (logo, fotos de productos).
-    /// Se configura en appsettings como PublicApiUrl. Si no estÃ¡ configurada, cae al BaseUrl.
+    /// URL pública de la API que el BROWSER puede usar para cargar imágenes (logo, fotos de productos).
+    /// Se configura en appsettings como PublicApiUrl. Si no está configurada, cae al BaseUrl.
     /// </summary>
     public string PublicBaseUrl { get; init; } = string.Empty;
 
@@ -158,7 +158,7 @@ public class TinaStoreApiClient
             // DomainException devuelve { "mensaje": "..." }
             if (json.TryGetProperty("mensaje", out var msj) && msj.ValueKind == System.Text.Json.JsonValueKind.String)
                 return msj.GetString();
-            // ConvenciÃ³n inglesa { "message": "..." }
+            // Convención inglesa { "message": "..." }
             if (json.TryGetProperty("message", out var msg) && msg.ValueKind == System.Text.Json.JsonValueKind.String)
                 return msg.GetString();
             // FluentValidation devuelve un array de strings
@@ -169,7 +169,7 @@ public class TinaStoreApiClient
         return $"Error {(int)r.StatusCode}.";
     }
 
-    // Helper: GET que devuelve null en lugar de lanzar excepciÃ³n ante 401/403/red caÃ­da
+    // Helper: GET que devuelve null en lugar de lanzar excepción ante 401/403/red caída
     private async Task<T?> GetSafeAsync<T>(string url) where T : class
     {
         SetAuthHeader();
@@ -182,7 +182,7 @@ public class TinaStoreApiClient
         catch { return null; }
     }
 
-    // Helper: GET que devuelve (resultado, mensaje de error) para diagnÃ³stico
+    // Helper: GET que devuelve (resultado, mensaje de error) para diagnóstico
     private async Task<(T? Data, string? Error)> GetWithErrorAsync<T>(string url) where T : class
     {
         SetAuthHeader();
@@ -190,7 +190,7 @@ public class TinaStoreApiClient
         {
             var response = await _http.GetAsync(url);
             if (!response.IsSuccessStatusCode)
-                return (null, $"La API respondiÃ³ con error {(int)response.StatusCode}.");
+                return (null, $"La API respondió con error {(int)response.StatusCode}.");
             var data = await response.Content.ReadFromJsonAsync<T>();
             return (data, null);
         }
@@ -204,7 +204,7 @@ public class TinaStoreApiClient
         }
     }
 
-    // â”€â”€ Auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Auth ──────────────────────────────────────────────────────────────────
     public async Task<TokenResponseDto?> LoginAsync(string email, string password)
     {
         try
@@ -237,8 +237,8 @@ public class TinaStoreApiClient
     }
 
     /// <summary>
-    /// Obtiene el perfil del usuario usando un token explÃ­cito.
-    /// Usado para restaurar la sesiÃ³n desde la cookie al arrancar el circuito Blazor.
+    /// Obtiene el perfil del usuario usando un token explícito.
+    /// Usado para restaurar la sesión desde la cookie al arrancar el circuito Blazor.
     /// </summary>
     public async Task<UserInfoDto?> GetPerfilAsync(string token)
     {
@@ -254,14 +254,14 @@ public class TinaStoreApiClient
         catch { return null; }
     }
 
-    // â”€â”€ Dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Dashboard ─────────────────────────────────────────────────────────────
     public Task<DashboardDto?> GetDashboardAsync() =>
         GetSafeAsync<DashboardDto>("/api/dashboard");
 
     public Task<(DashboardDto? Data, string? Error)> GetDashboardConDiagnosticoAsync() =>
         GetWithErrorAsync<DashboardDto>("/api/dashboard");
 
-    // â”€â”€ Clientes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Clientes ──────────────────────────────────────────────────────────────
     public Task<List<ClienteDto>?> GetClientesAsync() =>
         GetSafeAsync<List<ClienteDto>>("/api/customers");
 
@@ -291,7 +291,7 @@ public class TinaStoreApiClient
         return r.IsSuccessStatusCode;
     }
 
-    // â”€â”€ CategorÃ­as â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Categorías ────────────────────────────────────────────────────────────
     public Task<List<CategoriaDto>?> GetCategoriasAsync() =>
         GetSafeAsync<List<CategoriaDto>>("/api/categories");
 
@@ -311,7 +311,7 @@ public class TinaStoreApiClient
         return (false, await LeerMensajeErrorAsync(r));
     }
 
-    // â”€â”€ Proveedores â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Proveedores ───────────────────────────────────────────────────────────
     public Task<List<ProveedorDto>?> GetProveedoresAsync() =>
         GetSafeAsync<List<ProveedorDto>>("/api/suppliers");
 
@@ -338,11 +338,11 @@ public class TinaStoreApiClient
         return r.IsSuccessStatusCode;
     }
 
-    // â”€â”€ MÃ©todos de pago â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Métodos de pago ───────────────────────────────────────────────────────
     public Task<List<MetodoPagoDto>?> GetMetodosPagoAsync() =>
         GetSafeAsync<List<MetodoPagoDto>>("/api/paymentmethods");
 
-    // â”€â”€ Productos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Productos ─────────────────────────────────────────────────────────────
     public Task<List<ProductoDto>?> GetProductosAsync() =>
         GetSafeAsync<List<ProductoDto>>("/api/products");
 
@@ -386,7 +386,7 @@ public class TinaStoreApiClient
         };
         var sc = new StreamContent(contenido);
         sc.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
-        // El nombre del campo debe coincidir con el parÃ¡metro del controller: IFormFile archivo
+        // El nombre del campo debe coincidir con el parámetro del controller: IFormFile archivo
         form.Add(sc, "archivo", nombreArchivo);
         var r = await _http.PostAsync($"/api/products/{id}/imagen", form);
         if (!r.IsSuccessStatusCode) return null;
@@ -416,7 +416,7 @@ public class TinaStoreApiClient
         return await r.Content.ReadFromJsonAsync<BulkUpdateResultDto>();
     }
 
-    // â”€â”€ Facturas
+    // ── Facturas
     public Task<List<FacturaDto>?> GetFacturasAsync() =>
         GetSafeAsync<List<FacturaDto>>("/api/invoices");
 
@@ -454,7 +454,7 @@ public class TinaStoreApiClient
         return r.IsSuccessStatusCode ? await r.Content.ReadAsByteArrayAsync() : null;
     }
 
-    // â”€â”€ Egresos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Egresos ───────────────────────────────────────────────────────────────
     public Task<List<EgresoDto>?> GetEgresosAsync() =>
         GetSafeAsync<List<EgresoDto>>("/api/expenses");
 
@@ -482,7 +482,7 @@ public class TinaStoreApiClient
         return r.IsSuccessStatusCode;
     }
 
-    // â”€â”€ ConfiguraciÃ³n de tienda â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Configuración de tienda ───────────────────────────────────────────────
 
     public Task<ConfiguracionTiendaDto?> GetConfiguracionAsync() =>
         GetSafeAsync<ConfiguracionTiendaDto>("/api/settings");
@@ -505,7 +505,7 @@ public class TinaStoreApiClient
             : null;
     }
 
-    // â”€â”€ Recordatorios â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Recordatorios ─────────────────────────────────────────────────────────
     public async Task<ReminderHistoryDto?> RegistrarRecordatorioWhatsAppAsync(int customerId, string message)
     {
         SetAuthHeader();
@@ -519,7 +519,7 @@ public class TinaStoreApiClient
     public Task<List<ReminderHistoryDto>?> GetHistorialRecordatoriosAsync(int customerId) =>
         GetSafeAsync<List<ReminderHistoryDto>>($"/api/reminders/historial/{customerId}");
 
-    // â”€â”€ Reportes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Reportes ──────────────────────────────────────────────────────────────
     public Task<ReporteVentasDto?> GetReporteVentasAsync(DateTime desde, DateTime hasta) =>
         GetSafeAsync<ReporteVentasDto>(
             $"/api/reports/ventas?from={desde:yyyy-MM-dd}&to={hasta:yyyy-MM-dd}");
@@ -587,7 +587,7 @@ public class TinaStoreApiClient
             : null;
     }
 
-    // â”€â”€ Usuarios â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Usuarios ─────────────────────────────────────────────────────────────
     public Task<List<UsuarioDto>?> GetUsuariosAsync() =>
         GetSafeAsync<List<UsuarioDto>>("/api/users");
 

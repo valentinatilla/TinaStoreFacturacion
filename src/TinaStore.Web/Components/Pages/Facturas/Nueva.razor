@@ -4,7 +4,7 @@
 @inject NavigationManager Nav
 @inject IConfiguration Config
 
-<PageTitle>Nueva Venta â€” Tina Store</PageTitle>
+<PageTitle>Nueva Venta — Tina Store</PageTitle>
 
 <div class="d-flex align-items-center mb-4 gap-3">
     <NavLink href="/ventas" class="btn btn-outline-secondary btn-sm">
@@ -35,7 +35,7 @@
         <div class="card border-0 shadow-sm p-3">
             <h6 class="fw-bold mb-3">Pago</h6>
             <div class="mb-2">
-                <label class="form-label small fw-semibold">MÃ©todo de pago</label>
+                <label class="form-label small fw-semibold">Método de pago</label>
                 <select class="form-select" @bind="_metodoPagoId">
                     <option value="0">Seleccione...</option>
                     @foreach (var mp in _metodosPago)
@@ -60,7 +60,7 @@
         <div class="card border-0 shadow-sm p-3">
             <div class="mb-3">
                 <h6 class="fw-bold mb-2">Detalle de productos</h6>
-                <!-- Chips de categorÃ­a -->
+                <!-- Chips de categoría -->
                 <div class="d-flex flex-wrap gap-1 mb-2">
                     <button type="button"
                             class="btn btn-sm @(_filtroCategoriaId == 0 ? "bg-purple text-white" : "btn-outline-secondary")"
@@ -78,8 +78,8 @@
                         </button>
                     }
                 </div>
-                <!-- BÃºsqueda -->
-                <input class="form-control form-control-sm" placeholder="ðŸ” Buscar producto..."
+                <!-- Búsqueda -->
+                <input class="form-control form-control-sm" placeholder="🔍 Buscar producto..."
                        @bind="_busquedaProducto" @oninput="FiltrarProductos" />
             </div>
 
@@ -116,7 +116,7 @@
                                 @if (p.CurrentStock == 0)
                                 {
                                     <button class="btn btn-xs btn-outline-warning py-0 px-1"
-                                            title="AÃ±adir stock"
+                                            title="Añadir stock"
                                             @onclick:stopPropagation="true"
                                             @onclick="() => AbrirModalStock(p)">
                                         <i class="bi bi-plus-circle"></i>
@@ -166,7 +166,7 @@
                                            @bind="d.Cantidad" @bind:after="() => RecalcularTotales()" />
                                     @if (d.Cantidad > d.StockDisponible)
                                     {
-                                        <div class="text-danger" style="font-size:0.7rem;">MÃ¡x. @d.StockDisponible</div>
+                                        <div class="text-danger" style="font-size:0.7rem;">Máx. @d.StockDisponible</div>
                                     }
                                 </td>
                                 <td class="text-end">$@d.PrecioUnitario.ToString("N0")</td>
@@ -252,7 +252,7 @@
     </div>
 </div>
 
-<!-- Modal: AÃ±adir stock rÃ¡pido -->
+<!-- Modal: Añadir stock rápido -->
 @if (_modalStockVisible)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.4)">
@@ -260,7 +260,7 @@
             <div class="modal-content">
                 <div class="modal-header py-2">
                     <h6 class="modal-title fw-bold">
-                        <i class="bi bi-plus-circle me-1 text-warning"></i>AÃ±adir stock
+                        <i class="bi bi-plus-circle me-1 text-warning"></i>Añadir stock
                     </h6>
                     <button class="btn-close" @onclick="CerrarModalStock"></button>
                 </div>
@@ -289,7 +289,7 @@
                     <button class="btn btn-sm btn-warning text-dark" @onclick="ConfirmarAjusteStock"
                             disabled="@_stockGuardando">
                         @if (_stockGuardando) { <span class="spinner-border spinner-border-sm me-1"></span> }
-                        AÃ±adir
+                        Añadir
                     </button>
                 </div>
             </div>
@@ -338,7 +338,7 @@
         var t4 = Api.GetCategoriasAsync();
         await Task.WhenAll(t1, t2, t3, t4);
         _clientes     = t1.Result ?? [];
-        // Excluir "Fiado / CrÃ©dito" (Type == 5) del selector de pago inicial
+        // Excluir "Fiado / Crédito" (Type == 5) del selector de pago inicial
         _metodosPago  = (t2.Result ?? []).Where(m => m.Type != 5).ToList();
         _productos    = t3.Result ?? [];
         _categorias   = t4.Result ?? [];
@@ -388,7 +388,7 @@
         {
             if (existente.Cantidad >= existente.StockDisponible)
             {
-                _advertenciaStock = $"Stock mÃ¡ximo alcanzado para '{p.Name}' ({existente.StockDisponible} unid.)";
+                _advertenciaStock = $"Stock máximo alcanzado para '{p.Name}' ({existente.StockDisponible} unid.)";
                 return;
             }
             existente.Cantidad++;
@@ -397,7 +397,7 @@
         {
             if (p.CurrentStock <= 0)
             {
-                _advertenciaStock = $"'{p.Name}' no tiene stock disponible. AÃ±ade stock antes de facturar.";
+                _advertenciaStock = $"'{p.Name}' no tiene stock disponible. Añade stock antes de facturar.";
                 return;
             }
             _detalles.Add(new DetalleLinea
@@ -448,13 +448,13 @@
     {
         _error = null;
 
-        // â”€â”€ Validaciones de negocio â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Validaciones de negocio ───────────────────────────────────────────
         if (_clienteId == 0)            { _error = "Selecciona un cliente antes de registrar la venta.";      return; }
         if (!_detalles.Any())           { _error = "Agrega al menos un producto a la venta.";              return; }
         if (_detalles.Any(d => d.Cantidad <= 0))
                                         { _error = "La cantidad de cada producto debe ser mayor a cero.";    return; }
         if (_detalles.Any(d => d.Cantidad > d.StockDisponible))
-                                        { _error = "Una o mÃ¡s lÃ­neas superan el stock disponible. Corrija las cantidades antes de registrar."; return; }
+                                        { _error = "Una o más líneas superan el stock disponible. Corrija las cantidades antes de registrar."; return; }
         if (_detalles.Any(d => d.PrecioUnitario < 0))
                                         { _error = "El precio unitario no puede ser negativo.";              return; }
         if (_descuentoPct < 0)         { _error = "El descuento no puede ser negativo.";                    return; }
@@ -521,7 +521,7 @@
 
             if (actualizado is null)
             {
-                _stockError = "No se pudo actualizar el stock. IntÃ©ntalo de nuevo.";
+                _stockError = "No se pudo actualizar el stock. Inténtalo de nuevo.";
                 return;
             }
 

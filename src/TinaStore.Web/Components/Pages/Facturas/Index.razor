@@ -4,7 +4,7 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<PageTitle>Ventas â€” Tina Store</PageTitle>
+<PageTitle>Ventas — Tina Store</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h4 class="fw-bold mb-0"><i class="bi bi-receipt me-2 text-purple"></i>Ventas</h4>
@@ -37,8 +37,8 @@ else
     <div class="ts-filter-bar">
         <div class="row g-2 align-items-end">
             <div class="col-sm-6 col-md-3">
-                <label class="form-label">NÂ° o cliente</label>
-                <input class="form-control form-control-sm" placeholder="ðŸ” Buscar..." @oninput="Filtrar" />
+                <label class="form-label">N° o cliente</label>
+                <input class="form-control form-control-sm" placeholder="🔍 Buscar..." @oninput="Filtrar" />
             </div>
             <div class="col-sm-6 col-md-2">
                 <label class="form-label">Estado</label>
@@ -77,7 +77,7 @@ else
                     <tr>
                         <th style="width:32px"></th>
                         <th class="ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("numero")'>
-                            NÂ° Venta <i class="@(SortIconClass("numero")) ms-1 small"></i>
+                            N° Venta <i class="@(SortIconClass("numero")) ms-1 small"></i>
                         </th>
                         <th>Cliente</th>
                         <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("total")'>
@@ -107,7 +107,7 @@ else
                             <td class="ts-table-hide-mobile"><span class="badge bg-dark">@f.InvoiceNumber</span></td>
                             <td>
                                 <span class="d-block">@f.CustomerName</span>
-                                <span class="d-md-none text-muted" style="font-size:.72rem;">@f.InvoiceNumber Â· @f.InvoiceDate.ToString("dd/MM/yy")</span>
+                                <span class="d-md-none text-muted" style="font-size:.72rem;">@f.InvoiceNumber · @f.InvoiceDate.ToString("dd/MM/yy")</span>
                             </td>
                             <td class="text-end fw-semibold">$@f.Total.ToString("N0")</td>
                             <td class="text-end ts-table-hide-mobile @(f.AmountPaid < f.Total ? "text-danger" : "text-success")">
@@ -170,12 +170,12 @@ else
                                             <!-- Productos de la venta -->
                                             @if (detalle.Details.Any())
                                             {
-                                                @* Determinar si es venta libre: todas las lÃ­neas sin ProductId *@
+                                                @* Determinar si es venta libre: todas las líneas sin ProductId *@
                                                 var esVentaLibre = detalle.Details.All(d => d.ProductId == null);
 
                                                 @if (esVentaLibre)
                                                 {
-                                                    <!-- Venta libre: mostrar descripciÃ³n por lÃ­nea -->
+                                                    <!-- Venta libre: mostrar descripción por línea -->
                                                     <div class="fw-semibold small text-purple mb-2">
                                                         <i class="bi bi-lightning-charge me-1"></i>Venta libre
                                                     </div>
@@ -183,7 +183,7 @@ else
                                                         <table class="table table-sm mb-2" style="font-size:.87rem">
                                                             <thead class="table-light">
                                                                 <tr>
-                                                                    <th>DescripciÃ³n</th>
+                                                                    <th>Descripción</th>
                                                                     <th class="text-center">Cant.</th>
                                                                     <th class="text-end">Valor unit.</th>
                                                                     <th class="text-end">Subtotal</th>
@@ -246,7 +246,7 @@ else
                                                                         <td class="text-center align-middle">@linea.Quantity</td>
                                                                         <td class="text-end text-muted align-middle">$@linea.UnitPrice.ToString("N0")</td>
                                                                         <td class="text-end text-muted align-middle">
-                                                                            @(linea.DiscountAmount > 0 ? "$" + linea.DiscountAmount.ToString("N0") : "â€”")
+                                                                            @(linea.DiscountAmount > 0 ? "$" + linea.DiscountAmount.ToString("N0") : "—")
                                                                         </td>
                                                                         <td class="text-end fw-semibold align-middle">$@linea.Subtotal.ToString("N0")</td>
                                                                     </tr>
@@ -285,7 +285,7 @@ else
                                                 <p class="text-muted small mb-2">
                                                     <i class="bi bi-lightning-charge me-1 text-purple"></i>
                                                     <strong>Venta libre:</strong>
-                                                    @(detalle.Notes ?? "Sin descripciÃ³n registrada.")
+                                                    @(detalle.Notes ?? "Sin descripción registrada.")
                                                 </p>
                                             }
 
@@ -293,15 +293,15 @@ else
                                             @if (!string.IsNullOrWhiteSpace(detalle.Notes))
                                             {
                                                 <div class="text-muted small mb-2">
-                                                    <i class="bi bi-sticky me-1"></i><strong>Nota de creaciÃ³n:</strong> @detalle.Notes
+                                                    <i class="bi bi-sticky me-1"></i><strong>Nota de creación:</strong> @detalle.Notes
                                                 </div>
                                             }
 
-                                            <!-- Nota de anulaciÃ³n -->
+                                            <!-- Nota de anulación -->
                                             @if (!string.IsNullOrWhiteSpace(detalle.CancellationReason))
                                             {
                                                 <div class="alert alert-danger py-1 small mb-2">
-                                                    <i class="bi bi-slash-circle me-1"></i><strong>Motivo de anulaciÃ³n:</strong> @detalle.CancellationReason
+                                                    <i class="bi bi-slash-circle me-1"></i><strong>Motivo de anulación:</strong> @detalle.CancellationReason
                                                 </div>
                                             }
 
@@ -317,11 +317,11 @@ else
                                                         <div class="pago-chip">
                                                             <span class="fw-semibold">$@pago.Amount.ToString("N0")</span>
                                                             <span class="text-muted ms-1 small">@pago.PaymentMethodName</span>
-                                                            <span class="text-muted ms-1 small">Â·</span>
+                                                            <span class="text-muted ms-1 small">·</span>
                                                             <span class="text-muted small">@pago.PaymentDate.ToString("dd/MM/yyyy")</span>
                                                             @if (!string.IsNullOrWhiteSpace(pago.Reference))
                                                             {
-                                                                <span class="text-muted small ms-1">Â· Ref: @pago.Reference</span>
+                                                                <span class="text-muted small ms-1">· Ref: @pago.Reference</span>
                                                             }
                                                         </div>
                                                     }
@@ -349,7 +349,7 @@ else
     </div>
 }
 
-<!-- Modal de motivo de anulaciÃ³n -->
+<!-- Modal de motivo de anulación -->
 @if (_mostrarModalAnular)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
@@ -360,8 +360,8 @@ else
                     <button class="btn-close" @onclick="CerrarModal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted small">Esta acciÃ³n revertirÃ¡ el stock y las cuentas por cobrar asociadas.</p>
-                    <label class="form-label fw-semibold">Motivo de anulaciÃ³n <span class="text-danger">*</span></label>
+                    <p class="text-muted small">Esta acción revertirá el stock y las cuentas por cobrar asociadas.</p>
+                    <label class="form-label fw-semibold">Motivo de anulación <span class="text-danger">*</span></label>
                     <textarea class="form-control" rows="3" placeholder="Indique el motivo..."
                               @bind="_motivoAnulacion" @bind:event="oninput"
                               @onkeydown="HandleAnulacionKeyDown"
@@ -375,7 +375,7 @@ else
                     <button class="btn btn-secondary btn-sm" @onclick="CerrarModal">Cancelar</button>
                     <button class="btn btn-danger btn-sm" @onclick="ConfirmarAnulacion" disabled="@_anulando">
                         @if (_anulando) { <span class="spinner-border spinner-border-sm me-1"></span> }
-                        <i class="bi bi-check-lg me-1"></i>Confirmar anulaciÃ³n
+                        <i class="bi bi-check-lg me-1"></i>Confirmar anulación
                     </button>
                 </div>
             </div>
@@ -400,7 +400,7 @@ else
                     </p>
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label fw-semibold small">MÃ©todo de pago *</label>
+                            <label class="form-label fw-semibold small">Método de pago *</label>
                             <select class="form-select" @bind="_pagoForm.MetodoPagoId">
                                 <option value="0">Seleccione...</option>
                                 @foreach (var mp in _metodosPago)
@@ -416,7 +416,7 @@ else
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold small">Referencia</label>
-                            <input class="form-control" @bind="_pagoForm.Referencia" placeholder="NÂ° cheque, transf..." @onkeydown="HandlePagoKeyDown" />
+                            <input class="form-control" @bind="_pagoForm.Referencia" placeholder="N° cheque, transf..." @onkeydown="HandlePagoKeyDown" />
                         </div>
                         <div class="col-12">
                             <label class="form-label fw-semibold small">Notas</label>
@@ -455,7 +455,7 @@ else
     private bool      _ordenDesc    = true;
     private HashSet<int> _pdfDescargando = [];
 
-    // â”€â”€ Detalle expandible â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Detalle expandible ─────────────────────────────────────────────────────
     private HashSet<int>                         _expandidas      = [];
     private HashSet<int>                         _detallesCargando = [];
     private Dictionary<int, VentaDetalleDto>     _detallesCache   = [];
@@ -513,7 +513,7 @@ else
         var t2 = Api.GetMetodosPagoAsync();
         await Task.WhenAll(t1, t2);
         _facturas    = t1.Result ?? [];
-        // Excluir "Fiado / CrÃ©dito" (Type == 5 = Credit) del selector de abonos
+        // Excluir "Fiado / Crédito" (Type == 5 = Credit) del selector de abonos
         _metodosPago = (t2.Result ?? [])
             .Where(m => m.Type != 5)
             .ToList();
@@ -525,7 +525,7 @@ else
     {
         _loading = true;
         _facturas = await Api.GetFacturasAsync() ?? [];
-        // Limpiar cachÃ© de detalles al recargar la lista
+        // Limpiar caché de detalles al recargar la lista
         _expandidas.Clear();
         _detallesCache.Clear();
         _detallesCargando.Clear();
@@ -543,7 +543,7 @@ else
 
         _expandidas.Add(id);
 
-        // Cargar solo si no estÃ¡ en cachÃ©
+        // Cargar solo si no está en caché
         if (!_detallesCache.ContainsKey(id))
         {
             _detallesCargando.Add(id);
@@ -632,7 +632,7 @@ else
 
     private async Task ConfirmarPago()
     {
-        if (_pagoForm.MetodoPagoId == 0) { _errorPago = "Seleccione un mÃ©todo de pago."; return; }
+        if (_pagoForm.MetodoPagoId == 0) { _errorPago = "Seleccione un método de pago."; return; }
         if (_pagoForm.Monto <= 0)        { _errorPago = "El monto debe ser mayor a cero."; return; }
         if (_pagoForm.Monto > _pagoSaldo)
         {
@@ -673,7 +673,7 @@ else
     {
         if (string.IsNullOrWhiteSpace(_motivoAnulacion))
         {
-            _errorModal = "El motivo de anulaciÃ³n es obligatorio.";
+            _errorModal = "El motivo de anulación es obligatorio.";
             return;
         }
 
@@ -681,7 +681,7 @@ else
         _errorModal = null;
         try
         {
-            // Detectar si habÃ­a productos de inventario para enriquecer el mensaje
+            // Detectar si había productos de inventario para enriquecer el mensaje
             var tieneProductosInventario = _detallesCache.TryGetValue(_idFacturaAnular, out var detallePrevio)
                 && detallePrevio.Details.Any(d => d.ProductId > 0);
 
@@ -735,7 +735,7 @@ else
         }
     }
 
-    // â”€â”€ Ordenamiento de columnas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Ordenamiento de columnas ────────────────────────────────────────────────────
     private void OrdenarPor(string campo)
     {
         if (_ordenCampo == campo)

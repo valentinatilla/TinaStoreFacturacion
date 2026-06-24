@@ -3,7 +3,7 @@
 @inject TinaStoreApiClient Api
 @inject NavigationManager Nav
 
-<PageTitle>Venta Libre â€” Tina Store</PageTitle>
+<PageTitle>Venta Libre — Tina Store</PageTitle>
 
 <div class="d-flex align-items-center mb-4 gap-3">
     <NavLink href="/ventas" class="btn btn-outline-secondary btn-sm">
@@ -37,7 +37,7 @@
         <div class="card border-0 shadow-sm p-3">
             <h6 class="fw-bold mb-3"><i class="bi bi-credit-card me-1 text-purple"></i>Pago</h6>
             <div class="mb-2">
-                <label class="form-label small fw-semibold">MÃ©todo de pago</label>
+                <label class="form-label small fw-semibold">Método de pago</label>
                 <select class="form-select" @bind="_metodoPagoId">
                     <option value="0">Seleccione...</option>
                     @foreach (var mp in _metodosPago)
@@ -57,13 +57,13 @@
         </div>
     </div>
 
-    <!-- Columna derecha: lÃ­neas libres -->
+    <!-- Columna derecha: líneas libres -->
     <div class="col-lg-8">
         <div class="card border-0 shadow-sm p-3">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h6 class="fw-bold mb-0"><i class="bi bi-list-ul me-1 text-purple"></i>Detalle de la venta</h6>
                 <button class="btn btn-sm btn-outline-purple" @onclick="AgregarLinea">
-                    <i class="bi bi-plus-lg me-1"></i>Agregar lÃ­nea
+                    <i class="bi bi-plus-lg me-1"></i>Agregar línea
                 </button>
             </div>
 
@@ -72,7 +72,7 @@
                 <table class="table table-sm mb-3">
                     <thead class="table-light">
                         <tr>
-                            <th>DescripciÃ³n</th>
+                            <th>Descripción</th>
                             <th class="text-center" style="width:90px">Cant.</th>
                             <th class="text-end" style="width:120px">Precio unit.</th>
                             <th class="text-end" style="width:100px">Subtotal</th>
@@ -157,7 +157,7 @@
             {
                 <div class="text-center py-4 text-muted">
                     <i class="bi bi-plus-circle fs-2 d-block mb-2 text-purple opacity-50"></i>
-                    Pulsa <strong>Agregar lÃ­nea</strong> para ingresar los productos o servicios de esta venta
+                    Pulsa <strong>Agregar línea</strong> para ingresar los productos o servicios de esta venta
                 </div>
             }
 
@@ -198,9 +198,9 @@
         var t2 = Api.GetMetodosPagoAsync();
         await Task.WhenAll(t1, t2);
         _clientes    = t1.Result ?? [];
-        // Excluir "Fiado / CrÃ©dito" (Type == 5) del selector de pago inicial
+        // Excluir "Fiado / Crédito" (Type == 5) del selector de pago inicial
         _metodosPago = (t2.Result ?? []).Where(m => m.Type != 5).ToList();
-        AgregarLinea(); // Una lÃ­nea vacÃ­a de inicio
+        AgregarLinea(); // Una línea vacía de inicio
     }
 
     private void AgregarLinea()
@@ -233,11 +233,11 @@
         if (_clienteId == 0)
             { _error = "Selecciona un cliente antes de registrar la venta."; return; }
         if (!_lineas.Any())
-            { _error = "Agrega al menos una lÃ­nea a la venta."; return; }
+            { _error = "Agrega al menos una línea a la venta."; return; }
         if (_lineas.Any(l => string.IsNullOrWhiteSpace(l.Descripcion)))
-            { _error = "Todas las lÃ­neas deben tener descripciÃ³n."; return; }
+            { _error = "Todas las líneas deben tener descripción."; return; }
         if (_lineas.Any(l => l.Cantidad <= 0))
-            { _error = "La cantidad de cada lÃ­nea debe ser mayor a cero."; return; }
+            { _error = "La cantidad de cada línea debe ser mayor a cero."; return; }
         if (_lineas.Any(l => l.PrecioUnitario < 0))
             { _error = "El precio unitario no puede ser negativo."; return; }
         if (_descuentoPct is < 0 or > 100)

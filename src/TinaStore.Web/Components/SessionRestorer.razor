@@ -11,7 +11,7 @@
         {
             if (Session.IsAuthenticated) return;
 
-            // Lee el JWT almacenado en la cookie HTTP-only (vÃ­a endpoint server-side)
+            // Lee el JWT almacenado en la cookie HTTP-only (vía endpoint server-side)
             var token = await JS.InvokeAsync<string>("tinaSession.get");
             if (string.IsNullOrWhiteSpace(token)) return;
 
@@ -23,7 +23,7 @@
         }
         finally
         {
-            // SeÃ±aliza que terminÃ³, con o sin Ã©xito, para que Routes pueda renderizar
+            // Señaliza que terminó, con o sin éxito, para que Routes pueda renderizar
             Gate.SignalDone();
         }
     }

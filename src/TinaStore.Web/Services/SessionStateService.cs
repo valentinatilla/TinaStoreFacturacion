@@ -3,8 +3,8 @@ using Microsoft.JSInterop;
 namespace TinaStore.Web.Services;
 
 /// <summary>
-/// Mantiene el estado de sesiÃ³n del usuario en el circuito Blazor Server
-/// y lo persiste en una cookie HTTP-only para sobrevivir recargas de pÃ¡gina.
+/// Mantiene el estado de sesión del usuario en el circuito Blazor Server
+/// y lo persiste en una cookie HTTP-only para sobrevivir recargas de página.
 /// </summary>
 public class SessionStateService
 {
@@ -26,7 +26,7 @@ public class SessionStateService
     }
 
     /// <summary>
-    /// Restaura la sesiÃ³n desde un token ya validado (usado al arrancar desde cookie).
+    /// Restaura la sesión desde un token ya validado (usado al arrancar desde cookie).
     /// </summary>
     public void RestoreSession(string token, string userName, string email, string role)
     {
@@ -47,7 +47,7 @@ public class SessionStateService
     }
 
     /// <summary>
-    /// Persiste el JWT en la cookie HTTP-only del servidor vÃ­a fetch JS.
+    /// Persiste el JWT en la cookie HTTP-only del servidor vía fetch JS.
     /// </summary>
     public static async Task PersistAsync(IJSRuntime js, string token)
     {
@@ -55,7 +55,7 @@ public class SessionStateService
     }
 
     /// <summary>
-    /// Borra la cookie de sesiÃ³n del servidor vÃ­a fetch JS.
+    /// Borra la cookie de sesión del servidor vía fetch JS.
     /// </summary>
     public static async Task ClearPersistenceAsync(IJSRuntime js)
     {
