@@ -50,7 +50,11 @@ try
             webRootPath));
 
     // ─── Autenticación JWT ────────────────────────────────────────────────────
-    var jwtKey = builder.Configuration["Jwt:Key"]!;
+    var jwtKey = builder.Configuration["Jwt:Key"];
+    if (string.IsNullOrWhiteSpace(jwtKey))
+        throw new InvalidOperationException(
+            "La clave JWT (Jwt:Key) no está configurada. " +
+            "Establécela mediante user-secrets o una variable de entorno antes de iniciar la aplicación.");
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
         {
@@ -133,6 +137,10 @@ try
         // En producción, configura App__AdminEmail y App__AdminPassword como env vars.
         var adminEmail    = builder.Configuration["App:AdminEmail"]    ?? "admin@tinastore.com";
         var adminPassword = builder.Configuration["App:AdminPassword"] ?? "Admin123!";
+        if (esProduccion && builder.Configuration["App:AdminPassword"] is null)
+            Log.Warning("⚠️  La contraseña del administrador inicial no está configurada. " +
+                        "Se usará la contraseña por defecto, lo que supone un riesgo de seguridad en producción. " +
+                        "Establece la variable de entorno App__AdminPassword antes de iniciar la aplicación.");
         if (!db.Users.Any(u => u.Email == adminEmail))
         {
             var hasher = scope.ServiceProvider.GetRequiredService<IAppPasswordHasher>();
