@@ -2,7 +2,7 @@
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 
-<PageTitle>Egresos â€” Tina Store</PageTitle>
+<PageTitle>Egresos ” Tina Store</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold mb-0"><i class="bi bi-arrow-down-circle me-2 text-purple"></i>Egresos y Gastos</h4>
@@ -79,7 +79,7 @@ else
                             style="@(anulado ? "opacity:.55" : "")">
                             <td class="text-muted small">@e.ExpenseDate.ToString("dd/MM/yyyy")</td>
                             <td>@if (anulado){<s>@e.Description</s>}else{@e.Description}</td>
-                            <td class="text-muted small">@(e.SupplierName ?? "â€”")</td>
+                            <td class="text-muted small">@(e.SupplierName ?? "”")</td>
                             <td class="text-end fw-semibold">
                                 @if (anulado){<s>$@e.Amount.ToString("N0")</s>}else{<span>$@e.Amount.ToString("N0")</span>}
                             </td>
@@ -127,7 +127,7 @@ else
                             <td>@if (anulado){<s>@e.Description</s>}else{@e.Description}</td>
                             <td><span class="badge @(anulado ? "bg-danger" : "bg-secondary")">@e.ExpenseCategoryName</span></td>
                             <td class="text-muted small ts-table-hide-mobile">
-                                @(string.IsNullOrWhiteSpace(e.PaymentMethodName) ? "â€”" : e.PaymentMethodName)
+                                @(string.IsNullOrWhiteSpace(e.PaymentMethodName) ? "”" : e.PaymentMethodName)
                             </td>
                             <td class="text-end fw-semibold">
                                 @if (anulado){<s>$@e.Amount.ToString("N0")</s>}else{<span>$@e.Amount.ToString("N0")</span>}
@@ -237,7 +237,7 @@ else
                     <button class="btn-close" @onclick="() => _mostrarModalAnular = false"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-1">Â¿Confirmas que deseas anular el egreso <strong>@_egresoAAnular?.Description</strong>?</p>
+                    <p class="mb-1">¿Confirmas que deseas anular el egreso <strong>@_egresoAAnular?.Description</strong>?</p>
                     <p class="text-muted small mb-0">Esta acción no se puede deshacer y el egreso quedará excluido de los totales.</p>
                 </div>
                 <div class="modal-footer">
@@ -267,12 +267,12 @@ else
     private string? _errorModal;
     private EgresoForm _form = new();
 
-    // â”€â”€ Confirmación de anulación â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ”€”€ Confirmación de anulación ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
     private bool _mostrarModalAnular;
     private EgresoDto? _egresoAAnular;
     private int _editandoId;
 
-    // â”€â”€ Filtros â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ”€”€ Filtros ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
     private string? _filtroDesdeStr;
     private string? _filtroHastaStr = DateTime.Today.ToString("yyyy-MM-dd");
     private int _filtroCategoriaId;

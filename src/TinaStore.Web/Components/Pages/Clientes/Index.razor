@@ -3,7 +3,7 @@
 @inject TinaStoreApiClient Api
 @inject IJSRuntime JS
 
-<PageTitle>Clientes â€” Tina Store</PageTitle>
+<PageTitle>Clientes ” Tina Store</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h4 class="fw-bold mb-0"><i class="bi bi-people me-2 text-purple"></i>Clientes</h4>
@@ -115,12 +115,12 @@ else
                                 }
                             </td>
                             <td class="text-end fw-semibold ts-table-hide-mobile @(c.PendingBalance > 0 ? "text-danger" : "text-muted")">
-                                @(c.PendingBalance > 0 ? c.PendingBalance.ToString("N0") : "â€”")
+                                @(c.PendingBalance > 0 ? c.PendingBalance.ToString("N0") : "”")
                             </td>
                             <td class="text-muted small ts-table-hide-mobile">
                                 @(c.LastPurchaseDate.HasValue
                                     ? c.LastPurchaseDate.Value.ToLocalTime().ToString("dd/MM/yyyy")
-                                    : "â€”")
+                                    : "”")
                             </td>
                             <td class="text-end" @onclick:stopPropagation="true">
                                 <div class="d-flex gap-1 justify-content-end">
@@ -193,12 +193,12 @@ else
                         <div class="col-12 col-md-6">
                             <label class="form-label small fw-semibold">Tipo doc.</label>
                             <select class="form-select" @bind="_form.DocumentType">
-                                <option value="">â€” Selecciona â€”</option>
-                                <option value="CC">CC â€” Cédula de ciudadanía</option>
-                                <option value="NIT">NIT â€” Número de identificación tributaria</option>
-                                <option value="CE">CE â€” Cédula de extranjería</option>
-                                <option value="PP">PP â€” Pasaporte</option>
-                                <option value="TI">TI â€” Tarjeta de identidad</option>
+                                <option value="">” Selecciona ”</option>
+                                <option value="CC">CC ” Cédula de ciudadanía</option>
+                                <option value="NIT">NIT ” Número de identificación tributaria</option>
+                                <option value="CE">CE ” Cédula de extranjería</option>
+                                <option value="PP">PP ” Pasaporte</option>
+                                <option value="TI">TI ” Tarjeta de identidad</option>
                                 <option value="Otro">Otro</option>
                             </select>
                         </div>
@@ -255,7 +255,7 @@ else
                     <button class="btn-close" @onclick="() => _mostrarModalEliminar = false"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-0">Â¿Seguro que deseas eliminar a <strong>@_nombreAEliminar</strong>? Esta acción no se puede deshacer.</p>
+                    <p class="mb-0">¿Seguro que deseas eliminar a <strong>@_nombreAEliminar</strong>? Esta acción no se puede deshacer.</p>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" @onclick="() => _mostrarModalEliminar = false">Cancelar</button>
@@ -285,7 +285,7 @@ else
     private string _nombreAEliminar = "";
     private bool _exportandoClientes;
 
-    // â”€â”€ Detalle expandible con nota â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ”€”€ Detalle expandible con nota ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
     private readonly HashSet<int> _expandidos = [];
 
     private async Task ExportarExcel()
@@ -314,13 +314,13 @@ else
         finally { _exportandoClientes = false; }
     }
 
-    // â”€â”€ Errores de validación del modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ”€”€ Errores de validación del modal ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
     private string? _errNombre;
     private string? _errEmail;
     private string? _errTelefono;
     private List<string> _erroresModal = [];
 
-    // â”€â”€ Filtros â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ”€”€ Filtros ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
     private string _filtroTexto  = string.Empty;
     private string _filtroEmail  = string.Empty;
     private string _filtroEstado = string.Empty;
@@ -378,7 +378,7 @@ else
         _filtrados    = _clientes;
     }
 
-    // â”€â”€ Ordenamiento por columna â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ”€”€ Ordenamiento por columna ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
     private string  _ordenCampo = string.Empty;
     private bool    _ordenDesc;
 

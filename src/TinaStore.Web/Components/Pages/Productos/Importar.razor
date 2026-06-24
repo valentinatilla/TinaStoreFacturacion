@@ -4,7 +4,7 @@
 @inject IJSRuntime JS
 @inject NavigationManager Nav
 
-<PageTitle>Importar Productos â€” Tina Store</PageTitle>
+<PageTitle>Importar Productos ” Tina Store</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold mb-0">
@@ -22,12 +22,12 @@
     </div>
 }
 
-<!-- â”€â”€ Paso 1: Subir archivo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!-- ”€”€ Paso 1: Subir archivo ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€ -->
 @if (_paso == 1)
 {
     <div class="card border-0 shadow-sm p-4" style="max-width: 600px;">
         <h6 class="fw-bold mb-3 text-purple">
-            <i class="bi bi-upload me-2"></i>Paso 1 â€” Selecciona el archivo Excel
+            <i class="bi bi-upload me-2"></i>Paso 1 ” Selecciona el archivo Excel
         </h6>
         <p class="text-muted small mb-3">
             El archivo debe seguir la plantilla oficial.
@@ -52,13 +52,13 @@
     </div>
 }
 
-<!-- â”€â”€ Paso 2: Tabla de previsualización â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!-- ”€”€ Paso 2: Tabla de previsualización ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€ -->
 @if (_paso == 2 && _preview is not null)
 {
     <div class="card border-0 shadow-sm p-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h6 class="fw-bold mb-0 text-purple">
-                <i class="bi bi-table me-2"></i>Paso 2 â€” Revisa y edita las filas antes de importar
+                <i class="bi bi-table me-2"></i>Paso 2 ” Revisa y edita las filas antes de importar
             </h6>
             <div class="d-flex gap-2">
                 <span class="badge bg-success">@_preview.Count(r => r.Valido) válidas</span>
@@ -185,7 +185,7 @@
     </div>
 }
 
-<!-- â”€â”€ Paso 3: Resultado â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!-- ”€”€ Paso 3: Resultado ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€ -->
 @if (_paso == 3 && _resultado is not null)
 {
     <div class="card border-0 shadow-sm p-4" style="max-width: 500px;">

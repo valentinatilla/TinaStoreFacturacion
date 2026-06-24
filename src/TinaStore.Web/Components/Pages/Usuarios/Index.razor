@@ -4,7 +4,7 @@
 @inject SessionStateService Session
 @inject NavigationManager Nav
 
-<PageTitle>Usuarios â€” Tina Store</PageTitle>
+<PageTitle>Usuarios ” Tina Store</PageTitle>
 
 @* Solo Admin puede acceder *@
 @if (Session.UserRole != "Admin")
@@ -64,7 +64,7 @@ else
                                 </span>
                             </td>
                             <td class="text-muted small ts-table-hide-mobile">
-                                @(u.LastLoginAt.HasValue ? u.LastLoginAt.Value.ToString("dd/MM/yyyy HH:mm") : "â€”")
+                                @(u.LastLoginAt.HasValue ? u.LastLoginAt.Value.ToString("dd/MM/yyyy HH:mm") : "”")
                             </td>
                             <td class="text-end">
                                 <button class="btn btn-sm btn-outline-secondary me-1" title="Editar"
@@ -241,7 +241,7 @@ else
                     <button class="btn-close" @onclick="() => _mostrarModalDesactivar = false"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-1">Â¿Confirmas que deseas desactivar al usuario <strong>@_usuarioADesactivar?.FullName</strong>?</p>
+                    <p class="mb-1">¿Confirmas que deseas desactivar al usuario <strong>@_usuarioADesactivar?.FullName</strong>?</p>
                     <p class="text-muted small mb-0">El usuario no podrá iniciar sesión hasta que sea reactivado desde la edición.</p>
                 </div>
                 <div class="modal-footer">
@@ -274,11 +274,11 @@ else
     private bool _reseteando;
     private string? _errorReset;
 
-    // â”€â”€ Confirmación desactivar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ”€”€ Confirmación desactivar ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
     private bool _mostrarModalDesactivar;
     private UsuarioDto? _usuarioADesactivar;
 
-    // â”€â”€ Toggles ojito de contraseña â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ”€”€ Toggles ojito de contraseña ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
     private bool _mostrarPassNuevo;
     private bool _mostrarPassReset1;
     private bool _mostrarPassReset2;

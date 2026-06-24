@@ -4,7 +4,7 @@
 @inject IJSRuntime JS
 @implements IAsyncDisposable
 
-<PageTitle>Productos â€” Tina Store</PageTitle>
+<PageTitle>Productos ” Tina Store</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h4 class="fw-bold mb-0"><i class="bi bi-box-seam me-2 text-purple"></i>Productos</h4>
@@ -160,11 +160,11 @@ else
                             <td class="text-muted small ts-table-hide-mobile">@p.Sku</td>
                             <td class="fw-semibold">@p.Name</td>
                             <td class="ts-table-hide-mobile">@p.CategoryName</td>
-                            <td class="ts-table-hide-mobile text-muted small">@(p.SupplierName ?? "â€”")</td>
-                            <td class="text-end text-muted ts-table-hide-mobile">@(p.PurchasePrice > 0 ? p.PurchasePrice.ToString("N0") : "â€”")</td>
+                            <td class="ts-table-hide-mobile text-muted small">@(p.SupplierName ?? "”")</td>
+                            <td class="text-end text-muted ts-table-hide-mobile">@(p.PurchasePrice > 0 ? p.PurchasePrice.ToString("N0") : "”")</td>
                             <td class="text-end">$@p.SalePrice.ToString("N0")</td>
                             <td class="text-end small ts-table-hide-mobile @(p.ProfitMargin > 0 ? "text-success fw-semibold" : "text-muted")">
-                                @(p.ProfitMargin > 0 ? p.ProfitMargin.ToString("0.0") + " %" : "â€”")
+                                @(p.ProfitMargin > 0 ? p.ProfitMargin.ToString("0.0") + " %" : "”")
                             </td>
                             <td class="text-center">
                                 <span class="badge @(!p.IsActive ? "bg-secondary" : p.CurrentStock == 0 ? "badge-sin-stock" : p.IsLowStock ? "badge-bajo-stock" : "bg-success")">@p.CurrentStock</span>
@@ -261,7 +261,7 @@ else
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">Unidad</label>
                         <input class="form-control @(!string.IsNullOrWhiteSpace(_form.Unit) && System.Text.RegularExpressions.Regex.IsMatch(_form.Unit, @"\d") ? "is-invalid" : "")"
-                               @bind="_form.Unit" maxlength="30" placeholder="Ej: unidad, kgâ€¦" @onkeydown="HandleModalKeyDown" />
+                               @bind="_form.Unit" maxlength="30" placeholder="Ej: unidad, kg…" @onkeydown="HandleModalKeyDown" />
                         <div class="invalid-feedback">La unidad de medida no debe contener números.</div>
                         <div class="form-text text-muted">Solo letras, espacios y tildes.</div>
                     </div>
@@ -318,7 +318,7 @@ else
                         <input type="file" id="nativeImgProducto" accept=".jpg,.jpeg,.png,.webp" style="display:none" />
                         @if (_form.ImagePathActual is null && _form.ImagenPreviewUrl is null)
                         {
-                            <p class="text-muted small mt-1">JPG, PNG o WEBP Â· Máximo 2 MB</p>
+                            <p class="text-muted small mt-1">JPG, PNG o WEBP · Máximo 2 MB</p>
                         }
                     </div>
                 </div>
@@ -353,7 +353,7 @@ else
                     <button class="btn-close" @onclick="CerrarModalEliminar"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-0">Â¿Seguro que deseas eliminar a <strong>@_productoAEliminar.Name</strong>? Esta acción no se puede deshacer.</p>
+                    <p class="mb-0">¿Seguro que deseas eliminar a <strong>@_productoAEliminar.Name</strong>? Esta acción no se puede deshacer.</p>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" @onclick="CerrarModalEliminar">Cancelar</button>
@@ -367,7 +367,7 @@ else
     </div>
 }
 
-<!-- â•â•â• Modal edición masiva â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- ••• Modal edición masiva ••••••••••••••••••••••••••••••••••••••••••••••• -->
 @if (_mostrarEdicionMasiva)
 {
     <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
@@ -380,11 +380,11 @@ else
                         <i class="bi bi-pencil-square me-2 text-purple"></i>Edición masiva de productos
                         @if (_bulkPaso == 2)
                         {
-                            <span class="badge bg-purple ms-2" style="font-size:.75rem;">Paso 2 â€” Confirmar</span>
+                            <span class="badge bg-purple ms-2" style="font-size:.75rem;">Paso 2 ” Confirmar</span>
                         }
                         else
                         {
-                            <span class="badge badge-estado-pendiente ms-2" style="font-size:.75rem;">Paso 1 â€” Editar</span>
+                            <span class="badge badge-estado-pendiente ms-2" style="font-size:.75rem;">Paso 1 ” Editar</span>
                         }
                     </h5>
                     <button class="btn-close" @onclick="CerrarEdicionMasiva"></button>
@@ -392,7 +392,7 @@ else
 
                 @if (_bulkPaso == 1)
                 {
-                    <!-- â”€â”€ PASO 1: tabla editable â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+                    <!-- ”€”€ PASO 1: tabla editable ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€ -->
                     <div class="modal-body p-0">
 
                         <!-- Barra de búsqueda -->
@@ -521,7 +521,7 @@ else
                 }
                 else
                 {
-                    <!-- â”€â”€ PASO 2: resumen y confirmación â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+                    <!-- ”€”€ PASO 2: resumen y confirmación ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€ -->
                     <div class="modal-body">
                         @{
                             var _resumenNumericos = FilasConCambiosNumericos.ToList();
@@ -616,7 +616,7 @@ else
                                 Actualizados: <strong>@_bulkResultado.TotalActualizados</strong>
                                 @if (_bulkResultado.TotalErrores > 0)
                                 {
-                                    <span> Â· Errores: <strong class="text-danger">@_bulkResultado.TotalErrores</strong></span>
+                                    <span> · Errores: <strong class="text-danger">@_bulkResultado.TotalErrores</strong></span>
                                     @foreach (var e in _bulkResultado.Resultados.Where(r => !r.Ok))
                                     {
                                         <div class="small text-danger mt-1">@e.ProductName: @e.Error</div>
@@ -644,7 +644,7 @@ else
 @code {
     private string _apiBase = string.Empty;
 
-    // â”€â”€ Tarjetas resumen (calculadas desde _productos) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ”€”€ Tarjetas resumen (calculadas desde _productos) ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
     private int     _refDisponibles  => _productos.Count(p => p.IsActive && p.CurrentStock > 0);
     private decimal _costoInventario => _productos.Where(p => p.IsActive).Sum(p => p.PurchasePrice * p.CurrentStock);
 
@@ -665,12 +665,12 @@ else
     private IBrowserFile? _imagenSeleccionada;
     private byte[]? _imagenBytes;
 
-    // â”€â”€ Drag & drop JS interop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ”€”€ Drag & drop JS interop ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
     private ElementReference _dropZoneRef;
     private DotNetObjectReference<Index>? _dotNetRef;
     private bool _dropZoneIniciada;
 
-    // â”€â”€ Filtros â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ”€”€ Filtros ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
     private string   _filtroTexto       = string.Empty;
     private int      _filtroCategoriaId;
     private int      _filtroProveedorId;
@@ -946,7 +946,7 @@ else
 
     private async Task Guardar()
     {
-        // â”€â”€ Validaciones por campo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ”€”€ Validaciones por campo ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
         _errorModal = null;
         _mensaje = null;
         if (string.IsNullOrWhiteSpace(_form.Name))
@@ -1113,7 +1113,7 @@ else
         public int StockEntrada { get; set; }
     }
 
-    // â”€â”€ Edición masiva â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ”€”€ Edición masiva ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
     private bool               _mostrarEdicionMasiva;
     private int                _bulkPaso = 1;
     private string             _bulkFiltro = "";
@@ -1245,7 +1245,7 @@ else
                 partes.Add($"{_bulkImagenesErrores} imagen(es) con error");
             if (numErrores > 0)
                 partes.Add($"{numErrores} error(es) numérico(s)");
-            _mensaje = "Edición masiva: " + string.Join(" Â· ", partes) + ".";
+            _mensaje = "Edición masiva: " + string.Join(" · ", partes) + ".";
 
             // Mostrar detalle de errores de imagen en el resultado del bulk
             if (erroresImagen.Count > 0 && _bulkResultado is null)
