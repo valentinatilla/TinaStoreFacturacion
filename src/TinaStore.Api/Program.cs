@@ -184,8 +184,11 @@ try
 
     // Servir imágenes desde el volumen externo (/app/data/uploads) cuando
     // Uploads:BasePath apunta fuera de wwwroot (caso Railway con 1 solo volumen).
+    // Solo se activa si la ruta configurada es distinta de wwwroot para evitar
+    // registrar dos proveedores para la misma carpeta.
     var uploadsSettings = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<UploadsSettings>>().Value;
-    if (!string.IsNullOrWhiteSpace(uploadsSettings.BasePath))
+    if (!string.IsNullOrWhiteSpace(uploadsSettings.BasePath)
+        && !uploadsSettings.BasePath.Equals(webRootPath, StringComparison.OrdinalIgnoreCase))
     {
         var uploadsDir = Path.Combine(uploadsSettings.BasePath, "uploads");
         Directory.CreateDirectory(uploadsDir);
