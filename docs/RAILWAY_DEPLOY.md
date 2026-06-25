@@ -57,6 +57,7 @@
 |----------|-------|
 | `ASPNETCORE_ENVIRONMENT` | `Production` |
 | `ConnectionStrings__DefaultConnection` | `Data Source=/app/data/tinastore.db` |
+| `Uploads__BasePath` | `/app/data` |
 | `Jwt__Key` | _(ver cómo generar abajo)_ |
 | `Jwt__Issuer` | `TinaStore` |
 | `Jwt__Audience` | `TinaStoreClients` |
@@ -67,9 +68,16 @@
 | `Google__ClientSecret` | _(opcional — tu ClientSecret de Google)_ |
 | `Google__AllowedEmails` | _(opcional — tu correo Google)_ |
 
-5. Ve a la pestaña **Volumes** y añade un volumen:
+> **`Uploads__BasePath=/app/data`**: redirige el almacenamiento de imágenes de productos y el logo
+> hacia `/app/data/uploads/`, que vive dentro del volumen persistente. Así con un solo volumen
+> se protegen tanto la base de datos como las imágenes.
+
+5. Ve a la pestaña **Volumes** y añade **un volumen**:
+
    - **Mount Path**: `/app/data`
-   - Esto persiste la base de datos SQLite entre reinicios y redeploys.
+   - Persiste la base de datos SQLite **y** las imágenes de productos/logo en `/app/data/uploads/`.
+
+   > Solo necesitas este único volumen gracias a la variable `Uploads__BasePath=/app/data` del paso anterior.
 
 6. Railway generará automáticamente una URL pública como `https://tinastore-api-<hash>.up.railway.app`. Cópiala.
 
@@ -161,3 +169,42 @@ railway up --service tinastore-web
 - **Logs**: Railway captura todo `stdout`/`stderr`. Revísalos en la pestaña **Logs** de cada servicio.
 - **Costos**: El plan gratuito de Railway incluye 500 horas/mes de ejecución. Para un uso personal continuo, considera el plan Hobby (~$5/mes) que incluye uso ilimitado.
 - **Primer arranque**: La API creará automáticamente la base de datos y el usuario admin al iniciar por primera vez.
+
+---
+
+## ✅ Verificar que el volumen está configurado
+
+Después de crear el servicio, confirma en el dashboard de Railway que `tinastore-api` tiene este volumen:
+
+| Mount Path | Para qué sirve |
+|---|---|
+| `/app/data` | Base de datos `tinastore.db` **+** imágenes de productos y logo en `/app/data/uploads/` |
+
+La variable `Uploads__BasePath=/app/data` hace que las imágenes se guarden dentro de ese mismo volumen, sin necesitar un segundo volumen separado.
+
+---
+
+## 💾 Cómo hacer backup manual
+
+### Backup de la base de datos
+
+1. En Railway, ve al servicio `tinastore-api`
+2. Pestaña **Shell** → abre una terminal dentro del contenedor
+3. Ejecuta:
+   ```bash
+   cp /app/data/tinastore.db /app/data/tinastore-backup-$(date +%Y%m%d).db
+   ```
+4. Para descargarlo localmente, instala la Railway CLI y ejecuta desde tu máquina:
+   ```bash
+   railway run --service tinastore-api cat /app/data/tinastore.db > tinastore-backup.db
+   ```
+
+### Backup de imágenes
+
+Las imágenes están en `/app/wwwroot/uploads/` dentro del contenedor. Para descargarlas:
+```bash
+# Lista todas las imágenes
+railway run --service tinastore-api ls /app/wwwroot/uploads/productos/
+```
+
+> 💡 **Frecuencia recomendada**: hacer backup de la BD al menos una vez por semana, o antes de cada actualización importante.

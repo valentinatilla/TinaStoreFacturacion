@@ -49,8 +49,9 @@ ENV LANG=es_CO.UTF-8
 # Copiar la aplicación publicada
 COPY --from=build /app/publish .
 
-# Carpeta de logs y directorio para la base de datos SQLite
-# En Railway, monta un volumen persistente en /app/data
+# Carpeta de logs y directorio base para SQLite.
+# Las imágenes se guardan en /app/data/uploads/ (dentro del volumen Railway)
+# cuando se configura la variable Uploads__BasePath=/app/data
 RUN mkdir -p /app/logs /app/data
 
 # Exponer el puerto

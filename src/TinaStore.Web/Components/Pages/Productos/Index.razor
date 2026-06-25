@@ -494,6 +494,10 @@ else
                                                         <InputFile OnChange="e => SeleccionarImagenBulk(e, fila)"
                                                                    accept=".jpg,.jpeg,.png,.webp" class="d-none" />
                                                     </label>
+                                                    @if (fila.ErrorImagen is not null)
+                                                    {
+                                                        <div class="text-danger" style="font-size:.68rem;max-width:100px;">@fila.ErrorImagen</div>
+                                                    }
                                                 }
                                             </td>
                                         </tr>
@@ -1140,8 +1144,16 @@ else
         var archivo = e.File;
         const long maxBytes = 2 * 1024 * 1024;
         var ext = Path.GetExtension(archivo.Name).ToLowerInvariant();
-        if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp")) return;
-        if (archivo.Size > maxBytes) return;
+        if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp"))
+        {
+            fila.SetErrorImagen("Formato no permitido. Usa JPG, PNG o WebP.");
+            return;
+        }
+        if (archivo.Size > maxBytes)
+        {
+            fila.SetErrorImagen("La imagen supera el tamaño máximo de 2 MB.");
+            return;
+        }
         try
         {
             using var ms = new MemoryStream();
@@ -1152,7 +1164,10 @@ else
             var previewUrl = $"data:{contentType};base64,{Convert.ToBase64String(bytes)}";
             fila.SetImagen(bytes, archivo.Name, previewUrl);
         }
-        catch { /* silencioso; la imagen simplemente no se carga */ }
+        catch
+        {
+            fila.SetErrorImagen("No se pudo cargar la imagen. Inténtalo de nuevo.");
+        }
     }
 
     private void AbrirEdicionMasiva()
@@ -1248,11 +1263,24 @@ else
             _mensaje = "Edición masiva: " + string.Join(" · ", partes) + ".";
 
             // Mostrar detalle de errores de imagen en el resultado del bulk
-            if (erroresImagen.Count > 0 && _bulkResultado is null)
+            if (erroresImagen.Count > 0)
             {
-                _bulkResultado = new BulkUpdateResultDto(
-                    filasConImagen.Count, _bulkImagenesSubidas, _bulkImagenesErrores,
-                    erroresImagen.Select(e => new BulkUpdateItemResultDto(0, e, false, e)).ToList());
+                var imgResultados = erroresImagen.Select(e => new BulkUpdateItemResultDto(0, e, false, e)).ToList();
+                if (_bulkResultado is null)
+                {
+                    _bulkResultado = new BulkUpdateResultDto(
+                        filasConImagen.Count, _bulkImagenesSubidas, _bulkImagenesErrores,
+                        imgResultados);
+                }
+                else
+                {
+                    // Combinar errores numéricos + errores de imagen
+                    _bulkResultado = new BulkUpdateResultDto(
+                        _bulkResultado.TotalSolicitados,
+                        _bulkResultado.TotalActualizados,
+                        _bulkResultado.TotalErrores,
+                        [.. _bulkResultado.Resultados, .. imgResultados]);
+                }
             }
 
             if (!hayErrores)
@@ -1302,6 +1330,7 @@ else
         public byte[]?  ImagenBytes         { get; private set; }
         public string?  ImagenNombreArchivo { get; private set; }
         public string?  ImagenPreviewUrl    { get; private set; }
+        public string?  ErrorImagen         { get; private set; }
         public bool     TieneImagenNueva    => ImagenBytes is not null;
 
         public void SetImagen(byte[] bytes, string nombre, string previewUrl)
@@ -1309,6 +1338,12 @@ else
             ImagenBytes         = bytes;
             ImagenNombreArchivo = nombre;
             ImagenPreviewUrl    = previewUrl;
+            ErrorImagen         = null;
+        }
+
+        public void SetErrorImagen(string mensaje)
+        {
+            ErrorImagen = mensaje;
         }
 
         public void QuitarImagen()

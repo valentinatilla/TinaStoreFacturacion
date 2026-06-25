@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using TinaStore.Application.DTOs;
 using TinaStore.Application.Interfaces;
 using TinaStore.Domain.Exceptions;
@@ -44,18 +45,20 @@ public sealed class ProductsController : ControllerBase
     private readonly IProductService _service;
     private readonly IValidator<CreateProductDto> _createValidator;
     private readonly IValidator<UpdateProductDto> _updateValidator;
-    private readonly IWebHostEnvironment _env;
+    private readonly string _uploadsRoot;
 
     public ProductsController(
         IProductService service,
         IValidator<CreateProductDto> createValidator,
         IValidator<UpdateProductDto> updateValidator,
-        IWebHostEnvironment env)
+        IWebHostEnvironment env,
+        IOptions<UploadsSettings> uploadsOptions)
     {
         _service = service;
         _createValidator = createValidator;
         _updateValidator = updateValidator;
-        _env = env;
+        var basePath = uploadsOptions.Value.BasePath;
+        _uploadsRoot = string.IsNullOrWhiteSpace(basePath) ? env.WebRootPath : basePath;
     }
 
     /// <summary>Obtiene todos los productos. Parámetro opcional: soloActivos=true.</summary>
@@ -163,13 +166,13 @@ public sealed class ProductsController : ControllerBase
         if (producto is null)
             return NotFound(new { mensaje = $"Producto {id} no encontrado." });
 
-        var carpeta = Path.Combine(_env.WebRootPath, "uploads", "productos");
+        var carpeta = Path.Combine(_uploadsRoot, "uploads", "productos");
         Directory.CreateDirectory(carpeta);
 
         // Borrar imagen anterior si existe
         if (!string.IsNullOrEmpty(producto.ImagePath))
         {
-            var rutaAnterior = Path.Combine(_env.WebRootPath, producto.ImagePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            var rutaAnterior = Path.Combine(_uploadsRoot, producto.ImagePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
             if (System.IO.File.Exists(rutaAnterior))
                 System.IO.File.Delete(rutaAnterior);
         }
@@ -220,7 +223,7 @@ public sealed class ProductsController : ControllerBase
 
         if (!string.IsNullOrEmpty(producto.ImagePath))
         {
-            var rutaFisica = Path.Combine(_env.WebRootPath, producto.ImagePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            var rutaFisica = Path.Combine(_uploadsRoot, producto.ImagePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
             if (System.IO.File.Exists(rutaFisica))
                 System.IO.File.Delete(rutaFisica);
         }
