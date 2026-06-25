@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
@@ -42,12 +43,23 @@ try
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
 
-    // Registra IStoreSettingsService con la ruta física de wwwroot
-    var webRootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
+    // Ruta base para guardar uploads (imágenes de productos y logo).
+    // En Railway (plan gratuito con 1 solo volumen en /app/data), configura:
+    //   Uploads__BasePath=/app/data
+    // Así las imágenes se guardan en /app/data/uploads/ dentro del volumen persistente.
+    // En desarrollo no se configura esta variable y se usa wwwroot normalmente.
+    var webRootPath   = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
+    var uploadsBase   = builder.Configuration["Uploads:BasePath"];
+    var uploadsRoot   = string.IsNullOrWhiteSpace(uploadsBase) ? webRootPath : uploadsBase;
+
     builder.Services.AddScoped<TinaStore.Application.Interfaces.IStoreSettingsService>(sp =>
         new TinaStore.Application.Services.StoreSettingsService(
             sp.GetRequiredService<TinaStore.Domain.Interfaces.IRepository<TinaStore.Domain.Entities.StoreSettings>>(),
-            webRootPath));
+            uploadsRoot));
+
+    // Expone las imágenes al browser como archivos estáticos bajo la ruta /uploads/
+    // cuando están fuera de wwwroot (caso Railway con volumen en /app/data).
+    builder.Services.Configure<UploadsSettings>(o => o.BasePath = uploadsRoot);
 
     // ─── Autenticación JWT ────────────────────────────────────────────────────
     var jwtKey = builder.Configuration["Jwt:Key"];
@@ -169,6 +181,20 @@ try
     app.UseSerilogRequestLogging();
     app.UseCors("AllowAll");
     app.UseStaticFiles();
+
+    // Servir imágenes desde el volumen externo (/app/data/uploads) cuando
+    // Uploads:BasePath apunta fuera de wwwroot (caso Railway con 1 solo volumen).
+    var uploadsSettings = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<UploadsSettings>>().Value;
+    if (!string.IsNullOrWhiteSpace(uploadsSettings.BasePath))
+    {
+        var uploadsDir = Path.Combine(uploadsSettings.BasePath, "uploads");
+        Directory.CreateDirectory(uploadsDir);
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = new PhysicalFileProvider(uploadsDir),
+            RequestPath  = "/uploads"
+        });
+    }
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();

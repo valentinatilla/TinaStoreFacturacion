@@ -1,6 +1,6 @@
 # 🚀 Guía de Despliegue — Tina Store
 
-Esta guía te explica cómo publicar Tina Store en un servidor externo (hosting) para que funcione en internet.
+Esta guía explica cómo publicar Tina Store en un servidor externo (hosting) para que funcione en internet.
 
 ---
 
@@ -103,23 +103,7 @@ Railway es la opción más simple para producción. Soporta .NET via Docker.
 6. Configurar las variables de entorno en el dashboard de Railway
 7. Railway hace el deploy automáticamente con cada push a `master`
 
----
-
-## 🆓 Opción B: Despliegue en Azure App Service (plan gratuito F1) — PARA PRUEBAS
-
-Azure es la opción gratis más compatible con .NET.
-
-### Pasos:
-
-1. Crear cuenta en https://portal.azure.com (requiere tarjeta, no cobra en plan gratuito)
-2. Crear un "App Service" con plan F1 (gratuito)
-3. Elegir .NET 10 como runtime
-4. Conectar con GitHub para deploy automático
-5. Configurar variables de entorno en "Configuration > Application Settings"
-6. Para base de datos: usar Azure SQL Database (tiene plan gratuito de 100,000 vDTU/mes)
-
-> **Limitación importante:** El plan gratuito F1 tiene solo 60 minutos de CPU por día.
-> Solo usar para pruebas, **no para la tienda real**.
+Ver guía detallada en [`docs/RAILWAY_DEPLOY.md`](./RAILWAY_DEPLOY.md).
 
 ---
 
