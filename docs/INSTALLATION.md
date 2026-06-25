@@ -172,6 +172,7 @@ dotnet ef migrations remove \
 | Error de JWT inválido | Verificar que configuraste el secret con `dotnet user-secrets` |
 | La base de datos no existe | Ejecutar `dotnet ef database update` del Paso 3 |
 | CORS bloqueado | Verificar que el puerto del Web coincide en `appsettings.Development.json` del API |
+| `UNIQUE constraint failed: Products.Name` al arrancar | Hay una BD anterior con productos duplicados. Elimina `tinastore-dev.db` del equipo y vuelve a ejecutar: la app la recrea limpia. |
 
 ---
 
