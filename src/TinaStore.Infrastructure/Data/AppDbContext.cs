@@ -81,7 +81,7 @@ public class AppDbContext : DbContext
         {
             Id = 1,
             StoreName = "Tina Store",
-            TaxId = "1003565981-7",
+            TaxId = null,
             Currency = "COP",
             TaxPercentage = 0,
             InvoiceConsecutive = 1,

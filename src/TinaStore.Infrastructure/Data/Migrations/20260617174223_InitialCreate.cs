@@ -1,11 +1,11 @@
-ï»¿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace TinaStore.Infrastructure.Migrations
+namespace TinaStore.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -537,7 +537,7 @@ namespace TinaStore.Infrastructure.Migrations
             migrationBuilder.InsertData(
                 table: "Categories",
                 columns: new[] { "Id", "CreatedAt", "Description", "IsActive", "IsDeleted", "Name", "UpdatedAt" },
-                values: new object[] { 1, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "CategorÃ­a general", true, false, "General", null });
+                values: new object[] { 1, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Categoría general", true, false, "General", null });
 
             migrationBuilder.InsertData(
                 table: "ExpenseCategories",
@@ -548,7 +548,7 @@ namespace TinaStore.Infrastructure.Migrations
                     { 2, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, true, false, "Servicios", null },
                     { 3, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, true, false, "Compras a proveedor", null },
                     { 4, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, true, false, "Transporte", null },
-                    { 5, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, true, false, "NÃ³mina", null },
+                    { 5, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, true, false, "Nómina", null },
                     { 6, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, true, false, "Otros", null }
                 });
 
@@ -562,7 +562,7 @@ namespace TinaStore.Infrastructure.Migrations
                     { 3, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, true, false, "Daviplata", 3, null },
                     { 4, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, true, false, "Transferencia", 1, null },
                     { 5, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, true, false, "Tarjeta", 4, null },
-                    { 6, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, true, false, "Fiado / CrÃ©dito", 5, null }
+                    { 6, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), null, true, false, "Fiado / Crédito", 5, null }
                 });
 
             migrationBuilder.InsertData(

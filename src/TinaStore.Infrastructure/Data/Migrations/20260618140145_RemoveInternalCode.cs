@@ -1,8 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace TinaStore.Infrastructure.Migrations
+namespace TinaStore.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
     public partial class RemoveInternalCode : Migration
@@ -10,8 +10,8 @@ namespace TinaStore.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // ── Migración de datos: copiar InternalCode → Sku donde Sku esté vacío ──
-            // Esto preserva el identificador de los productos que solo tenían InternalCode.
+            // -- Migraci�n de datos: copiar InternalCode ? Sku donde Sku est� vac�o --
+            // Esto preserva el identificador de los productos que solo ten�an InternalCode.
             migrationBuilder.Sql(@"
                 UPDATE Products
                 SET Sku = InternalCode
@@ -20,7 +20,7 @@ namespace TinaStore.Infrastructure.Migrations
                   AND InternalCode != '';
             ");
 
-            // ── Eliminar la columna ya no necesaria ───────────────────────────────
+            // -- Eliminar la columna ya no necesaria -------------------------------
             migrationBuilder.DropColumn(
                 name: "InternalCode",
                 table: "Products");
