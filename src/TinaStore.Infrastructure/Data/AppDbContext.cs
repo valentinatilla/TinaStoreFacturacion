@@ -111,7 +111,8 @@ public class AppDbContext : DbContext
             new ExpenseCategory { Id = 3, Name = "Compras a proveedor", IsActive = true, CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
             new ExpenseCategory { Id = 4, Name = "Transporte", IsActive = true, CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
             new ExpenseCategory { Id = 5, Name = "Nómina", IsActive = true, CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new ExpenseCategory { Id = 6, Name = "Otros", IsActive = true, CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
+            new ExpenseCategory { Id = 6, Name = "Otros", IsActive = true, CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new ExpenseCategory { Id = 7, Name = "Insumos", IsActive = true, CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
         );
     }
 

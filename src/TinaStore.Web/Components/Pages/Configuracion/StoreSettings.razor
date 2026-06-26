@@ -92,11 +92,21 @@ else if (_cargado)
             </div>
             <div class="col-md-6">
                 <label class="form-label small fw-semibold">NIT / RUT</label>
-                <input class="form-control-plaintext fw-semibold ps-2 border rounded bg-light"
-                       value="@_modelo.TaxId" readonly />
-                <div class="text-muted small mt-1">
-                    <i class="bi bi-lock-fill me-1"></i>El NIT no puede modificarse.
-                </div>
+                @if (string.IsNullOrWhiteSpace(_modelo.TaxId))
+                {
+                    <input class="form-control" @bind="_modelo.TaxId" placeholder="Ej: 900123456-1"
+                           inputmode="numeric"
+                           @oninput="e => FiltrarTaxId(e)" />
+                    <div class="text-muted small mt-1">Ingresa el NIT una sola vez y se guardará.</div>
+                }
+                else
+                {
+                    <input class="form-control-plaintext fw-semibold ps-2 border rounded bg-light"
+                           value="@_modelo.TaxId" readonly />
+                    <div class="text-muted small mt-1">
+                        <i class="bi bi-lock-fill me-1"></i>El NIT no puede modificarse.
+                    </div>
+                }
             </div>
             <div class="col-md-6">
                 <label class="form-label small fw-semibold">IVA (%)</label>
@@ -168,7 +178,7 @@ else if (_cargado)
                 _modelo.AllowNegativeStock   = cfg.AllowNegativeStock;
                 _logoUrl = string.IsNullOrEmpty(cfg.LogoPath)
                     ? null
-                    : $"{Api.PublicBaseUrl.TrimEnd('/')}{cfg.LogoPath}";
+                    : $"{Api.PublicBaseUrl.TrimEnd('/')}{cfg.LogoPath}?v={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
                 _cargado = true;
             }
         }
@@ -189,7 +199,7 @@ else if (_cargado)
             {
                 var url = string.IsNullOrEmpty(cfg.LogoPath)
                     ? null
-                    : $"{Api.PublicBaseUrl.TrimEnd('/')}{cfg.LogoPath}";
+                    : $"{Api.PublicBaseUrl.TrimEnd('/')}{cfg.LogoPath}?v={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
                 _logoUrl = url;
                 LogoState.SetLogo(url);
                 _exito = true;
@@ -204,6 +214,12 @@ else if (_cargado)
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter" && !_guardando) await Guardar();
+    }
+
+    private void FiltrarTaxId(ChangeEventArgs e)
+    {
+        var val = e.Value?.ToString() ?? string.Empty;
+        _modelo.TaxId = new string(val.Where(c => char.IsDigit(c) || c == '-').ToArray());
     }
 
     private async Task Guardar()

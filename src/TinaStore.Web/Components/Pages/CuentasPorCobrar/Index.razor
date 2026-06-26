@@ -173,7 +173,45 @@ else if (_data is not null)
     </div>
 }
 
+<!-- Modal previsualización de mensaje WhatsApp -->
+@if (_mostrarModalWhatsApp && _deudorWhatsApp is not null)
+{
+    <div class="modal show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-whatsapp text-success me-2"></i>Mensaje de recordatorio
+                    </h5>
+                    <button class="btn-close" @onclick="() => _mostrarModalWhatsApp = false"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-2">
+                        <i class="bi bi-person me-1"></i><strong>@_deudorWhatsApp.CustomerName</strong>
+                        &nbsp;—&nbsp;<i class="bi bi-telephone me-1"></i>@_deudorWhatsApp.Phone
+                    </p>
+                    <label class="form-label small fw-semibold">Mensaje a enviar:</label>
+                    <textarea class="form-control" rows="4" @bind="_mensajeWhatsApp"></textarea>
+                    <div class="form-text text-muted mt-1">
+                        Puedes editar el mensaje antes de enviarlo.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => _mostrarModalWhatsApp = false">Cancelar</button>
+                    <button class="btn btn-success" @onclick="ConfirmarEnvioWhatsApp">
+                        <i class="bi bi-whatsapp me-1"></i>Abrir WhatsApp
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
+    private const string MensajePorDefecto =
+        "Hola {nombre}, te recordamos que tienes un saldo pendiente de ${saldo}. " +
+        "Por favor comunícate con nosotros. ¡Gracias! 🌸";
+
     private ReporteCuentasPorCobrarDto? _data;
     private List<DeudorCXCDto>          _deudoresFiltrados = [];
     private bool    _loading = true;
@@ -181,6 +219,11 @@ else if (_data is not null)
     private string  _filtroTexto    = string.Empty;
     private string  _ordenCampo = "saldo";
     private bool    _ordenDesc  = true;
+
+    // Modal WhatsApp
+    private bool          _mostrarModalWhatsApp;
+    private DeudorCXCDto? _deudorWhatsApp;
+    private string        _mensajeWhatsApp = string.Empty;
 
     private readonly HashSet<int>                       _expandidos      = [];
     private readonly HashSet<int>                       _cargandoDetalle = [];
@@ -268,15 +311,26 @@ else if (_data is not null)
         }
     }
 
-    private async Task EnviarWhatsApp(DeudorCXCDto cxc)
+    private void EnviarWhatsApp(DeudorCXCDto cxc)
     {
-        var telefono = cxc.Phone?.Replace(" ", "").Replace("-", "").Replace("+", "") ?? "";
-        var plantilla = _reminderMessage
-            ?? "Hola {nombre}, te recordamos que tienes un saldo pendiente de {saldo}. Por favor comunícate con nosotros. Gracias 🌸";
-        var mensaje = plantilla
+        var plantilla = !string.IsNullOrWhiteSpace(_reminderMessage)
+            ? _reminderMessage
+            : MensajePorDefecto;
+
+        _mensajeWhatsApp = plantilla
             .Replace("{nombre}", cxc.CustomerName)
             .Replace("{saldo}", cxc.SaldoPendiente.ToString("N0"));
-        var url = $"https://wa.me/{telefono}?text={Uri.EscapeDataString(mensaje)}";
+
+        _deudorWhatsApp       = cxc;
+        _mostrarModalWhatsApp = true;
+    }
+
+    private async Task ConfirmarEnvioWhatsApp()
+    {
+        if (_deudorWhatsApp is null) return;
+        var telefono = _deudorWhatsApp.Phone?.Replace(" ", "").Replace("-", "").Replace("+", "") ?? "";
+        var url = $"https://wa.me/{telefono}?text={Uri.EscapeDataString(_mensajeWhatsApp)}";
+        _mostrarModalWhatsApp = false;
         await JS.InvokeVoidAsync("open", url, "_blank");
     }
 }

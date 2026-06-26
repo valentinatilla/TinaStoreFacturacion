@@ -172,7 +172,7 @@
                                 <td class="text-end">$@d.PrecioUnitario.ToString("N0")</td>
                                 <td class="text-end">
                                     <input type="number" class="form-control form-control-sm text-end w-100"
-                                           min="0" max="100" step="0.1"
+                                           min="0" max="100" step="0.01"
                                            placeholder="0"
                                            @bind="d.DescuentoPct" @bind:after="() => RecalcularTotales()" />
                                     @if (d.DescuentoMonto > 0)

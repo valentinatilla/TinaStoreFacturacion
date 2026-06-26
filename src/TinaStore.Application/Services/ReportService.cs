@@ -13,16 +13,23 @@ public sealed class ReportService : IReportService
 
     public async Task<ReporteVentasDto> GetSalesReportAsync(DateTime from, DateTime to)
     {
-        var toFin = to.Date.AddDays(1).AddTicks(-1);
-        var facturas = await _repo.GetInvoicesByRangeAsync(from.Date, toFin);
-        var detalles = await _repo.GetSoldDetailsByRangeAsync(from.Date, toFin);
+        // Ajuste de zona horaria Colombia (UTC-5): ampliar el rango ±1 día para cubrir
+        // facturas registradas en UTC que corresponden a días locales del período.
+        var fromUtc = from.Date.AddHours(-5);          // inicio del día local → UTC
+        var toUtc   = to.Date.AddDays(1).AddHours(-5); // fin del día local → UTC (exclusive)
+        var toFin   = toUtc.AddTicks(-1);
 
-        var totalVentas = facturas.Sum(i => i.Total);
-        var totalCobrado = facturas.Sum(i => i.AmountPaid);
+        var facturas = await _repo.GetInvoicesByRangeAsync(fromUtc, toFin);
+        var detalles = await _repo.GetSoldDetailsByRangeAsync(fromUtc, toFin);
+
+        var totalVentas    = facturas.Sum(i => i.Total);
+        var totalCobrado   = facturas.Sum(i => i.AmountPaid);
         var totalPendiente = facturas.Sum(i => i.Balance);
 
+        // Agrupar por fecha local (UTC-5)
         var ventasPorDia = facturas
-            .GroupBy(i => i.InvoiceDate.Date)
+            .GroupBy(i => i.InvoiceDate.AddHours(-5).Date)
+            .Where(g => g.Key >= from.Date && g.Key <= to.Date)
             .OrderBy(g => g.Key)
             .Select(g => new VentasPorPeriodoDto(
                 g.Key,
@@ -50,8 +57,9 @@ public sealed class ReportService : IReportService
 
     public async Task<ReporteGastosDto> GetExpensesReportAsync(DateTime from, DateTime to)
     {
-        var toFin = to.Date.AddDays(1).AddTicks(-1);
-        var gastos = await _repo.GetExpensesByRangeAsync(from.Date, toFin);
+        var fromUtc = from.Date.AddHours(-5);
+        var toFin   = to.Date.AddDays(1).AddHours(-5).AddTicks(-1);
+        var gastos  = await _repo.GetExpensesByRangeAsync(fromUtc, toFin);
 
         // Excluir egresos anulados del total y del reporte
         var gastosActivos = gastos.Where(e => e.Status != ExpenseStatus.Cancelled).ToList();

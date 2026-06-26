@@ -220,7 +220,13 @@
             </div>
         }
 
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-wrap">
+            @if (_resultado.Errores > 0 && _preview is not null)
+            {
+                <button class="btn btn-warning text-dark" @onclick="CorregirErrores">
+                    <i class="bi bi-pencil-square me-1"></i>Corregir errores
+                </button>
+            }
             <button class="btn btn-outline-secondary" @onclick="Reiniciar">
                 <i class="bi bi-arrow-counterclockwise me-1"></i>Nueva importación
             </button>
@@ -441,6 +447,14 @@
         _preview   = null;
         _resultado = null;
         _mensaje   = null;
+    }
+
+    /// <summary>Regresa al paso 2 para corregir las filas con errores.</summary>
+    private void CorregirErrores()
+    {
+        _resultado = null;
+        _mensaje   = null;
+        _paso      = 2;
     }
 
     private async Task DescargarPlantilla()

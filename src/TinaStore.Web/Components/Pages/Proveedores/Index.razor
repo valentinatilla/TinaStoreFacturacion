@@ -301,6 +301,16 @@ else
             }
         }
 
+        if (!string.IsNullOrWhiteSpace(_form.Email))
+        {
+            var emailRegex = new System.Text.RegularExpressions.Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
+            if (!emailRegex.IsMatch(_form.Email))
+            {
+                _errorModal = "El correo electrónico no tiene un formato válido.";
+                return;
+            }
+        }
+
         _guardando = true;
         bool ok;
         string? apiError = null;

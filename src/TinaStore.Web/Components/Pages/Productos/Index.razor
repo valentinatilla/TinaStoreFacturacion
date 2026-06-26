@@ -86,6 +86,7 @@ else
                 <label class="form-label">Categoría</label>
                 <select class="form-select form-select-sm" @onchange="e => { _filtroCategoriaId = int.TryParse(e.Value?.ToString(), out var v) ? v : 0; Filtrar(); }">
                     <option value="0">Todas</option>
+                    <option value="-1">Sin categoría</option>
                     @foreach (var c in _categorias)
                     {
                         <option value="@c.Id">@c.Name</option>
@@ -222,7 +223,21 @@ else
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-semibold">SKU</label>
-                        <input class="form-control" @bind="_form.Sku" maxlength="30" placeholder="Ej: SKU-001" @onkeydown="HandleModalKeyDown" />
+                        <div class="input-group">
+                            <input class="form-control" @bind="_form.Sku" maxlength="30" placeholder="Ej: SKU-001" @onkeydown="HandleModalKeyDown" />
+                            @if (!_editando)
+                            {
+                                <button type="button" class="btn btn-outline-secondary btn-sm"
+                                        title="Sugerir siguiente SKU disponible"
+                                        @onclick="SugerirSiguienteSku">
+                                    <i class="bi bi-magic"></i>
+                                </button>
+                            }
+                        </div>
+                        @if (!_editando)
+                        {
+                            <div class="form-text text-muted">Clic en <i class="bi bi-magic"></i> para sugerir el siguiente SKU.</div>
+                        }
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Descripción</label>
@@ -243,9 +258,13 @@ else
                             {
                                 @(Math.Round((_form.SalePrice - _form.PurchasePrice) / _form.PurchasePrice * 100, 1).ToString("0.0") + " %")
                             }
+                            else if (_form.SalePrice > 0)
+                            {
+                                <span class="text-info small" title="Costo cero: ganancia neta = precio de venta">$@_form.SalePrice.ToString("N0") neta</span>
+                            }
                             else
                             {
-                                <span class="text-muted small">No calculable</span>
+                                <span class="text-muted small">Sin precio</span>
                             }
                         </div>
                     </div>
@@ -776,7 +795,7 @@ else
             .Where(p => string.IsNullOrWhiteSpace(_filtroTexto) ||
                         p.Name.Contains(_filtroTexto, StringComparison.OrdinalIgnoreCase) ||
                         (p.Sku?.Contains(_filtroTexto, StringComparison.OrdinalIgnoreCase) ?? false))
-            .Where(p => _filtroCategoriaId == 0 || p.CategoryId == _filtroCategoriaId)
+            .Where(p => _filtroCategoriaId == 0 || (_filtroCategoriaId == -1 ? p.CategoryId == null : p.CategoryId == _filtroCategoriaId))
             .Where(p => _filtroProveedorId == 0 || p.SupplierId == _filtroProveedorId)
             .Where(p => _filtroEstado switch
             {
@@ -823,6 +842,21 @@ else
     }
 
     private int _stockOriginalEdicion;
+
+    /// <summary>Genera el siguiente SKU disponible en la serie SKU-XXXX.</summary>
+    private void SugerirSiguienteSku()
+    {
+        var skusExistentes = _productos
+            .Where(p => p.Sku != null && System.Text.RegularExpressions.Regex.IsMatch(p.Sku, @"^SKU-(\d+)$"))
+            .Select(p => int.Parse(System.Text.RegularExpressions.Regex.Match(p.Sku!, @"\d+").Value))
+            .ToHashSet();
+
+        var siguiente = 1;
+        while (skusExistentes.Contains(siguiente))
+            siguiente++;
+
+        _form.Sku = $"SKU-{siguiente:D4}";
+    }
 
     private async Task AbrirModal(ProductoDto? p = null)
     {

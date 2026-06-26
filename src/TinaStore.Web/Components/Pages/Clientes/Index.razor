@@ -57,7 +57,7 @@ else
                 </select>
             </div>
             <div class="col-auto d-flex align-items-end">
-                <button class="btn-limpiar" @onclick="LimpiarFiltros">
+                <button class="btn-limpiar align-self-end" style="height:fit-content" @onclick="LimpiarFiltros">
                     <i class="bi bi-x-circle me-1"></i>Limpiar
                 </button>
             </div>
@@ -204,11 +204,17 @@ else
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label small fw-semibold">Documento</label>
-                            <input class="form-control" @bind="_form.DocumentNumber" maxlength="20" />
+                            <input class="form-control" @bind="_form.DocumentNumber" maxlength="20"
+                                   inputmode="numeric" pattern="[0-9]*"
+                                   @oninput="e => SoloNumerosDocumento(e)" />
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label small fw-semibold">Teléfono</label>
-                            <input class="form-control @(_errTelefono is not null ? "is-invalid" : "")" @bind="_form.Phone" maxlength="10" placeholder="Ej: 3001234567" inputmode="numeric" @onkeydown="HandleModalKeyDown" />
+                            <input class="form-control @(_errTelefono is not null ? "is-invalid" : "")"
+                                   @bind="_form.Phone" maxlength="10" placeholder="Ej: 3001234567"
+                                   inputmode="numeric" pattern="[0-9]*"
+                                   @oninput="e => SoloNumerosTelefono(e)"
+                                   @onkeydown="HandleModalKeyDown" />
                             @if (_errTelefono is not null)
                             {
                                 <div class="invalid-feedback">@_errTelefono</div>
@@ -430,6 +436,16 @@ else
         _errTelefono = null;
         _erroresModal = [];
     }
+
+    private static string FiltrarSoloNumeros(string? valor) =>
+        string.IsNullOrEmpty(valor) ? string.Empty :
+        new string(valor.Where(char.IsDigit).ToArray());
+
+    private void SoloNumerosDocumento(ChangeEventArgs e) =>
+        _form.DocumentNumber = FiltrarSoloNumeros(e.Value?.ToString());
+
+    private void SoloNumerosTelefono(ChangeEventArgs e) =>
+        _form.Phone = FiltrarSoloNumeros(e.Value?.ToString());
 
     private async Task Guardar()
     {

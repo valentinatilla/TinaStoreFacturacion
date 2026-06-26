@@ -11,7 +11,34 @@ El versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
-## [1.5.0] — 2026-07-09
+## [1.6.0] — 2026-06-25
+
+### Añadido
+- **Productos – Botón "Siguiente SKU":** Al crear un nuevo producto, un botón junto al campo SKU sugiere automáticamente el próximo código disponible en la serie `SKU-XXXX`.
+- **Productos – "Sin categoría" en filtros:** El desplegable de categoría del listado incluye la opción "Sin categoría" (valor `-1`) para filtrar productos sin categoría asignada.
+- **Egresos – Hora en tablas:** La columna Fecha de egresos muestra ahora también la hora (`dd/MM/yyyy HH:mm`) en ambas tablas (Compras y Otros).
+- **Importar – Botón "Corregir":** En el paso 3 (resultado de importación), si hubo errores, aparece un botón "Corregir errores" que regresa al paso 2 manteniendo la previsualización para editar las filas con problemas.
+- **CuentasPorCobrar – Modal de previsualización WhatsApp:** Antes de abrir WhatsApp se muestra un modal con el mensaje editable; tiene un texto fijo por defecto con nombre y saldo del deudor.
+- **Egresos – Categoría "Insumos":** Nueva categoría de egreso disponible tanto en instalaciones nuevas (seed) como en bases de datos existentes (migración `AddInsumosExpenseCategory`).
+- **Configuración – NIT editable cuando está vacío:** Si el NIT llega vacío en producción, el campo pasa a ser editable para que se pueda ingresar una sola vez; una vez guardado queda bloqueado.
+
+### Corregido
+- **#1 Ganancia cuando costo = 0:** Productos con `PurchasePrice = 0` muestran el precio de venta como "ganancia neta" en lugar de "—".
+- **#5 Ventas por día en reportes:** `ReportService` calcula rangos de fecha en UTC-5 (Colombia) y agrupa por día local para que el gráfico de ventas muestre datos correctamente.
+- **#6 WhatsApp mensaje fijo:** Reemplazado envío directo por un modal de previsualización con mensaje configurable y texto por defecto.
+- **#7 Descuento decimal en ventas:** El input de descuento usa `step="0.01"` para evitar que un valor de `1` se trate como entero y genere precio en cero.
+- **#8 Hora en egresos:** Ambas tablas de egresos muestran `dd/MM/yyyy HH:mm` en lugar de solo la fecha.
+- **#9 / #10 Teléfono y documento en editar cliente:** Los campos Teléfono y Documento del modal de edición bloquean letras mediante `inputmode + pattern + oninput` (métodos `SoloNumerosTelefono` / `SoloNumerosDocumento`).
+- **#11 Botón Limpiar tamaño en clientes:** El botón usa `height:fit-content` para no crecer al tamaño del `col-auto` del flex container.
+- **#13 Error email proveedor muestra 404:** Se añade validación de formato de email en el frontend antes de llamar la API, mostrando mensaje claro en el modal.
+- **#14 Categoría "Sin categoría" en filtro de productos:** Opción añadida al `<select>` de categoría con valor `-1`; el filtro busca productos con `CategoryId == null`.
+- **#15 Logo no renderiza:** La URL del logo incluye `?v={UnixTimeSeconds}` al cargar y al subir, invalidando la caché del navegador.
+- **#16 NIT vacío en producción:** NIT editable cuando está vacío; una vez guardado se vuelve `readonly` para evitar modificaciones accidentales.
+- **#17 Insumos en tipo de egreso:** Categoría "Insumos" añadida al seed inicial y migración EF Core para bases de datos existentes.
+
+---
+
+## [1.5.0]
 
 ### Añadido
 - **Validador FluentValidation** `UpdateStoreSettingsDtoValidator`: IVA limitado a 0–100%, moneda obligatoria, nombre de tienda obligatorio.
