@@ -1,4 +1,4 @@
-@page "/login"
+﻿@page "/login"
 @layout EmptyLayout
 @inject TinaStoreApiClient Api
 @inject SessionStateService Session
@@ -16,7 +16,7 @@
             <h4 class="fw-bold mb-0" style="color: var(--ts-text-main); letter-spacing: -.01em;">Tina Store</h4>
             <small style="color: var(--ts-text-soft);">Panel Administrativo</small>
             <div class="login-version-row">
-                <span class="login-version-badge">v@(Config["AppVersion"] ?? "”")</span>
+                <span class="login-version-badge">v@(Config["AppVersion"] ?? string.Empty)</span>
                 @if (Env.IsDevelopment())
                 {
                     <span class="login-env-badge login-env-dev">DEV</span>

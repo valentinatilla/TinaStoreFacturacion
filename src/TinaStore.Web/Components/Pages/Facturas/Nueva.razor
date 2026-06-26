@@ -1,10 +1,10 @@
-@page "/ventas/nueva"
+﻿@page "/ventas/nueva"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 @inject NavigationManager Nav
 @inject IConfiguration Config
 
-<PageTitle>Nueva Venta ” Tina Store</PageTitle>
+<PageTitle>Nueva Venta " Tina Store</PageTitle>
 
 <div class="d-flex align-items-center mb-4 gap-3">
     <NavLink href="/ventas" class="btn btn-outline-secondary btn-sm">
@@ -465,7 +465,7 @@
     {
         _error = null;
 
-        // ”€”€ Validaciones de negocio ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
+        // "€"€ Validaciones de negocio "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
         if (_clienteId == 0)            { _error = "Selecciona un cliente antes de registrar la venta.";      return; }
         if (!_detalles.Any())           { _error = "Agrega al menos un producto a la venta.";              return; }
         if (_detalles.Any(d => d.Cantidad <= 0))

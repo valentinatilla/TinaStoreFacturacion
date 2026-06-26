@@ -4,7 +4,7 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<PageTitle>Ventas ” Tina Store</PageTitle>
+<PageTitle>Ventas " Tina Store</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h4 class="fw-bold mb-0"><i class="bi bi-receipt me-2 text-purple"></i>Ventas</h4>
@@ -38,7 +38,10 @@ else
         <div class="row g-2 align-items-end">
             <div class="col-sm-6 col-md-3">
                 <label class="form-label">N° o cliente</label>
-                <input class="form-control form-control-sm" placeholder="🔍 Buscar..." @oninput="Filtrar" />
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input class="form-control form-control-sm" placeholder="Buscar..." @oninput="Filtrar" />
+                </div>
             </div>
             <div class="col-sm-6 col-md-2">
                 <label class="form-label">Estado</label>
@@ -107,7 +110,7 @@ else
                             <td class="ts-table-hide-mobile"><span class="badge bg-dark">@f.InvoiceNumber</span></td>
                             <td>
                                 <span class="d-block">@f.CustomerName</span>
-                                <span class="d-md-none text-muted" style="font-size:.72rem;">@f.InvoiceNumber · @f.InvoiceDate.ToString("dd/MM/yy")</span>
+                                <span class="d-md-none text-muted" style="font-size:.72rem;">@f.InvoiceNumber · @f.InvoiceDate.ToLocalTime().ToString("dd/MM/yy")</span>
                             </td>
                             <td class="text-end fw-semibold">$@f.Total.ToString("N0")</td>
                             <td class="text-end ts-table-hide-mobile @(f.AmountPaid < f.Total ? "text-danger" : "text-success")">
@@ -119,7 +122,7 @@ else
                             <td>
                                 <span class="badge badge-estado-@f.StatusName.ToLower()">@f.StatusName</span>
                             </td>
-                            <td class="text-muted small ts-table-hide-mobile">@f.InvoiceDate.ToString("dd/MM/yyyy")</td>
+                            <td class="text-muted small ts-table-hide-mobile">@f.InvoiceDate.ToLocalTime().ToString("dd/MM/yyyy")</td>
                             <td class="text-end" @onclick:stopPropagation="true">
                                 <div class="d-flex gap-1 justify-content-end align-items-center">
                                 @if (_pdfDescargando.Contains(f.Id))
@@ -246,7 +249,7 @@ else
                                                                         <td class="text-center align-middle">@linea.Quantity</td>
                                                                         <td class="text-end text-muted align-middle">$@linea.UnitPrice.ToString("N0")</td>
                                                                         <td class="text-end text-muted align-middle">
-                                                                            @(linea.DiscountAmount > 0 ? "$" + linea.DiscountAmount.ToString("N0") : "”")
+                                                                            @(linea.DiscountAmount > 0 ? "$" + linea.DiscountAmount.ToString("N0") : string.Empty)
                                                                         </td>
                                                                         <td class="text-end fw-semibold align-middle">$@linea.Subtotal.ToString("N0")</td>
                                                                     </tr>
@@ -455,7 +458,7 @@ else
     private bool      _ordenDesc    = true;
     private HashSet<int> _pdfDescargando = [];
 
-    // ”€”€ Detalle expandible ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
+    // "€"€ Detalle expandible "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
     private HashSet<int>                         _expandidas      = [];
     private HashSet<int>                         _detallesCargando = [];
     private Dictionary<int, VentaDetalleDto>     _detallesCache   = [];
@@ -735,7 +738,7 @@ else
         }
     }
 
-    // ”€”€ Ordenamiento de columnas ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
+    // "€"€ Ordenamiento de columnas "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
     private void OrdenarPor(string campo)
     {
         if (_ordenCampo == campo)

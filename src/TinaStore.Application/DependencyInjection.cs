@@ -1,4 +1,4 @@
-using FluentValidation;
+﻿using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using TinaStore.Application.Interfaces;
 using TinaStore.Application.Services;
@@ -15,7 +15,7 @@ public static class DependencyInjection
         // Validadores de FluentValidation (registro automático por ensamblado)
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 
-        // Servicios de aplicación — casos de uso por módulo
+        // Servicios de aplicación -- casos de uso por módulo
         services.AddScoped<ICustomerService, CustomerService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IProductService, ProductService>();

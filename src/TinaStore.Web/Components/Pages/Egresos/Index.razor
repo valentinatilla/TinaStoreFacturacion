@@ -1,8 +1,8 @@
-@page "/egresos"
+﻿@page "/egresos"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 
-<PageTitle>Egresos ” Tina Store</PageTitle>
+<PageTitle>Egresos " Tina Store</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold mb-0"><i class="bi bi-arrow-down-circle me-2 text-purple"></i>Egresos y Gastos</h4>
@@ -79,7 +79,7 @@ else
                             style="@(anulado ? "opacity:.55" : "")">
                             <td class="text-muted small">@e.ExpenseDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
                             <td>@if (anulado){<s>@e.Description</s>}else{@e.Description}</td>
-                            <td class="text-muted small">@(e.SupplierName ?? "”")</td>
+                            <td class="text-muted small">@(e.SupplierName ?? string.Empty)</td>
                             <td class="text-end fw-semibold">
                                 @if (anulado){<s>$@e.Amount.ToString("N0")</s>}else{<span>$@e.Amount.ToString("N0")</span>}
                             </td>
@@ -127,7 +127,7 @@ else
                             <td>@if (anulado){<s>@e.Description</s>}else{@e.Description}</td>
                             <td><span class="badge @(anulado ? "bg-danger" : "bg-secondary")">@e.ExpenseCategoryName</span></td>
                             <td class="text-muted small ts-table-hide-mobile">
-                                @(string.IsNullOrWhiteSpace(e.PaymentMethodName) ? "”" : e.PaymentMethodName)
+                                @(string.IsNullOrWhiteSpace(e.PaymentMethodName) ? string.Empty : e.PaymentMethodName)
                             </td>
                             <td class="text-end fw-semibold">
                                 @if (anulado){<s>$@e.Amount.ToString("N0")</s>}else{<span>$@e.Amount.ToString("N0")</span>}
@@ -267,12 +267,12 @@ else
     private string? _errorModal;
     private EgresoForm _form = new();
 
-    // ”€”€ Confirmación de anulación ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
+    // "€"€ Confirmación de anulación "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
     private bool _mostrarModalAnular;
     private EgresoDto? _egresoAAnular;
     private int _editandoId;
 
-    // ”€”€ Filtros ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
+    // "€"€ Filtros "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
     private string? _filtroDesdeStr;
     private string? _filtroHastaStr = DateTime.Today.ToString("yyyy-MM-dd");
     private int _filtroCategoriaId;

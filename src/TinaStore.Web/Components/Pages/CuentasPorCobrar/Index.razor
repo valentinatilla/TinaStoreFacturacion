@@ -3,7 +3,7 @@
 @inject TinaStoreApiClient Api
 @inject IJSRuntime JS
 
-<PageTitle>Cuentas por Cobrar ” Tina Store</PageTitle>
+<PageTitle>Cuentas por Cobrar " Tina Store</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold mb-0"><i class="bi bi-cash-stack me-2 text-purple"></i>Cuentas por Cobrar</h4>
@@ -125,7 +125,7 @@ else if (_data is not null)
                                                         {
                                                             <tr>
                                                                 <td><span class="badge bg-secondary">@f.InvoiceNumber</span></td>
-                                                                <td class="text-muted small">@f.InvoiceDate.ToString("dd/MM/yyyy")</td>
+                                                                <td class="text-muted small">@f.InvoiceDate.ToLocalTime().ToString("dd/MM/yyyy")</td>
                                                                 <td class="text-end fw-semibold">$@f.Total.ToString("N0")</td>
                                                                 <td class="text-end text-success">$@f.AmountPaid.ToString("N0")</td>
                                                                 <td class="text-end fw-bold text-danger">$@f.Balance.ToString("N0")</td>
@@ -188,12 +188,12 @@ else if (_data is not null)
                 <div class="modal-body">
                     <p class="text-muted small mb-2">
                         <i class="bi bi-person me-1"></i><strong>@_deudorWhatsApp.CustomerName</strong>
-                        &nbsp;—&nbsp;<i class="bi bi-telephone me-1"></i>@_deudorWhatsApp.Phone
+                        &nbsp;--&nbsp;<i class="bi bi-telephone me-1"></i>@_deudorWhatsApp.Phone
                     </p>
-                    <label class="form-label small fw-semibold">Mensaje a enviar:</label>
-                    <textarea class="form-control" rows="4" @bind="_mensajeWhatsApp"></textarea>
+                    <label class="form-label small fw-semibold">Mensaje que se enviará:</label>
+                    <div class="p-3 bg-light rounded border" style="white-space:pre-wrap;font-size:.92rem;">@_mensajeWhatsApp</div>
                     <div class="form-text text-muted mt-1">
-                        Puedes editar el mensaje antes de enviarlo.
+                        <i class="bi bi-lock-fill me-1"></i>Este mensaje es fijo y se enviará tal como aparece.
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -313,11 +313,7 @@ else if (_data is not null)
 
     private void EnviarWhatsApp(DeudorCXCDto cxc)
     {
-        var plantilla = !string.IsNullOrWhiteSpace(_reminderMessage)
-            ? _reminderMessage
-            : MensajePorDefecto;
-
-        _mensajeWhatsApp = plantilla
+        _mensajeWhatsApp = MensajePorDefecto
             .Replace("{nombre}", cxc.CustomerName)
             .Replace("{saldo}", cxc.SaldoPendiente.ToString("N0"));
 

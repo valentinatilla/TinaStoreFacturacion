@@ -2,7 +2,7 @@
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 
-<PageTitle>Proveedores ” Tina Store</PageTitle>
+<PageTitle>Proveedores " Tina Store</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold mb-0"><i class="bi bi-truck me-2 text-purple"></i>Proveedores</h4>
@@ -91,13 +91,15 @@ else
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">NIT / RUT</label>
-                        <input class="form-control" @bind="_form.TaxId" inputmode="numeric"
-                               @onkeypress="SoloNumerosNIT" placeholder="Ej: 900123456" maxlength="15" />
+                        <input class="form-control" value="@_form.TaxId" inputmode="numeric"
+                               placeholder="Ej: 900123456" maxlength="15"
+                               @oninput="e => { _form.TaxId = new string((e.Value?.ToString() ?? string.Empty).Where(char.IsDigit).ToArray()); }" />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Teléfono</label>
-                        <input class="form-control" @bind="_form.Phone" inputmode="numeric"
-                               @onkeypress="SoloNumerosTel" placeholder="Ej: 3001234567" maxlength="10" />
+                        <input class="form-control" value="@_form.Phone" inputmode="numeric"
+                               placeholder="Ej: 3001234567" maxlength="10"
+                               @oninput="e => { _form.Phone = new string((e.Value?.ToString() ?? string.Empty).Where(char.IsDigit).ToArray()); }" />
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Email</label>
@@ -179,7 +181,7 @@ else
     private int _editandoId;
     private string _filtroTexto = "";
 
-    // ”€”€ Modal confirmación eliminar ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
+    // "€"€ Modal confirmación eliminar "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
     private bool _mostrarModalEliminar;
     private ProveedorDto? _proveedorAEliminar;
 
@@ -244,12 +246,6 @@ else
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (_focusBtnEliminar) { _focusBtnEliminar = false; await _btnConfirmarEliminar.FocusAsync(); }
-    }
-
-    // Permite solo dígitos en el campo Teléfono
-    private void SoloNumerosTel(KeyboardEventArgs e)
-    {
-        // La prevención real en Blazor requiere JS interop; aquí validamos en Guardar.
     }
 
     private void AbrirModal()

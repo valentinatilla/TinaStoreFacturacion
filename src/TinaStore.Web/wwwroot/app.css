@@ -929,6 +929,9 @@ a.btn.bg-purple:focus {
     font-family: 'Nunito', sans-serif;
     padding: .35rem .9rem;
     transition: background .15s, color .15s;
+    height: fit-content;
+    align-self: flex-end;
+    white-space: nowrap;
 }
 
 .ts-filter-bar .btn-limpiar:hover {

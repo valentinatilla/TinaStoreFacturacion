@@ -4,7 +4,7 @@
 @inject IJSRuntime JS
 @inject LogoStateService LogoState
 
-<PageTitle>Configuración ” Tina Store</PageTitle>
+<PageTitle>Configuración " Tina Store</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold mb-0"><i class="bi bi-gear me-2 text-purple"></i>Configuración de la Tienda</h4>
@@ -25,7 +25,7 @@ else if (_cargado)
 
     <div class="card border-0 shadow-sm p-4" style="max-width: 700px;">
 
-        <!-- ”€”€ Logo ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€ -->
+        <!-- "€"€ Logo "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€ -->
         <h6 class="fw-bold mb-3 text-purple"><i class="bi bi-image me-2"></i>Logo de la tienda</h6>
         <div class="d-flex align-items-center gap-3 mb-4">
             @if (!string.IsNullOrEmpty(_logoUrl))
@@ -47,11 +47,11 @@ else if (_cargado)
                 {
                     <small class="text-muted"><span class="spinner-border spinner-border-sm me-1"></span>Subiendo...</small>
                 }
-                <div class="text-muted small mt-1">PNG, JPG o WebP. Recomendado: 200—60 px.</div>
+                <div class="text-muted small mt-1">PNG, JPG o WebP. Recomendado: 200--60 px.</div>
             </div>
         </div>
 
-        <!-- ”€”€ Información general ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€ -->
+        <!-- "€"€ Información general "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€ -->
         <h6 class="fw-bold mb-3 text-purple">Información general</h6>
         <div class="row g-3 mb-4">
             <div class="col-md-8">
@@ -92,21 +92,11 @@ else if (_cargado)
             </div>
             <div class="col-md-6">
                 <label class="form-label small fw-semibold">NIT / RUT</label>
-                @if (string.IsNullOrWhiteSpace(_modelo.TaxId))
-                {
-                    <input class="form-control" @bind="_modelo.TaxId" placeholder="Ej: 900123456-1"
-                           inputmode="numeric"
-                           @oninput="e => FiltrarTaxId(e)" />
-                    <div class="text-muted small mt-1">Ingresa el NIT una sola vez y se guardará.</div>
-                }
-                else
-                {
-                    <input class="form-control-plaintext fw-semibold ps-2 border rounded bg-light"
-                           value="@_modelo.TaxId" readonly />
-                    <div class="text-muted small mt-1">
-                        <i class="bi bi-lock-fill me-1"></i>El NIT no puede modificarse.
-                    </div>
-                }
+                <input class="form-control-plaintext fw-semibold ps-2 border rounded bg-light"
+                       value="1003565981-8" readonly />
+                <div class="text-muted small mt-1">
+                    <i class="bi bi-lock-fill me-1"></i>El NIT no puede modificarse.
+                </div>
             </div>
             <div class="col-md-6">
                 <label class="form-label small fw-semibold">IVA (%)</label>
@@ -216,12 +206,6 @@ else if (_cargado)
         if (e.Key == "Enter" && !_guardando) await Guardar();
     }
 
-    private void FiltrarTaxId(ChangeEventArgs e)
-    {
-        var val = e.Value?.ToString() ?? string.Empty;
-        _modelo.TaxId = new string(val.Where(c => char.IsDigit(c) || c == '-').ToArray());
-    }
-
     private async Task Guardar()
     {
         _guardando = true;
@@ -268,7 +252,8 @@ else if (_cargado)
 
         try
         {
-            _modelo.AllowNegativeStock = false; // el stock negativo no está permitido
+            _modelo.AllowNegativeStock = false;
+            _modelo.TaxId = "1003565981-8"; // NIT fijo de la tienda
             var dto = new UpdateConfiguracionDto(
                 _modelo.StoreName, _modelo.Address, _modelo.Phone, _modelo.Email,
                 _modelo.TaxId, _modelo.InvoiceFooterMessage, _modelo.ReminderMessage,

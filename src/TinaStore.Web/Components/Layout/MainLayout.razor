@@ -75,7 +75,8 @@
                 var cfg = await Api.GetConfiguracionAsync();
                 if (cfg is not null && !string.IsNullOrEmpty(cfg.LogoPath))
                 {
-                    LogoState.SetLogo($"{Api.PublicBaseUrl.TrimEnd('/')}{cfg.LogoPath}");
+                    var ts = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                    LogoState.SetLogo($"{Api.PublicBaseUrl.TrimEnd('/')}{cfg.LogoPath}?v={ts}");
                 }
             }
             catch { /* Si falla, usar emoji predeterminado */ }

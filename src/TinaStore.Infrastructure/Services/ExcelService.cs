@@ -1,4 +1,4 @@
-using ClosedXML.Excel;
+﻿using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
 using TinaStore.Application.DTOs;
 using TinaStore.Application.Interfaces;
@@ -61,7 +61,7 @@ public sealed class ExcelService : IExcelService
                 .MaxAsync(f => (DateTime?)f.InvoiceDate);
             ws.Cell(row, 8).Value = ultCompra.HasValue
                 ? ultCompra.Value.ToLocalTime().ToString("dd/MM/yyyy")
-                : "—";
+                : "--";
 
             var saldo = c.AccountReceivable?.TotalDebt - c.AccountReceivable?.TotalPaid ?? 0m;
             ws.Cell(row, 9).Value  = (double)(saldo > 0 ? saldo : 0m);
@@ -130,13 +130,13 @@ public sealed class ExcelService : IExcelService
             };
             var metodoPago = f.Payments.Any()
                 ? string.Join(", ", f.Payments
-                    .GroupBy(p => p.PaymentMethod?.Name ?? "—")
+                    .GroupBy(p => p.PaymentMethod?.Name ?? "--")
                     .Select(g => g.Key))
-                : "—";
+                : "--";
 
             wsRes.Cell(row, 1).Value  = f.InvoiceNumber;
             wsRes.Cell(row, 2).Value  = f.InvoiceDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
-            wsRes.Cell(row, 3).Value  = f.Customer?.FullName ?? "—";
+            wsRes.Cell(row, 3).Value  = f.Customer?.FullName ?? "--";
             wsRes.Cell(row, 4).Value  = tipo;
             wsRes.Cell(row, 5).Value  = (double)f.Total;
             wsRes.Cell(row, 6).Value  = (double)f.AmountPaid;
@@ -178,9 +178,9 @@ public sealed class ExcelService : IExcelService
             foreach (var d in f.Details)
             {
                 wsDet.Cell(detRow, 1).Value = f.InvoiceNumber;
-                wsDet.Cell(detRow, 2).Value = d.Product?.Sku ?? "—";
-                wsDet.Cell(detRow, 3).Value = d.ProductName.Length > 0 ? d.ProductName : "—";
-                wsDet.Cell(detRow, 4).Value = d.Product?.Category?.Name ?? "—";
+                wsDet.Cell(detRow, 2).Value = d.Product?.Sku ?? "--";
+                wsDet.Cell(detRow, 3).Value = d.ProductName.Length > 0 ? d.ProductName : "--";
+                wsDet.Cell(detRow, 4).Value = d.Product?.Category?.Name ?? "--";
                 wsDet.Cell(detRow, 5).Value = d.Quantity;
                 wsDet.Cell(detRow, 6).Value = (double)d.UnitPrice;
                 wsDet.Cell(detRow, 7).Value = (double)d.DiscountAmount;
@@ -215,7 +215,7 @@ public sealed class ExcelService : IExcelService
         using var wb = new XLWorkbook();
         var ws = wb.Worksheets.Add("Productos");
 
-        // Encabezados — misma estructura que la plantilla de importación
+        // Encabezados -- misma estructura que la plantilla de importación
         var headers = new[]
         {
             "SKU", "Nombre", "Descripción", "Categoría", "Proveedor",
@@ -286,7 +286,7 @@ public sealed class ExcelService : IExcelService
             wb.DefinedNames.Add("ListaProveedores",
                 wsListas.Range(1, 2, proveedores.Count, 2));
 
-        // ── Hoja principal — misma estructura que exportación ─────────────────
+        // ── Hoja principal -- misma estructura que exportación ─────────────────
         var ws = wb.Worksheets.Add("Productos");
 
         // Columnas: SKU(1), Nombre(2), Descripción(3), Categoría(4), Proveedor(5),
@@ -492,7 +492,7 @@ public sealed class ExcelService : IExcelService
             }
             catch (Exception ex)
             {
-                errores.Add($"Fila {row}: error inesperado — {ex.Message}");
+                errores.Add($"Fila {row}: error inesperado -- {ex.Message}");
             }
         }
 
@@ -538,7 +538,7 @@ public sealed class ExcelService : IExcelService
         if (faltantes.Count > 0)
         {
             preview.Add(new ImportPreviewRowDto(
-                1, "—", null, null, 0, 0, 0, 0, 0, null, null, null,
+                1, "--", null, null, 0, 0, 0, 0, 0, null, null, null,
                 Valido: false,
                 MensajeError: $"Formato inválido. Columnas no encontradas: {string.Join(", ", faltantes)}. Descarga la plantilla actualizada."));
             return preview;
@@ -760,7 +760,7 @@ public sealed class ExcelService : IExcelService
             }
             catch (Exception ex)
             {
-                errores.Add($"Fila {fila.Fila}: error inesperado — {ex.Message}");
+                errores.Add($"Fila {fila.Fila}: error inesperado -- {ex.Message}");
             }
         }
 

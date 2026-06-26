@@ -1,10 +1,10 @@
-@page "/usuarios"
+﻿@page "/usuarios"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 @inject SessionStateService Session
 @inject NavigationManager Nav
 
-<PageTitle>Usuarios ” Tina Store</PageTitle>
+<PageTitle>Usuarios " Tina Store</PageTitle>
 
 @* Solo Admin puede acceder *@
 @if (Session.UserRole != "Admin")
@@ -64,7 +64,7 @@ else
                                 </span>
                             </td>
                             <td class="text-muted small ts-table-hide-mobile">
-                                @(u.LastLoginAt.HasValue ? u.LastLoginAt.Value.ToString("dd/MM/yyyy HH:mm") : "”")
+                                @(u.LastLoginAt.HasValue ? u.LastLoginAt.Value.ToString("dd/MM/yyyy HH:mm") : string.Empty)
                             </td>
                             <td class="text-end">
                                 <button class="btn btn-sm btn-outline-secondary me-1" title="Editar"
@@ -274,11 +274,11 @@ else
     private bool _reseteando;
     private string? _errorReset;
 
-    // ”€”€ Confirmación desactivar ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
+    // "€"€ Confirmación desactivar "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
     private bool _mostrarModalDesactivar;
     private UsuarioDto? _usuarioADesactivar;
 
-    // ”€”€ Toggles ojito de contraseña ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
+    // "€"€ Toggles ojito de contraseña "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
     private bool _mostrarPassNuevo;
     private bool _mostrarPassReset1;
     private bool _mostrarPassReset2;

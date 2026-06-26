@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -68,7 +68,7 @@ public sealed class PdfService : IPdfService
                         row.RelativeItem().Column(c =>
                         {
                             c.Item().Text("CLIENTE").Bold().FontColor("#333333");
-                            c.Item().Text(invoice.Customer?.FullName ?? "—");
+                            c.Item().Text(invoice.Customer?.FullName ?? "--");
                             if (!string.IsNullOrEmpty(invoice.Customer?.DocumentNumber))
                                 c.Item().Text($"Doc: {invoice.Customer.DocumentNumber}").FontColor("#666666");
                             if (!string.IsNullOrEmpty(invoice.Customer?.Phone))
@@ -116,7 +116,7 @@ public sealed class PdfService : IPdfService
                             table.Cell().Element(c => Cell(c, bg)).Text(d.ProductName);
                             table.Cell().Element(c => Cell(c, bg)).AlignCenter().Text(d.Quantity.ToString());
                             table.Cell().Element(c => Cell(c, bg)).AlignRight().Text($"${d.UnitPrice:N0}");
-                            table.Cell().Element(c => Cell(c, bg)).AlignRight().Text(d.DiscountAmount > 0 ? $"${d.DiscountAmount:N0}" : "—");
+                            table.Cell().Element(c => Cell(c, bg)).AlignRight().Text(d.DiscountAmount > 0 ? $"${d.DiscountAmount:N0}" : "--");
                             table.Cell().Element(c => Cell(c, bg)).AlignRight().Text($"${d.Subtotal:N0}");
                             rowIndex++;
                         }
@@ -162,7 +162,7 @@ public sealed class PdfService : IPdfService
                                 {
                                     r.RelativeItem().Column(c =>
                                     {
-                                        c.Item().Text($"{p.PaymentDate:dd/MM/yyyy} — {p.PaymentMethod?.Name ?? "—"}").FontColor("#555555");
+                                        c.Item().Text($"{p.PaymentDate:dd/MM/yyyy} -- {p.PaymentMethod?.Name ?? "--"}").FontColor("#555555");
                                         if (!string.IsNullOrWhiteSpace(p.Reference))
                                             c.Item().Text($"Ref: {p.Reference}").FontSize(9).FontColor("#888888");
                                         if (!string.IsNullOrWhiteSpace(p.Notes))
@@ -212,7 +212,7 @@ public sealed class PdfService : IPdfService
 
                 // Pie
                 page.Footer().AlignCenter()
-                    .Text($"Generado el {DateTime.Now:dd/MM/yyyy HH:mm} — {storeName}")
+                    .Text($"Generado el {DateTime.Now:dd/MM/yyyy HH:mm} -- {storeName}")
                     .FontSize(8).FontColor("#999999");
             });
         });

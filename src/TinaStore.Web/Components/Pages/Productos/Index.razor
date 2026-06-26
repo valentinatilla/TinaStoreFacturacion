@@ -1,10 +1,10 @@
-@page "/productos"
+﻿@page "/productos"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 @inject IJSRuntime JS
 @implements IAsyncDisposable
 
-<PageTitle>Productos ” Tina Store</PageTitle>
+<PageTitle>Productos " Tina Store</PageTitle>
 
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h4 class="fw-bold mb-0"><i class="bi bi-box-seam me-2 text-purple"></i>Productos</h4>
@@ -62,7 +62,7 @@ else
                         <div class="text-muted small">Costo total del inventario</div>
                         <div class="fw-bold fs-4 text-purple">$@_costoInventario.ToString("N0")</div>
                         <div class="text-muted" style="font-size:.75rem;">
-                            suma de costo — stock por producto activo
+                            suma de costo -- stock por producto activo
                         </div>
                     </div>
                 </div>
@@ -161,11 +161,22 @@ else
                             <td class="text-muted small ts-table-hide-mobile">@p.Sku</td>
                             <td class="fw-semibold">@p.Name</td>
                             <td class="ts-table-hide-mobile">@p.CategoryName</td>
-                            <td class="ts-table-hide-mobile text-muted small">@(p.SupplierName ?? "”")</td>
-                            <td class="text-end text-muted ts-table-hide-mobile">@(p.PurchasePrice > 0 ? p.PurchasePrice.ToString("N0") : "”")</td>
+                            <td class="ts-table-hide-mobile text-muted small">@(p.SupplierName ?? string.Empty)</td>
+                            <td class="text-end text-muted ts-table-hide-mobile">@(p.PurchasePrice > 0 ? p.PurchasePrice.ToString("N0") : string.Empty)</td>
                             <td class="text-end">$@p.SalePrice.ToString("N0")</td>
-                            <td class="text-end small ts-table-hide-mobile @(p.ProfitMargin > 0 ? "text-success fw-semibold" : "text-muted")">
-                                @(p.ProfitMargin > 0 ? p.ProfitMargin.ToString("0.0") + " %" : "”")
+                            <td class="text-end small ts-table-hide-mobile">
+                                @if (p.ProfitMargin > 0)
+                                {
+                                    <span class="text-success fw-semibold">@(p.ProfitMargin.ToString("0.0")) %</span>
+                                }
+                                else if (p.PurchasePrice == 0 && p.SalePrice > 0)
+                                {
+                                    <span class="text-info fw-semibold" title="Costo cero - ganancia neta">$@p.SalePrice.ToString("N0")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
                             </td>
                             <td class="text-center">
                                 <span class="badge @(!p.IsActive ? "bg-secondary" : p.CurrentStock == 0 ? "badge-sin-stock" : p.IsLowStock ? "badge-bajo-stock" : "bg-success")">@p.CurrentStock</span>
@@ -399,11 +410,11 @@ else
                         <i class="bi bi-pencil-square me-2 text-purple"></i>Edición masiva de productos
                         @if (_bulkPaso == 2)
                         {
-                            <span class="badge bg-purple ms-2" style="font-size:.75rem;">Paso 2 ” Confirmar</span>
+                            <span class="badge bg-purple ms-2" style="font-size:.75rem;">Paso 2 " Confirmar</span>
                         }
                         else
                         {
-                            <span class="badge badge-estado-pendiente ms-2" style="font-size:.75rem;">Paso 1 ” Editar</span>
+                            <span class="badge badge-estado-pendiente ms-2" style="font-size:.75rem;">Paso 1 " Editar</span>
                         }
                     </h5>
                     <button class="btn-close" @onclick="CerrarEdicionMasiva"></button>
@@ -411,7 +422,7 @@ else
 
                 @if (_bulkPaso == 1)
                 {
-                    <!-- ”€”€ PASO 1: tabla editable ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€ -->
+                    <!-- "€"€ PASO 1: tabla editable "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€ -->
                     <div class="modal-body p-0">
 
                         <!-- Barra de búsqueda -->
@@ -544,7 +555,7 @@ else
                 }
                 else
                 {
-                    <!-- ”€”€ PASO 2: resumen y confirmación ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€ -->
+                    <!-- "€"€ PASO 2: resumen y confirmación "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€ -->
                     <div class="modal-body">
                         @{
                             var _resumenNumericos = FilasConCambiosNumericos.ToList();
@@ -667,7 +678,7 @@ else
 @code {
     private string _apiBase = string.Empty;
 
-    // ”€”€ Tarjetas resumen (calculadas desde _productos) ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
+    // "€"€ Tarjetas resumen (calculadas desde _productos) "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
     private int     _refDisponibles  => _productos.Count(p => p.IsActive && p.CurrentStock > 0);
     private decimal _costoInventario => _productos.Where(p => p.IsActive).Sum(p => p.PurchasePrice * p.CurrentStock);
 
@@ -688,12 +699,12 @@ else
     private IBrowserFile? _imagenSeleccionada;
     private byte[]? _imagenBytes;
 
-    // ”€”€ Drag & drop JS interop ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
+    // "€"€ Drag & drop JS interop "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
     private ElementReference _dropZoneRef;
     private DotNetObjectReference<Index>? _dotNetRef;
     private bool _dropZoneIniciada;
 
-    // ”€”€ Filtros ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
+    // "€"€ Filtros "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
     private string   _filtroTexto       = string.Empty;
     private int      _filtroCategoriaId;
     private int      _filtroProveedorId;
@@ -984,7 +995,7 @@ else
 
     private async Task Guardar()
     {
-        // ”€”€ Validaciones por campo ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
+        // "€"€ Validaciones por campo "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
         _errorModal = null;
         _mensaje = null;
         if (string.IsNullOrWhiteSpace(_form.Name))
@@ -1151,7 +1162,7 @@ else
         public int StockEntrada { get; set; }
     }
 
-    // ”€”€ Edición masiva ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
+    // "€"€ Edición masiva "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
     private bool               _mostrarEdicionMasiva;
     private int                _bulkPaso = 1;
     private string             _bulkFiltro = "";

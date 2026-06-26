@@ -1,10 +1,10 @@
-using TinaStore.Application.Interfaces;
+﻿using TinaStore.Application.Interfaces;
 
 namespace TinaStore.Infrastructure.Services;
 
 /// <summary>
 /// Implementación del reloj de la aplicación en UTC-5
-/// (Colombia, Ecuador, Perú – sin horario de verano).
+/// (Colombia, Ecuador, Perú - sin horario de verano).
 /// </summary>
 public sealed class AppClock : IAppClock
 {
