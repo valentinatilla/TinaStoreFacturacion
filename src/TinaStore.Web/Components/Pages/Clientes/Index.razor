@@ -116,7 +116,7 @@ else
                             </td>
                             <td class="text-muted small ts-table-hide-mobile">
                                 @if (c.LastPurchaseDate.HasValue) {
-                                    @c.LastPurchaseDate.Value.ToLocalTime().ToString("dd/MM/yyyy")
+                                    @c.LastPurchaseDate.Value.ToString("dd/MM/yyyy")
                                 }
                             </td>
                             <td class="text-end" @onclick:stopPropagation="true">

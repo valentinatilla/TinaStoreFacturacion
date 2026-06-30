@@ -1,4 +1,4 @@
-﻿@page "/egresos"
+@page "/egresos"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 
@@ -77,7 +77,7 @@ else
                         var anulado = e.Status != 0;
                         <tr class="@(anulado ? "text-muted" : "")"
                             style="@(anulado ? "opacity:.55" : "")">
-                            <td class="text-muted small">@e.ExpenseDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="text-muted small">@e.ExpenseDate.ToString("dd/MM/yyyy")</td>
                             <td>@if (anulado){<s>@e.Description</s>}else{@e.Description}</td>
                             <td class="text-muted small">@(e.SupplierName ?? string.Empty)</td>
                             <td class="text-end fw-semibold">
@@ -123,7 +123,7 @@ else
                         var anulado = e.Status != 0;
                         <tr class="@(anulado ? "text-muted" : "")"
                             style="@(anulado ? "opacity:.55" : "")">
-                            <td class="text-muted small">@e.ExpenseDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="text-muted small">@e.ExpenseDate.ToString("dd/MM/yyyy")</td>
                             <td>@if (anulado){<s>@e.Description</s>}else{@e.Description}</td>
                             <td><span class="badge @(anulado ? "bg-danger" : "bg-secondary")">@e.ExpenseCategoryName</span></td>
                             <td class="text-muted small ts-table-hide-mobile">

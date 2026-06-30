@@ -125,7 +125,7 @@ else if (_data is not null)
                                                         {
                                                             <tr>
                                                                 <td><span class="badge bg-secondary">@f.InvoiceNumber</span></td>
-                                                                <td class="text-muted small">@f.InvoiceDate.ToLocalTime().ToString("dd/MM/yyyy")</td>
+                                                                <td class="text-muted small">@f.InvoiceDate.ToString("dd/MM/yyyy")</td>
                                                                 <td class="text-end fw-semibold">$@f.Total.ToString("N0")</td>
                                                                 <td class="text-end text-success">$@f.AmountPaid.ToString("N0")</td>
                                                                 <td class="text-end fw-bold text-danger">$@f.Balance.ToString("N0")</td>

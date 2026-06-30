@@ -1,4 +1,4 @@
-﻿@page "/ventas"
+@page "/ventas"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 @inject NavigationManager Nav
@@ -110,7 +110,7 @@ else
                             <td class="ts-table-hide-mobile"><span class="badge bg-dark">@f.InvoiceNumber</span></td>
                             <td>
                                 <span class="d-block">@f.CustomerName</span>
-                                <span class="d-md-none text-muted" style="font-size:.72rem;">@f.InvoiceNumber · @f.InvoiceDate.ToLocalTime().ToString("dd/MM/yy")</span>
+                                <span class="d-md-none text-muted" style="font-size:.72rem;">@f.InvoiceNumber · @f.InvoiceDate.ToString("dd/MM/yy")</span>
                             </td>
                             <td class="text-end fw-semibold">$@f.Total.ToString("N0")</td>
                             <td class="text-end ts-table-hide-mobile @(f.AmountPaid < f.Total ? "text-danger" : "text-success")">
@@ -122,7 +122,7 @@ else
                             <td>
                                 <span class="badge badge-estado-@f.StatusName.ToLower()">@f.StatusName</span>
                             </td>
-                            <td class="text-muted small ts-table-hide-mobile">@f.InvoiceDate.ToLocalTime().ToString("dd/MM/yyyy")</td>
+                            <td class="text-muted small ts-table-hide-mobile">@f.InvoiceDate.ToString("dd/MM/yyyy")</td>
                             <td class="text-end" @onclick:stopPropagation="true">
                                 <div class="d-flex gap-1 justify-content-end align-items-center">
                                 @if (_pdfDescargando.Contains(f.Id))
