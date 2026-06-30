@@ -1,4 +1,4 @@
-@page "/ventas"
+﻿@page "/ventas"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 @inject NavigationManager Nav
@@ -458,7 +458,7 @@ else
     private bool      _ordenDesc    = true;
     private HashSet<int> _pdfDescargando = [];
 
-    // "€"€ Detalle expandible "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Detalle expandible -----------------------------------------------------
     private HashSet<int>                         _expandidas      = [];
     private HashSet<int>                         _detallesCargando = [];
     private Dictionary<int, VentaDetalleDto>     _detallesCache   = [];
@@ -738,7 +738,7 @@ else
         }
     }
 
-    // "€"€ Ordenamiento de columnas "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Ordenamiento de columnas ----------------------------------------------------
     private void OrdenarPor(string campo)
     {
         if (_ordenCampo == campo)

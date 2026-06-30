@@ -465,7 +465,7 @@
     {
         _error = null;
 
-        // "€"€ Validaciones de negocio "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+        // -- Validaciones de negocio -------------------------------------------
         if (_clienteId == 0)            { _error = "Selecciona un cliente antes de registrar la venta.";      return; }
         if (!_detalles.Any())           { _error = "Agrega al menos un producto a la venta.";              return; }
         if (_detalles.Any(d => d.Cantidad <= 0))

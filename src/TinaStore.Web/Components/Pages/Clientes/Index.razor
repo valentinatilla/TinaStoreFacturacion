@@ -288,7 +288,7 @@ else
     private string _nombreAEliminar = "";
     private bool _exportandoClientes;
 
-    // "€"€ Detalle expandible con nota "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Detalle expandible con nota --------------------------------------------
     private readonly HashSet<int> _expandidos = [];
 
     private async Task ExportarExcel()
@@ -317,13 +317,13 @@ else
         finally { _exportandoClientes = false; }
     }
 
-    // "€"€ Errores de validación del modal "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Errores de validación del modal --------------------------------------------
     private string? _errNombre;
     private string? _errEmail;
     private string? _errTelefono;
     private List<string> _erroresModal = [];
 
-    // "€"€ Filtros "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Filtros --------------------------------------------------------------------
     private string _filtroTexto  = string.Empty;
     private string _filtroEmail  = string.Empty;
     private string _filtroEstado = string.Empty;
@@ -381,7 +381,7 @@ else
         _filtrados    = _clientes;
     }
 
-    // "€"€ Ordenamiento por columna "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Ordenamiento por columna ---------------------------------------------------
     private string  _ordenCampo = string.Empty;
     private bool    _ordenDesc;
 

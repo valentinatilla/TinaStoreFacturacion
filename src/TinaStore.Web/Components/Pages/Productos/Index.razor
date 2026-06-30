@@ -422,7 +422,7 @@ else
 
                 @if (_bulkPaso == 1)
                 {
-                    <!-- "€"€ PASO 1: tabla editable "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€ -->
+                    <!-- -- PASO 1: tabla editable ------------------------------- -->
                     <div class="modal-body p-0">
 
                         <!-- Barra de búsqueda -->
@@ -555,7 +555,7 @@ else
                 }
                 else
                 {
-                    <!-- "€"€ PASO 2: resumen y confirmación "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€ -->
+                    <!-- -- PASO 2: resumen y confirmación ----------------------- -->
                     <div class="modal-body">
                         @{
                             var _resumenNumericos = FilasConCambiosNumericos.ToList();
@@ -678,7 +678,7 @@ else
 @code {
     private string _apiBase = string.Empty;
 
-    // "€"€ Tarjetas resumen (calculadas desde _productos) "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Tarjetas resumen (calculadas desde _productos) -----------------------------
     private int     _refDisponibles  => _productos.Count(p => p.IsActive && p.CurrentStock > 0);
     private decimal _costoInventario => _productos.Where(p => p.IsActive).Sum(p => p.PurchasePrice * p.CurrentStock);
 
@@ -699,12 +699,12 @@ else
     private IBrowserFile? _imagenSeleccionada;
     private byte[]? _imagenBytes;
 
-    // "€"€ Drag & drop JS interop "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Drag & drop JS interop --------------------------------------------------
     private ElementReference _dropZoneRef;
     private DotNetObjectReference<Index>? _dotNetRef;
     private bool _dropZoneIniciada;
 
-    // "€"€ Filtros "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Filtros --------------------------------------------------------------------
     private string   _filtroTexto       = string.Empty;
     private int      _filtroCategoriaId;
     private int      _filtroProveedorId;
@@ -995,7 +995,7 @@ else
 
     private async Task Guardar()
     {
-        // "€"€ Validaciones por campo "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+        // -- Validaciones por campo ---------------------------------------------
         _errorModal = null;
         _mensaje = null;
         if (string.IsNullOrWhiteSpace(_form.Name))
@@ -1162,7 +1162,7 @@ else
         public int StockEntrada { get; set; }
     }
 
-    // "€"€ Edición masiva "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Edición masiva ---------------------------------------------------------
     private bool               _mostrarEdicionMasiva;
     private int                _bulkPaso = 1;
     private string             _bulkFiltro = "";

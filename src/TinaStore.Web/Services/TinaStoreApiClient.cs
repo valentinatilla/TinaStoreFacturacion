@@ -2,7 +2,7 @@
 
 namespace TinaStore.Web.Services;
 
-// "€"€"€ DTOs de respuesta de la API "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+// --- DTOs de respuesta de la API ----------------------------------------------
 
 public record TokenResponseDto(string AccessToken, string TokenType, int ExpiresInMinutes, UserInfoDto User);
 public record UserInfoDto(int Id, string FullName, string Email, string Role, bool IsActive);
@@ -204,7 +204,7 @@ public class TinaStoreApiClient
         }
     }
 
-    // "€"€ Auth "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Auth ------------------------------------------------------------------
     public async Task<TokenResponseDto?> LoginAsync(string email, string password)
     {
         try
@@ -254,14 +254,14 @@ public class TinaStoreApiClient
         catch { return null; }
     }
 
-    // "€"€ Dashboard "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Dashboard -------------------------------------------------------------
     public Task<DashboardDto?> GetDashboardAsync() =>
         GetSafeAsync<DashboardDto>("/api/dashboard");
 
     public Task<(DashboardDto? Data, string? Error)> GetDashboardConDiagnosticoAsync() =>
         GetWithErrorAsync<DashboardDto>("/api/dashboard");
 
-    // "€"€ Clientes "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Clientes --------------------------------------------------------------
     public Task<List<ClienteDto>?> GetClientesAsync() =>
         GetSafeAsync<List<ClienteDto>>("/api/customers");
 
@@ -291,7 +291,7 @@ public class TinaStoreApiClient
         return r.IsSuccessStatusCode;
     }
 
-    // "€"€ Categorías "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Categorías ------------------------------------------------------------
     public Task<List<CategoriaDto>?> GetCategoriasAsync() =>
         GetSafeAsync<List<CategoriaDto>>("/api/categories");
 
@@ -311,7 +311,7 @@ public class TinaStoreApiClient
         return (false, await LeerMensajeErrorAsync(r));
     }
 
-    // "€"€ Proveedores "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Proveedores -----------------------------------------------------------
     public Task<List<ProveedorDto>?> GetProveedoresAsync() =>
         GetSafeAsync<List<ProveedorDto>>("/api/suppliers");
 
@@ -338,11 +338,11 @@ public class TinaStoreApiClient
         return r.IsSuccessStatusCode;
     }
 
-    // "€"€ Métodos de pago "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Métodos de pago -------------------------------------------------------
     public Task<List<MetodoPagoDto>?> GetMetodosPagoAsync() =>
         GetSafeAsync<List<MetodoPagoDto>>("/api/paymentmethods");
 
-    // "€"€ Productos "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Productos -------------------------------------------------------------
     public Task<List<ProductoDto>?> GetProductosAsync() =>
         GetSafeAsync<List<ProductoDto>>("/api/products");
 
@@ -416,7 +416,7 @@ public class TinaStoreApiClient
         return await r.Content.ReadFromJsonAsync<BulkUpdateResultDto>();
     }
 
-    // "€"€ Facturas
+    // -- Facturas
     public Task<List<FacturaDto>?> GetFacturasAsync() =>
         GetSafeAsync<List<FacturaDto>>("/api/invoices");
 
@@ -454,7 +454,7 @@ public class TinaStoreApiClient
         return r.IsSuccessStatusCode ? await r.Content.ReadAsByteArrayAsync() : null;
     }
 
-    // "€"€ Egresos "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Egresos ---------------------------------------------------------------
     public Task<List<EgresoDto>?> GetEgresosAsync() =>
         GetSafeAsync<List<EgresoDto>>("/api/expenses");
 
@@ -482,7 +482,7 @@ public class TinaStoreApiClient
         return r.IsSuccessStatusCode;
     }
 
-    // "€"€ Configuración de tienda "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Configuración de tienda -----------------------------------------------
 
     public Task<ConfiguracionTiendaDto?> GetConfiguracionAsync() =>
         GetSafeAsync<ConfiguracionTiendaDto>("/api/settings");
@@ -505,7 +505,7 @@ public class TinaStoreApiClient
             : null;
     }
 
-    // "€"€ Recordatorios "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Recordatorios ---------------------------------------------------------
     public async Task<ReminderHistoryDto?> RegistrarRecordatorioWhatsAppAsync(int customerId, string message)
     {
         SetAuthHeader();
@@ -519,7 +519,7 @@ public class TinaStoreApiClient
     public Task<List<ReminderHistoryDto>?> GetHistorialRecordatoriosAsync(int customerId) =>
         GetSafeAsync<List<ReminderHistoryDto>>($"/api/reminders/historial/{customerId}");
 
-    // "€"€ Reportes "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Reportes --------------------------------------------------------------
     public Task<ReporteVentasDto?> GetReporteVentasAsync(DateTime desde, DateTime hasta) =>
         GetSafeAsync<ReporteVentasDto>(
             $"/api/reports/ventas?from={desde:yyyy-MM-dd}&to={hasta:yyyy-MM-dd}");
@@ -587,7 +587,7 @@ public class TinaStoreApiClient
             : null;
     }
 
-    // "€"€ Usuarios "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Usuarios -------------------------------------------------------------
     public Task<List<UsuarioDto>?> GetUsuariosAsync() =>
         GetSafeAsync<List<UsuarioDto>>("/api/users");
 

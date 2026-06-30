@@ -267,12 +267,12 @@ else
     private string? _errorModal;
     private EgresoForm _form = new();
 
-    // "€"€ Confirmación de anulación "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Confirmación de anulación ---------------------------------------------
     private bool _mostrarModalAnular;
     private EgresoDto? _egresoAAnular;
     private int _editandoId;
 
-    // "€"€ Filtros "€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€"€
+    // -- Filtros ---------------------------------------------------------------
     private string? _filtroDesdeStr;
     private string? _filtroHastaStr = DateTime.Today.ToString("yyyy-MM-dd");
     private int _filtroCategoriaId;
