@@ -17,6 +17,7 @@ public sealed class ProductService : IProductService
     private readonly IExpenseRepository _expenses;
     private readonly IRepository<ExpenseCategory> _expenseCategories;
     private readonly IRepository<InventoryMovement> _movements;
+    private readonly IAppClock _clock;
 
     public ProductService(
         IProductRepository products,
@@ -24,7 +25,8 @@ public sealed class ProductService : IProductService
         IRepository<Supplier> suppliers,
         IExpenseRepository expenses,
         IRepository<ExpenseCategory> expenseCategories,
-        IRepository<InventoryMovement> movements)
+        IRepository<InventoryMovement> movements,
+        IAppClock clock)
     {
         _products = products;
         _categories = categories;
@@ -32,6 +34,7 @@ public sealed class ProductService : IProductService
         _expenses = expenses;
         _expenseCategories = expenseCategories;
         _movements = movements;
+        _clock = clock;
     }
 
     public async Task<IEnumerable<ProductSummaryDto>> GetAllAsync(bool soloActivos = false)
@@ -293,7 +296,7 @@ public sealed class ProductService : IProductService
 
         var egreso = new Expense
         {
-            ExpenseDate       = DateTime.UtcNow,
+            ExpenseDate       = _clock.Now,
             Description       = $"Compra de {cantidad} unidad(es) de '{product.Name}'",
             Amount            = precioUnitario * cantidad,
             Notes             = product.Sku is not null ? $"SKU: {product.Sku}" : null,

@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Moq;
 using TinaStore.Application.DTOs;
+using TinaStore.Application.Interfaces;
 using TinaStore.Application.Services;
 using TinaStore.Domain.Entities;
 using TinaStore.Domain.Enums;
@@ -17,6 +18,7 @@ public class InvoiceServiceTests
     private readonly Mock<IRepository<Payment>> _paymentRepoMock;
     private readonly Mock<IRepository<InventoryMovement>> _movementRepoMock;
     private readonly Mock<IRepository<StoreSettings>> _settingsMock;
+    private readonly Mock<IAppClock> _clockMock;
     private readonly InvoiceService _sut;
 
     // Instancia fresca por cada test para evitar que CurrentStock se contamine
@@ -48,6 +50,8 @@ public class InvoiceServiceTests
         _paymentRepoMock    = new Mock<IRepository<Payment>>();
         _movementRepoMock   = new Mock<IRepository<InventoryMovement>>();
         _settingsMock       = new Mock<IRepository<StoreSettings>>();
+        _clockMock          = new Mock<IAppClock>();
+        _clockMock.Setup(c => c.Now).Returns(new DateTime(2026, 1, 1, 10, 0, 0));
 
         _sut = new InvoiceService(
             _invoiceRepoMock.Object,
@@ -55,7 +59,8 @@ public class InvoiceServiceTests
             _receivableRepoMock.Object,
             _paymentRepoMock.Object,
             _movementRepoMock.Object,
-            _settingsMock.Object);
+            _settingsMock.Object,
+            _clockMock.Object);
     }
 
     // ── Helper: configura mocks base para crear una factura ───────────────────

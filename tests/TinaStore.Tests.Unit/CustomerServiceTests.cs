@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Moq;
 using TinaStore.Application.DTOs;
+using TinaStore.Application.Interfaces;
 using TinaStore.Application.Services;
 using TinaStore.Domain.Entities;
 using TinaStore.Domain.Interfaces;
@@ -10,12 +11,15 @@ namespace TinaStore.Tests.Unit;
 public class CustomerServiceTests
 {
     private readonly Mock<ICustomerRepository> _repoMock;
+    private readonly Mock<IAppClock> _clockMock;
     private readonly CustomerService _sut;
 
     public CustomerServiceTests()
     {
-        _repoMock = new Mock<ICustomerRepository>();
-        _sut = new CustomerService(_repoMock.Object);
+        _repoMock  = new Mock<ICustomerRepository>();
+        _clockMock = new Mock<IAppClock>();
+        _clockMock.Setup(c => c.Now).Returns(new DateTime(2026, 1, 1, 10, 0, 0));
+        _sut = new CustomerService(_repoMock.Object, _clockMock.Object);
     }
 
     // ── GetAllAsync ───────────────────────────────────────────────────────────

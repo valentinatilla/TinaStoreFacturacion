@@ -9,10 +9,12 @@ namespace TinaStore.Application.Services;
 public sealed class CustomerService : ICustomerService
 {
     private readonly ICustomerRepository _customers;
+    private readonly IAppClock _clock;
 
-    public CustomerService(ICustomerRepository customers)
+    public CustomerService(ICustomerRepository customers, IAppClock clock)
     {
         _customers = customers;
+        _clock = clock;
     }
 
     public async Task<IEnumerable<CustomerDto>> GetAllAsync(bool soloActivos = false)
@@ -114,16 +116,16 @@ public sealed class CustomerService : ICustomerService
     /// "Activo" si compró en los últimos 6 meses.
     /// "Inactivo" si no ha comprado o la última compra fue hace más de 6 meses.
     /// </summary>
-    private static string GetCommercialStatus(Customer c)
+    private string GetCommercialStatus(Customer c)
     {
         var ultimaCompra = GetLastPurchaseDate(c);
         if (ultimaCompra is null) return "Sin compras";
-        return ultimaCompra.Value >= DateTime.UtcNow.AddMonths(-6)
+        return ultimaCompra.Value >= _clock.Now.AddMonths(-6)
             ? "Activo"
             : "Inactivo";
     }
 
-    private static CustomerDto ToDto(Customer c) => new(
+    private CustomerDto ToDto(Customer c) => new(
         c.Id,
         c.FullName,
         c.DocumentType,

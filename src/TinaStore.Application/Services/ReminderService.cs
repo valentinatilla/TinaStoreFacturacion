@@ -10,11 +10,13 @@ public sealed class ReminderService : IReminderService
 {
     private readonly IReminderRepository _reminders;
     private readonly ICustomerRepository _customers;
+    private readonly IAppClock _clock;
 
-    public ReminderService(IReminderRepository reminders, ICustomerRepository customers)
+    public ReminderService(IReminderRepository reminders, ICustomerRepository customers, IAppClock clock)
     {
         _reminders = reminders;
         _customers = customers;
+        _clock = clock;
     }
 
     public async Task<ReminderHistoryDto> RegistrarRecordatorioWhatsAppAsync(RegistrarRecordatorioWhatsAppDto dto)
@@ -32,7 +34,7 @@ public sealed class ReminderService : IReminderService
                 Message    = dto.Message,
                 Channel    = ReminderChannel.WhatsApp,
                 Status     = ReminderStatus.Sent,
-                SentAt     = DateTime.UtcNow
+                SentAt     = _clock.Now
             };
             await _reminders.AddAsync(reminder);
             await _reminders.SaveChangesAsync();
@@ -40,7 +42,7 @@ public sealed class ReminderService : IReminderService
         else
         {
             reminder.Message = dto.Message;
-            reminder.SentAt  = DateTime.UtcNow;
+            reminder.SentAt  = _clock.Now;
             reminder.Status  = ReminderStatus.Sent;
             await _reminders.UpdateAsync(reminder);
             await _reminders.SaveChangesAsync();
@@ -50,7 +52,7 @@ public sealed class ReminderService : IReminderService
         var history = new ReminderHistory
         {
             ReminderId = reminder.Id,
-            SentAt     = DateTime.UtcNow,
+            SentAt     = _clock.Now,
             Channel    = ReminderChannel.WhatsApp,
             Status     = ReminderStatus.Sent
         };

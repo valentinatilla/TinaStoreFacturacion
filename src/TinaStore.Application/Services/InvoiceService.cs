@@ -16,6 +16,7 @@ public sealed class InvoiceService : IInvoiceService
     private readonly IRepository<Payment> _payments;
     private readonly IRepository<InventoryMovement> _movements;
     private readonly IRepository<StoreSettings> _settings;
+    private readonly IAppClock _clock;
 
     public InvoiceService(
         IInvoiceRepository invoices,
@@ -23,7 +24,8 @@ public sealed class InvoiceService : IInvoiceService
         IAccountReceivableRepository receivables,
         IRepository<Payment> payments,
         IRepository<InventoryMovement> movements,
-        IRepository<StoreSettings> settings)
+        IRepository<StoreSettings> settings,
+        IAppClock clock)
     {
         _invoices = invoices;
         _products = products;
@@ -31,6 +33,7 @@ public sealed class InvoiceService : IInvoiceService
         _payments = payments;
         _movements = movements;
         _settings = settings;
+        _clock = clock;
     }
 
     public async Task<IEnumerable<InvoiceSummaryDto>> GetAllAsync()
@@ -94,7 +97,7 @@ public sealed class InvoiceService : IInvoiceService
         var invoice = new Invoice
         {
             InvoiceNumber = invoiceNumber,
-            InvoiceDate = DateTime.UtcNow,
+            InvoiceDate = _clock.Now,
             CustomerId = dto.CustomerId,
             Subtotal = subtotal,
             DiscountAmount = dto.DiscountAmount,
@@ -156,7 +159,7 @@ public sealed class InvoiceService : IInvoiceService
             invoice.Payments.Add(new Payment
             {
                 PaymentMethodId = pago.PaymentMethodId,
-                PaymentDate = DateTime.UtcNow,
+                PaymentDate = _clock.Now,
                 Amount = pago.Amount,
                 Reference = pago.Reference,
                 Notes = pago.Notes
@@ -187,7 +190,7 @@ public sealed class InvoiceService : IInvoiceService
                     CustomerId = dto.CustomerId,
                     TotalDebt = invoice.Balance,
                     TotalPaid = 0,
-                    LastPaymentDate = DateTime.UtcNow
+                    LastPaymentDate = _clock.Now
                 };
                 await _receivables.AddAsync(cxc);
             }
@@ -218,7 +221,7 @@ public sealed class InvoiceService : IInvoiceService
         {
             InvoiceId = invoiceId,
             PaymentMethodId = dto.PaymentMethodId,
-            PaymentDate = DateTime.UtcNow,
+            PaymentDate = _clock.Now,
             Amount = montoAplicado,
             Reference = dto.Reference,
             Notes = dto.Notes
@@ -238,7 +241,7 @@ public sealed class InvoiceService : IInvoiceService
         if (cxc is not null)
         {
             cxc.TotalPaid += montoAplicado;
-            cxc.LastPaymentDate = DateTime.UtcNow;
+            cxc.LastPaymentDate = _clock.Now;
             await _receivables.UpdateAsync(cxc);
         }
 
