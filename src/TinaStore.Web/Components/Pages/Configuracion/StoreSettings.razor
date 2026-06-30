@@ -1,4 +1,4 @@
-﻿@page "/configuracion"
+@page "/configuracion"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 @inject IJSRuntime JS
@@ -118,14 +118,10 @@ else if (_cargado)
                 <label class="form-label small fw-semibold">
                     <i class="bi bi-whatsapp text-success me-1"></i>Mensaje de recordatorio (WhatsApp)
                 </label>
-                <textarea class="form-control" rows="3" @bind="_modelo.ReminderMessage"
-                          maxlength="300" @bind:event="oninput"
-                          placeholder="Hola {nombre}, te recordamos que tienes un saldo pendiente de {saldo}. Por favor comunícate con nosotros. Gracias 🌸"></textarea>
+                <div class="form-control bg-light" style="min-height:80px;white-space:pre-wrap;font-size:.93rem;">Hola {nombre}, te recordamos que tienes un saldo pendiente de {saldo}. Por favor comunícate con nosotros. Gracias 🌸</div>
                 <div class="text-muted small mt-1 d-flex justify-content-between">
                     <span>Usa <code>{nombre}</code> y <code>{saldo}</code> como variables.</span>
-                    <span class="@(_modelo.ReminderMessage?.Length >= 280 ? "text-danger fw-semibold" : "")">
-                        @(_modelo.ReminderMessage?.Length ?? 0)/300
-                    </span>
+                    <span>0/300</span>
                 </div>
             </div>
         </div>
@@ -254,6 +250,7 @@ else if (_cargado)
         {
             _modelo.AllowNegativeStock = false;
             _modelo.TaxId = "1003565981-8"; // NIT fijo de la tienda
+            _modelo.ReminderMessage = "Hola {nombre}, te recordamos que tienes un saldo pendiente de {saldo}. Por favor comunícate con nosotros. Gracias 🌸";
             var dto = new UpdateConfiguracionDto(
                 _modelo.StoreName, _modelo.Address, _modelo.Phone, _modelo.Email,
                 _modelo.TaxId, _modelo.InvoiceFooterMessage, _modelo.ReminderMessage,
