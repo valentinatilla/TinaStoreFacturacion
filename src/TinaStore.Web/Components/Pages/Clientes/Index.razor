@@ -203,7 +203,7 @@ else
                             <label class="form-label small fw-semibold">Documento</label>
                             <input class="form-control" value="@_form.DocumentNumber" maxlength="20"
                                    inputmode="numeric" pattern="[0-9]*"
-                                   @oninput="e => SoloNumerosDocumento(e)" />
+                                   @oninput="e => SoloNumerosDocumento(e)" @ref="_refDocumento" />
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label small fw-semibold">Teléfono</label>
@@ -211,6 +211,7 @@ else
                                    value="@_form.Phone" maxlength="10" placeholder="Ej: 3001234567"
                                    inputmode="numeric" pattern="[0-9]*"
                                    @oninput="e => SoloNumerosTelefono(e)"
+                                   @ref="_refTelefono"
                                    @onkeydown="HandleModalKeyDown" />
                             @if (_errTelefono is not null)
                             {
@@ -438,11 +439,19 @@ else
         string.IsNullOrEmpty(valor) ? string.Empty :
         new string(valor.Where(char.IsDigit).ToArray());
 
-    private void SoloNumerosDocumento(ChangeEventArgs e) =>
-        _form.DocumentNumber = FiltrarSoloNumeros(e.Value?.ToString());
+    private async void SoloNumerosDocumento(ChangeEventArgs e)
+    {
+        var filtrado = FiltrarSoloNumeros(e.Value?.ToString());
+        _form.DocumentNumber = filtrado;
+        await JS.InvokeVoidAsync("eval", $"document.activeElement.value='{filtrado}'");
+    }
 
-    private void SoloNumerosTelefono(ChangeEventArgs e) =>
-        _form.Phone = FiltrarSoloNumeros(e.Value?.ToString());
+    private async void SoloNumerosTelefono(ChangeEventArgs e)
+    {
+        var filtrado = FiltrarSoloNumeros(e.Value?.ToString());
+        _form.Phone = filtrado;
+        await JS.InvokeVoidAsync("eval", $"document.activeElement.value='{filtrado}'");
+    }
 
     private async Task Guardar()
     {
@@ -450,6 +459,9 @@ else
 
         if (string.IsNullOrWhiteSpace(_form.FullName))
             _errNombre = "El nombre completo es obligatorio.";
+
+        if (!string.IsNullOrWhiteSpace(_form.DocumentType) && string.IsNullOrWhiteSpace(_form.DocumentNumber))
+            _erroresModal.Add("Si seleccionas un tipo de documento, debes ingresar el número de documento.");
 
         if (!EsEmailValido(_form.Email))
             _errEmail = "Ingresa un correo válido, por ejemplo: cliente@correo.com.";
@@ -510,6 +522,8 @@ else
 
     private ElementReference _btnConfirmarEliminarCliente;
     private bool _focusBtnEliminarCliente;
+    private ElementReference _refDocumento;
+    private ElementReference _refTelefono;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
