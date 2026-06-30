@@ -93,7 +93,7 @@ else if (_cargado)
             <div class="col-md-6">
                 <label class="form-label small fw-semibold">NIT / RUT</label>
                 <input class="form-control-plaintext fw-semibold ps-2 border rounded bg-light"
-                       value="1003565981-8" readonly />
+                       value="1003565981-7" readonly />
                 <div class="text-muted small mt-1">
                     <i class="bi bi-lock-fill me-1"></i>El NIT no puede modificarse.
                 </div>
@@ -163,7 +163,7 @@ else if (_cargado)
                 _modelo.AllowNegativeStock   = cfg.AllowNegativeStock;
                 _logoUrl = string.IsNullOrEmpty(cfg.LogoPath)
                     ? null
-                    : $"{Api.PublicBaseUrl.TrimEnd('/')}{cfg.LogoPath}?v={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
+                    : $"/proxy/logo?v={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
                 _cargado = true;
             }
         }
@@ -184,7 +184,7 @@ else if (_cargado)
             {
                 var url = string.IsNullOrEmpty(cfg.LogoPath)
                     ? null
-                    : $"{Api.PublicBaseUrl.TrimEnd('/')}{cfg.LogoPath}?v={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
+                    : $"/proxy/logo?v={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
                 _logoUrl = url;
                 LogoState.SetLogo(url);
                 _exito = true;
@@ -248,7 +248,7 @@ else if (_cargado)
         try
         {
             _modelo.AllowNegativeStock = false;
-            _modelo.TaxId = "1003565981-8"; // NIT fijo de la tienda
+            _modelo.TaxId = "1003565981-7"; // NIT fijo de la tienda
             _modelo.ReminderMessage = "Hola {nombre}, te recordamos que tienes un saldo pendiente de {saldo}. Por favor comunícate con nosotros. Gracias 🌸";
             var dto = new UpdateConfiguracionDto(
                 _modelo.StoreName, _modelo.Address, _modelo.Phone, _modelo.Email,

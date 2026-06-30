@@ -32,7 +32,7 @@ public sealed class StoreSettingsService : IStoreSettingsService
         settings.Address              = dto.Address;
         settings.Phone                = dto.Phone;
         settings.Email                = dto.Email;
-        settings.TaxId                = dto.TaxId;
+        settings.TaxId                = "1003565981-7"; // NIT fijo, no editable por el usuario
         settings.InvoiceFooterMessage = dto.InvoiceFooterMessage;
         settings.ReminderMessage      = dto.ReminderMessage;
         settings.Currency             = dto.Currency;
@@ -67,6 +67,6 @@ public sealed class StoreSettingsService : IStoreSettingsService
 
     private static StoreSettingsDto ToDto(StoreSettings s) => new(
         s.Id, s.StoreName, s.LogoPath, s.Address, s.Phone, s.Email,
-        s.TaxId, s.InvoiceFooterMessage, s.ReminderMessage, s.Currency,
+        "1003565981-7", s.InvoiceFooterMessage, s.ReminderMessage, s.Currency,
         s.TaxPercentage, s.InvoiceConsecutive, s.AllowNegativeStock);
 }

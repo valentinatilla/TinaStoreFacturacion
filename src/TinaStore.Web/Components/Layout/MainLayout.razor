@@ -76,7 +76,7 @@
                 if (cfg is not null && !string.IsNullOrEmpty(cfg.LogoPath))
                 {
                     var ts = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                    LogoState.SetLogo($"{Api.PublicBaseUrl.TrimEnd('/')}{cfg.LogoPath}?v={ts}");
+                    LogoState.SetLogo($"/proxy/logo?v={ts}");
                 }
             }
             catch { /* Si falla, usar emoji predeterminado */ }

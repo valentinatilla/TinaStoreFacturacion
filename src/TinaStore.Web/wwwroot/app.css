@@ -924,12 +924,12 @@ a.btn.bg-purple:focus {
     border: 1.5px solid var(--ts-accent);
     color: var(--ts-text-soft);
     background: #fff;
-    font-size: .82rem;
+    font-size: .855rem;
     font-weight: 600;
     font-family: 'Nunito', sans-serif;
-    padding: .35rem .9rem;
+    padding: .25rem .75rem;
+    line-height: 1.5;
     transition: background .15s, color .15s;
-    height: fit-content;
     align-self: flex-end;
     white-space: nowrap;
 }

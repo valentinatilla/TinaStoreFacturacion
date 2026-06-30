@@ -91,6 +91,9 @@ builder.Services.AddScoped(sp =>
         publicApiUrl);
 });
 
+// HttpClient para el proxy de logo: usa la URL interna servidor-a-servidor
+builder.Services.AddHttpClient("ApiProxy", c => c.BaseAddress = new Uri(apiBaseUrl));
+
 // ─── ForwardedHeaders (Railway termina TLS en el edge) ─────────────────────
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -209,6 +212,24 @@ app.MapGet("/session/get", (HttpContext ctx) =>
 {
     var token = ctx.Request.Cookies["tinastore_session"] ?? string.Empty;
     return Results.Ok(new { token });
+}).AllowAnonymous();
+
+// ─── Proxy de logo ───────────────────────────────────────────────────────────
+// Reenvía la petición de imagen al endpoint interno de la API.
+// Así el browser siempre llama al mismo dominio del Web (evita CORS y problemas
+// con PublicApiUrl no configurada en Railway).
+app.MapGet("/proxy/logo", async (IHttpClientFactory factory) =>
+{
+    try
+    {
+        var client   = factory.CreateClient("ApiProxy");
+        var response = await client.GetAsync("/api/settings/logo");
+        if (!response.IsSuccessStatusCode) return Results.NotFound();
+        var bytes       = await response.Content.ReadAsByteArrayAsync();
+        var contentType = response.Content.Headers.ContentType?.MediaType ?? "image/jpeg";
+        return Results.File(bytes, contentType);
+    }
+    catch { return Results.NotFound(); }
 }).AllowAnonymous();
 
 app.Run();

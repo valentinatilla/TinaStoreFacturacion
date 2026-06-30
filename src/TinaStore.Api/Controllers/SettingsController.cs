@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using TinaStore.Application.DTOs;
 using TinaStore.Application.Interfaces;
 
@@ -21,11 +22,13 @@ public sealed class SettingsController : ControllerBase
 
     private readonly IStoreSettingsService _service;
     private readonly IValidator<UpdateStoreSettingsDto> _updateValidator;
+    private readonly UploadsSettings _uploads;
 
-    public SettingsController(IStoreSettingsService service, IValidator<UpdateStoreSettingsDto> updateValidator)
+    public SettingsController(IStoreSettingsService service, IValidator<UpdateStoreSettingsDto> updateValidator, IOptions<UploadsSettings> uploads)
     {
         _service = service;
         _updateValidator = updateValidator;
+        _uploads = uploads.Value;
     }
 
     /// <summary>Obtiene la configuración actual de la tienda.</summary>
@@ -67,5 +70,32 @@ public sealed class SettingsController : ControllerBase
         stream.Position = 0;
         var result = await _service.UploadLogoAsync(stream, file.FileName);
         return Ok(result);
+    }
+
+    /// <summary>Devuelve el archivo de logo actual. No requiere autenticación para que el browser pueda cargarlo directamente.</summary>
+    [HttpGet("logo")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetLogo()
+    {
+        var cfg = await _service.GetAsync();
+        if (string.IsNullOrEmpty(cfg.LogoPath))
+            return NotFound();
+
+        var rutaRelativa = cfg.LogoPath.TrimStart('/');
+        var rutaFisica   = Path.Combine(_uploads.BasePath.Length > 0 ? _uploads.BasePath : Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"), rutaRelativa);
+        if (!System.IO.File.Exists(rutaFisica))
+            return NotFound();
+
+        var ext = Path.GetExtension(rutaFisica).ToLowerInvariant();
+        var contentType = ext switch
+        {
+            ".png"  => "image/png",
+            ".webp" => "image/webp",
+            _       => "image/jpeg"
+        };
+
+        var bytes = await System.IO.File.ReadAllBytesAsync(rutaFisica);
+        Response.Headers.CacheControl = "public, max-age=3600";
+        return File(bytes, contentType);
     }
 }

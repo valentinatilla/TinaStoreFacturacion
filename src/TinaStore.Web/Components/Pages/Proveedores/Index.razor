@@ -1,6 +1,7 @@
-﻿@page "/proveedores"
+@page "/proveedores"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
+@inject IJSRuntime JS
 
 <PageTitle>Proveedores " Tina Store</PageTitle>
 
@@ -93,13 +94,13 @@ else
                         <label class="form-label small fw-semibold">NIT / RUT</label>
                         <input class="form-control" value="@_form.TaxId" inputmode="numeric"
                                placeholder="Ej: 900123456" maxlength="15"
-                               @oninput="e => { _form.TaxId = new string((e.Value?.ToString() ?? string.Empty).Where(char.IsDigit).ToArray()); }" />
+                               @oninput="SoloNumerosNIT" @ref="_refNit" />
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Teléfono</label>
                         <input class="form-control" value="@_form.Phone" inputmode="numeric"
                                placeholder="Ej: 3001234567" maxlength="10"
-                               @oninput="e => { _form.Phone = new string((e.Value?.ToString() ?? string.Empty).Where(char.IsDigit).ToArray()); }" />
+                               @oninput="SoloNumerosTelefono" @ref="_refTelefonoProv" />
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Email</label>
@@ -233,11 +234,24 @@ else
         _proveedorAEliminar = null;
     }
 
-    // Permite solo dígitos en el campo NIT
-    private void SoloNumerosNIT(KeyboardEventArgs e)
+    private ElementReference _refNit;
+    private ElementReference _refTelefonoProv;
+
+    private static string FiltrarSoloNumeros(string? valor) =>
+        new string((valor ?? string.Empty).Where(char.IsDigit).ToArray());
+
+    private async void SoloNumerosNIT(ChangeEventArgs e)
     {
-        // La prevención real en Blazor requiere JS interop; aquí validamos en Guardar.
-        // Este método queda como punto de extensión visual.
+        var filtrado = FiltrarSoloNumeros(e.Value?.ToString());
+        _form.TaxId = filtrado;
+        await JS.InvokeVoidAsync("eval", $"document.activeElement.value='{filtrado}'");
+    }
+
+    private async void SoloNumerosTelefono(ChangeEventArgs e)
+    {
+        var filtrado = FiltrarSoloNumeros(e.Value?.ToString());
+        _form.Phone = filtrado;
+        await JS.InvokeVoidAsync("eval", $"document.activeElement.value='{filtrado}'");
     }
 
     private ElementReference _btnConfirmarEliminar;
