@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Json;
+using System.Net.Http.Json;
 
 namespace TinaStore.Web.Services;
 
@@ -54,6 +54,8 @@ public record FacturaDto(int Id, string InvoiceNumber, DateTime InvoiceDate, str
 public record CreateFacturaDto(int CustomerId, decimal DiscountAmount, decimal TaxAmount, string? Notes, List<CreateDetalleFacturaDto> Details, CreatePagoInicialDto? PagoInicial);
 public record CreateDetalleFacturaDto(int? ProductId, int Quantity, decimal UnitPrice, decimal DiscountAmount = 0, string? FreeDescription = null);
 public record CreatePagoInicialDto(int PaymentMethodId, decimal Amount, string? Reference, string? Notes);
+public record UpdateDetalleFacturaDto(int? ProductId, int Quantity, decimal UnitPrice, decimal DiscountAmount = 0, string? FreeDescription = null);
+public record UpdateFacturaDto(decimal DiscountAmount, decimal TaxAmount, string? Notes, List<UpdateDetalleFacturaDto> Details);
 
 public record DetalleLineaVentaDto(int Id, int? ProductId, string ProductName, int Quantity, decimal UnitPrice, decimal DiscountAmount, decimal Subtotal, string? ImagePath = null);
 public record PagoRegistradoDto(int Id, int PaymentMethodId, string PaymentMethodName, DateTime PaymentDate, decimal Amount, string? Reference, string? Notes);
@@ -431,6 +433,15 @@ public class TinaStoreApiClient
         SetAuthHeader();
         var r = await _http.PostAsJsonAsync("/api/invoices", dto);
         return r.IsSuccessStatusCode;
+    }
+
+    public async Task<(bool Ok, string? Error)> UpdateFacturaAsync(int id, UpdateFacturaDto dto)
+    {
+        SetAuthHeader();
+        var r = await _http.PutAsJsonAsync($"/api/invoices/{id}", dto);
+        if (r.IsSuccessStatusCode) return (true, null);
+        var body = await r.Content.ReadAsStringAsync();
+        return (false, body);
     }
 
     public async Task<bool> RegisterPagoAsync(int facturaId, RegisterPagoDto dto)

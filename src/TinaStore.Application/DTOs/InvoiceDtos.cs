@@ -94,3 +94,20 @@ public record InvoiceSummaryDto(
 
 /// <summary>Datos para anular una factura.</summary>
 public record CancelInvoiceDto(string Reason);
+
+/// <summary>Línea de detalle al editar una factura existente.</summary>
+public record UpdateInvoiceDetailDto(
+    int? ProductId,
+    int Quantity,
+    decimal UnitPrice,
+    decimal DiscountAmount = 0,
+    string? FreeDescription = null
+);
+
+/// <summary>Datos para editar una factura (detalles, descuento, notas). Solo facturas Pending o PartiallyPaid.</summary>
+public record UpdateInvoiceDto(
+    decimal DiscountAmount,
+    decimal TaxAmount,
+    string? Notes,
+    List<UpdateInvoiceDetailDto> Details
+);

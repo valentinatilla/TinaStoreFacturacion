@@ -147,6 +147,10 @@ else
                                             <i class="bi bi-cash-coin"></i>
                                         </button>
                                     }
+                                    <button class="btn btn-sm btn-outline-primary" title="Editar factura"
+                                            @onclick="() => AbrirEditar(f)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
                                     <button class="btn btn-sm btn-outline-danger" title="Anular"
                                             @onclick="() => Anular(f.Id)">
                                         <i class="bi bi-x-circle"></i>
@@ -443,6 +447,114 @@ else
     </div>
 }
 
+<!-- Modal de editar factura -->
+@if (_mostrarModalEditar)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-pencil-square text-primary me-2"></i>Editar venta <strong>@_editarNumero</strong></h5>
+                    <button class="btn-close" @onclick="CerrarModalEditar" disabled="@_guardandoEdicion"></button>
+                </div>
+                <div class="modal-body">
+                    @if (!string.IsNullOrEmpty(_errorEditar))
+                    {
+                        <div class="alert alert-danger py-2">@_errorEditar</div>
+                    }
+
+                    <!-- Líneas de detalle -->
+                    <h6 class="fw-semibold mb-2">Productos / servicios</h6>
+                    @foreach (var (linea, idx) in _editarLineas.Select((l, i) => (l, i)))
+                    {
+                        <div class="row g-2 align-items-end mb-2 border-bottom pb-2">
+                            <div class="col-md-4">
+                                <label class="form-label small">Producto</label>
+                                <select class="form-select form-select-sm" value="@linea.ProductId"
+                                        @onchange="e => CambiarProductoLinea(linea, e)">
+                                    <option value="">— Línea libre —</option>
+                                    @foreach (var p in _productosDisponibles)
+                                    {
+                                        <option value="@p.Id">@p.Name</option>
+                                    }
+                                </select>
+                            </div>
+                            @if (linea.ProductId == null)
+                            {
+                                <div class="col-md-3">
+                                    <label class="form-label small">Descripción</label>
+                                    <input class="form-control form-control-sm" placeholder="Descripción libre"
+                                           @bind="linea.FreeDescription" />
+                                </div>
+                            }
+                            <div class="col-md-2 col-6">
+                                <label class="form-label small">Precio</label>
+                                <input type="number" class="form-control form-control-sm" min="0" step="0.01"
+                                       @bind="linea.UnitPrice" @oninput="RecalcularTotales" />
+                            </div>
+                            <div class="col-md-1 col-6">
+                                <label class="form-label small">Cant.</label>
+                                <input type="number" class="form-control form-control-sm" min="1"
+                                       @bind="linea.Quantity" @oninput="RecalcularTotales" />
+                            </div>
+                            <div class="col-md-2 col-6">
+                                <label class="form-label small">Descuento</label>
+                                <input type="number" class="form-control form-control-sm" min="0" step="0.01"
+                                       @bind="linea.DiscountAmount" @oninput="RecalcularTotales" />
+                            </div>
+                            <div class="col-md-1 col-6 text-end">
+                                <label class="form-label small d-block">Subtotal</label>
+                                <span class="fw-semibold small">$@(((linea.UnitPrice * linea.Quantity) - linea.DiscountAmount).ToString("N0"))</span>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => EliminarLinea(linea)"
+                                        disabled="@(_editarLineas.Count <= 1)" title="Eliminar línea">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    }
+
+                    <button class="btn btn-sm btn-outline-secondary mb-3" @onclick="AgregarLinea">
+                        <i class="bi bi-plus-lg me-1"></i>Agregar línea
+                    </button>
+
+                    <!-- Totales y notas -->
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label small">Descuento global</label>
+                            <input type="number" class="form-control form-control-sm" min="0" step="0.01"
+                                   @bind="_editarDescuento" @oninput="RecalcularTotales" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">IVA / Impuesto</label>
+                            <input type="number" class="form-control form-control-sm" min="0" step="0.01"
+                                   @bind="_editarIva" @oninput="RecalcularTotales" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">Notas</label>
+                            <input class="form-control form-control-sm" @bind="_editarNotas" />
+                        </div>
+                        <div class="col-12 text-end">
+                            <span class="text-muted small me-3">Subtotal: <strong>$@_editarSubtotal.ToString("N0")</strong></span>
+                            <span class="text-muted small me-3">Descuento: <strong>$@_editarDescuento.ToString("N0")</strong></span>
+                            <span class="text-muted small me-3">IVA: <strong>$@_editarIva.ToString("N0")</strong></span>
+                            <span class="fs-5 fw-bold">Total: $@_editarTotal.ToString("N0")</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary btn-sm" @onclick="CerrarModalEditar" disabled="@_guardandoEdicion">Cancelar</button>
+                    <button class="btn btn-primary btn-sm" @onclick="GuardarEdicion" disabled="@_guardandoEdicion">
+                        @if (_guardandoEdicion) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                        <i class="bi bi-check-lg me-1"></i>Guardar cambios
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private string _apiBase = string.Empty;
     private List<FacturaDto> _facturas = [];
@@ -664,6 +776,151 @@ else
         _motivoAnulacion  = "";
         _errorModal       = null;
         _mostrarModalAnular = true;
+    }
+
+    // -- Edición de factura -------------------------------------------------------
+    private bool   _mostrarModalEditar;
+    private int    _idFacturaEditar;
+    private string _editarNumero  = "";
+    private bool   _guardandoEdicion;
+    private string? _errorEditar;
+    private decimal _editarDescuento;
+    private decimal _editarIva;
+    private string? _editarNotas;
+    private decimal _editarSubtotal;
+    private decimal _editarTotal;
+    private List<ProductoDto> _productosDisponibles = [];
+    private List<EditarLineaVm> _editarLineas = [];
+
+    private class EditarLineaVm
+    {
+        public int?    ProductId       { get; set; }
+        public int     Quantity        { get; set; } = 1;
+        public decimal UnitPrice       { get; set; }
+        public decimal DiscountAmount  { get; set; }
+        public string? FreeDescription { get; set; }
+    }
+
+    private async Task AbrirEditar(FacturaDto f)
+    {
+        _idFacturaEditar  = f.Id;
+        _editarNumero     = f.InvoiceNumber;
+        _errorEditar      = null;
+        _guardandoEdicion = false;
+
+        if (!_detallesCache.ContainsKey(f.Id))
+        {
+            var det = await Api.GetVentaDetalleAsync(f.Id);
+            if (det is not null) _detallesCache[f.Id] = det;
+        }
+
+        if (_productosDisponibles.Count == 0)
+            _productosDisponibles = await Api.GetProductosAsync() ?? [];
+
+        var detalle = _detallesCache.GetValueOrDefault(f.Id);
+        _editarLineas = detalle?.Details.Select(d => new EditarLineaVm
+        {
+            ProductId       = d.ProductId,
+            Quantity        = d.Quantity,
+            UnitPrice       = d.UnitPrice,
+            DiscountAmount  = d.DiscountAmount,
+            FreeDescription = d.ProductId == null ? d.ProductName : null
+        }).ToList() ?? [new EditarLineaVm()];
+
+        _editarDescuento = f.DiscountAmount;
+        _editarIva       = f.TaxAmount;
+        _editarNotas     = detalle?.Notes;
+
+        RecalcularTotales();
+        _mostrarModalEditar = true;
+    }
+
+    private void CerrarModalEditar()
+    {
+        _mostrarModalEditar = false;
+        _errorEditar = null;
+    }
+
+    private void AgregarLinea() =>
+        _editarLineas.Add(new EditarLineaVm { Quantity = 1 });
+
+    private void EliminarLinea(EditarLineaVm linea) =>
+        _editarLineas.Remove(linea);
+
+    private void CambiarProductoLinea(EditarLineaVm linea, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var pid))
+        {
+            linea.ProductId = pid;
+            var prod = _productosDisponibles.FirstOrDefault(p => p.Id == pid);
+            if (prod is not null) linea.UnitPrice = prod.SalePrice;
+            linea.FreeDescription = null;
+        }
+        else
+        {
+            linea.ProductId = null;
+            linea.UnitPrice = 0;
+        }
+        RecalcularTotales();
+    }
+
+    private void RecalcularTotales()
+    {
+        _editarSubtotal = _editarLineas.Sum(l => (l.UnitPrice * l.Quantity) - l.DiscountAmount);
+        _editarTotal    = _editarSubtotal - _editarDescuento + _editarIva;
+    }
+
+    private async Task GuardarEdicion()
+    {
+        _errorEditar = null;
+
+        if (_editarLineas.Count == 0)
+        {
+            _errorEditar = "La factura debe tener al menos una línea.";
+            return;
+        }
+        foreach (var l in _editarLineas)
+        {
+            if (l.ProductId == null && string.IsNullOrWhiteSpace(l.FreeDescription))
+            {
+                _errorEditar = "Las líneas libres deben tener una descripción.";
+                return;
+            }
+            if (l.Quantity < 1)
+            {
+                _errorEditar = "La cantidad de cada línea debe ser al menos 1.";
+                return;
+            }
+        }
+
+        _guardandoEdicion = true;
+        try
+        {
+            var dto = new UpdateFacturaDto(
+                _editarDescuento,
+                _editarIva,
+                _editarNotas,
+                _editarLineas.Select(l => new UpdateDetalleFacturaDto(
+                    l.ProductId, l.Quantity, l.UnitPrice, l.DiscountAmount, l.FreeDescription
+                )).ToList()
+            );
+
+            var (ok, error) = await Api.UpdateFacturaAsync(_idFacturaEditar, dto);
+            if (ok)
+            {
+                _mostrarModalEditar = false;
+                _exito   = true;
+                _mensaje = "Venta actualizada correctamente.";
+                _detallesCache.Remove(_idFacturaEditar);
+                await Cargar();
+            }
+            else
+            {
+                _errorEditar = error ?? "Error al guardar los cambios.";
+            }
+        }
+        catch { _errorEditar = "Error al comunicarse con la API."; }
+        finally { _guardandoEdicion = false; }
     }
 
     private void CerrarModal()

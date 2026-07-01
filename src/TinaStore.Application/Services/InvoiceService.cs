@@ -16,6 +16,7 @@ public sealed class InvoiceService : IInvoiceService
     private readonly IRepository<Payment> _payments;
     private readonly IRepository<InventoryMovement> _movements;
     private readonly IRepository<StoreSettings> _settings;
+    private readonly IRepository<InvoiceDetail> _details;
     private readonly IAppClock _clock;
 
     public InvoiceService(
@@ -25,6 +26,7 @@ public sealed class InvoiceService : IInvoiceService
         IRepository<Payment> payments,
         IRepository<InventoryMovement> movements,
         IRepository<StoreSettings> settings,
+        IRepository<InvoiceDetail> details,
         IAppClock clock)
     {
         _invoices = invoices;
@@ -33,6 +35,7 @@ public sealed class InvoiceService : IInvoiceService
         _payments = payments;
         _movements = movements;
         _settings = settings;
+        _details = details;
         _clock = clock;
     }
 
@@ -245,6 +248,166 @@ public sealed class InvoiceService : IInvoiceService
             await _receivables.UpdateAsync(cxc);
         }
 
+        await _invoices.SaveChangesAsync();
+
+        var result = await _invoices.GetWithDetailsAsync(invoiceId);
+        return ToDto(result!);
+    }
+
+    public async Task<InvoiceDto?> UpdateAsync(int invoiceId, UpdateInvoiceDto dto)
+    {
+        if (!dto.Details.Any())
+            throw new DomainException("La factura debe tener al menos un detalle.");
+
+        var invoice = await _invoices.GetWithDetailsAsync(invoiceId);
+        if (invoice is null) return null;
+        if (invoice.Status == InvoiceStatus.Cancelled)
+            throw new InvoiceCancelledException(invoice.Id);
+
+        var settings = await _settings.GetByIdAsync(1)
+            ?? throw new DomainException("No se encontró la configuración de la tienda.");
+
+        // ── 1. Revertir stock de los detalles actuales ────────────────────────
+        foreach (var detalle in invoice.Details)
+        {
+            if (!detalle.ProductId.HasValue) continue;
+            var prod = await _products.GetByIdAsync(detalle.ProductId.Value);
+            if (prod is null) continue;
+
+            var stockAntes = prod.CurrentStock;
+            prod.CurrentStock += detalle.Quantity;
+
+            await _movements.AddAsync(new InventoryMovement
+            {
+                ProductId = prod.Id,
+                MovementType = InventoryMovementType.ReturnFromSale,
+                Quantity = detalle.Quantity,
+                StockBefore = stockAntes,
+                StockAfter = prod.CurrentStock,
+                Reference = invoice.InvoiceNumber,
+                Notes = "Reversión por edición de factura"
+            });
+            await _products.UpdateAsync(prod);
+        }
+
+        // ── 2. Borrar detalles anteriores (soft-delete) ───────────────────────
+        foreach (var detalle in invoice.Details.ToList())
+            await _details.DeleteAsync(detalle);
+
+        invoice.Details.Clear();
+
+        // ── 3. Validar nuevos productos y calcular subtotal ───────────────────
+        var lineasInventario = new List<(Product producto, UpdateInvoiceDetailDto linea)>();
+        decimal subtotal = 0;
+
+        foreach (var linea in dto.Details)
+        {
+            if (linea.ProductId.HasValue)
+            {
+                var prod = await _products.GetByIdAsync(linea.ProductId.Value)
+                    ?? throw new EntityNotFoundException(nameof(Product), linea.ProductId.Value);
+
+                if (!settings.AllowNegativeStock && prod.CurrentStock < linea.Quantity)
+                    throw new InsufficientStockException(prod.Name, linea.Quantity, prod.CurrentStock);
+
+                lineasInventario.Add((prod, linea));
+            }
+            subtotal += (linea.UnitPrice * linea.Quantity) - linea.DiscountAmount;
+        }
+
+        var total = subtotal - dto.DiscountAmount + dto.TaxAmount;
+
+        // ── 4. Crear nuevos detalles y descontar stock ────────────────────────
+        foreach (var linea in dto.Details)
+        {
+            string nombreLinea;
+            if (linea.ProductId.HasValue)
+            {
+                var prod = lineasInventario.First(x => x.linea == linea).producto;
+                nombreLinea = prod.Name;
+
+                var stockAntes = prod.CurrentStock;
+                prod.CurrentStock -= linea.Quantity;
+
+                await _movements.AddAsync(new InventoryMovement
+                {
+                    ProductId = prod.Id,
+                    MovementType = InventoryMovementType.Exit,
+                    Quantity = linea.Quantity,
+                    StockBefore = stockAntes,
+                    StockAfter = prod.CurrentStock,
+                    Reference = invoice.InvoiceNumber,
+                    Notes = "Salida por edición de factura"
+                });
+                await _products.UpdateAsync(prod);
+            }
+            else
+            {
+                nombreLinea = linea.FreeDescription!;
+            }
+
+            invoice.Details.Add(new InvoiceDetail
+            {
+                InvoiceId = invoice.Id,
+                ProductId = linea.ProductId,
+                ProductName = nombreLinea,
+                Quantity = linea.Quantity,
+                UnitPrice = linea.UnitPrice,
+                DiscountAmount = linea.DiscountAmount
+            });
+        }
+
+        // ── 5. Ajustar totales ────────────────────────────────────────────────
+        var balanceAnterior = invoice.Balance;
+
+        invoice.Subtotal = subtotal;
+        invoice.DiscountAmount = dto.DiscountAmount;
+        invoice.TaxAmount = dto.TaxAmount;
+        invoice.Total = total;
+        invoice.Notes = dto.Notes;
+
+        invoice.Status = invoice.AmountPaid >= total
+            ? InvoiceStatus.Paid
+            : invoice.AmountPaid > 0
+                ? InvoiceStatus.Partial
+                : InvoiceStatus.Pending;
+
+        // ── 6. Ajustar cuenta por cobrar ──────────────────────────────────────
+        var balanceNuevo = invoice.Balance;
+        var deltaCxc = balanceNuevo - balanceAnterior;
+
+        if (deltaCxc != 0)
+        {
+            var cxc = await _receivables.GetByCustomerAsync(invoice.CustomerId);
+            if (deltaCxc > 0)
+            {
+                // Aumentó la deuda
+                if (cxc is null)
+                {
+                    cxc = new AccountReceivable
+                    {
+                        CustomerId = invoice.CustomerId,
+                        TotalDebt = balanceNuevo,
+                        TotalPaid = invoice.AmountPaid,
+                        LastPaymentDate = _clock.Now
+                    };
+                    await _receivables.AddAsync(cxc);
+                }
+                else
+                {
+                    cxc.TotalDebt += deltaCxc;
+                    await _receivables.UpdateAsync(cxc);
+                }
+            }
+            else if (cxc is not null)
+            {
+                // Disminuyó la deuda
+                cxc.TotalDebt = Math.Max(cxc.TotalPaid, cxc.TotalDebt + deltaCxc);
+                await _receivables.UpdateAsync(cxc);
+            }
+        }
+
+        await _invoices.UpdateAsync(invoice);
         await _invoices.SaveChangesAsync();
 
         var result = await _invoices.GetWithDetailsAsync(invoiceId);

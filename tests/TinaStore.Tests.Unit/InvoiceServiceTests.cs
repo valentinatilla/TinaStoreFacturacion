@@ -52,6 +52,8 @@ public class InvoiceServiceTests
         _settingsMock       = new Mock<IRepository<StoreSettings>>();
         _clockMock          = new Mock<IAppClock>();
         _clockMock.Setup(c => c.Now).Returns(new DateTime(2026, 1, 1, 10, 0, 0));
+        var detailsRepoMock = new Mock<IRepository<InvoiceDetail>>();
+        detailsRepoMock.Setup(r => r.DeleteAsync(It.IsAny<InvoiceDetail>(), default)).Returns(Task.CompletedTask);
 
         _sut = new InvoiceService(
             _invoiceRepoMock.Object,
@@ -60,6 +62,7 @@ public class InvoiceServiceTests
             _paymentRepoMock.Object,
             _movementRepoMock.Object,
             _settingsMock.Object,
+            detailsRepoMock.Object,
             _clockMock.Object);
     }
 

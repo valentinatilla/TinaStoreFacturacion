@@ -78,6 +78,32 @@ public sealed class InvoicesController : ControllerBase
         }
     }
 
+    /// <summary>Edita los detalles, descuento, IVA y notas de una factura (solo Pending/Partial).</summary>
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateInvoiceDto dto)
+    {
+        if (!dto.Details.Any())
+            return BadRequest(new { mensaje = "La factura debe tener al menos un detalle." });
+
+        try
+        {
+            var factura = await _service.UpdateAsync(id, dto);
+            return factura is null ? NotFound(new { mensaje = $"Factura {id} no encontrada." }) : Ok(factura);
+        }
+        catch (InsufficientStockException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
+        catch (EntityNotFoundException ex)
+        {
+            return NotFound(new { mensaje = ex.Message });
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
+    }
+
     /// <summary>Registra un pago o abono sobre una factura existente.</summary>
     [HttpPost("{id:int}/pagos")]
     public async Task<IActionResult> RegisterPayment(int id, [FromBody] RegisterPaymentDto dto)

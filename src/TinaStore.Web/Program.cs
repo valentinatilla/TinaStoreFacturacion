@@ -232,6 +232,23 @@ app.MapGet("/proxy/logo", async (IHttpClientFactory factory) =>
     catch { return Results.NotFound(); }
 }).AllowAnonymous();
 
+// ─── Proxy de imágenes de productos ──────────────────────────────────────────
+// Permite que el browser cargue imágenes de productos sin conocer la URL interna
+// de la API. La ruta recibe la sub-ruta completa después de /proxy/img/.
+app.MapGet("/proxy/img/{**rutaRelativa}", async (string rutaRelativa, IHttpClientFactory factory) =>
+{
+    try
+    {
+        var client   = factory.CreateClient("ApiProxy");
+        var response = await client.GetAsync($"/uploads/{rutaRelativa}");
+        if (!response.IsSuccessStatusCode) return Results.NotFound();
+        var bytes       = await response.Content.ReadAsByteArrayAsync();
+        var contentType = response.Content.Headers.ContentType?.MediaType ?? "image/jpeg";
+        return Results.File(bytes, contentType);
+    }
+    catch { return Results.NotFound(); }
+}).AllowAnonymous();
+
 app.Run();
 
 // DTO interno para el endpoint de sesión

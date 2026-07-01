@@ -61,6 +61,7 @@ public interface IInvoiceService
     Task<IEnumerable<InvoiceSummaryDto>> GetByDateRangeAsync(DateTime from, DateTime to);
     Task<InvoiceDto?> GetByIdAsync(int id);
     Task<InvoiceDto> CreateAsync(CreateInvoiceDto dto);
+    Task<InvoiceDto?> UpdateAsync(int invoiceId, UpdateInvoiceDto dto);
     Task<InvoiceDto?> RegisterPaymentAsync(int invoiceId, RegisterPaymentDto dto);
     Task<InvoiceDto?> CancelAsync(int invoiceId, CancelInvoiceDto dto);
 }

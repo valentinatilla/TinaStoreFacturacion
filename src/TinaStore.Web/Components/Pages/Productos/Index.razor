@@ -1,4 +1,4 @@
-﻿@page "/productos"
+@page "/productos"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 @inject IJSRuntime JS
@@ -151,7 +151,7 @@ else
                             <td class="ts-thumb-cell">
                                 @if (!string.IsNullOrEmpty(p.ImagePath))
                                 {
-                                    <img src="@(_apiBase + p.ImagePath)" alt="@p.Name" class="ts-product-thumb" />
+                                    <img src="/proxy/img/productos/@(Path.GetFileName(p.ImagePath))" alt="@p.Name" class="ts-product-thumb" />
                                 }
                                 else
                                 {
@@ -321,7 +321,7 @@ else
                             @if (!string.IsNullOrEmpty(_form.ImagePathActual))
                             {
                                 <div class="ts-image-preview-wrap">
-                                    <img src="@(_apiBase + _form.ImagePathActual)" alt="Imagen actual" class="ts-image-preview" />
+                                    <img src="/proxy/img/productos/@(Path.GetFileName(_form.ImagePathActual))" alt="Imagen actual" class="ts-image-preview" />
                                     <button type="button" class="btn btn-sm btn-outline-danger ts-image-remove-btn" @onclick="QuitarImagenModal">
                                         <i class="bi bi-x-lg"></i>
                                     </button>
@@ -698,6 +698,7 @@ else
     private ProductoForm _form = new();
     private IBrowserFile? _imagenSeleccionada;
     private byte[]? _imagenBytes;
+    private string? _imagenNombreArchivo;
 
     // -- Drag & drop JS interop --------------------------------------------------
     private ElementReference _dropZoneRef;
@@ -775,6 +776,7 @@ else
             var bytes = Convert.FromBase64String(base64);
             _imagenBytes = bytes;
             _imagenSeleccionada = null; // drop no genera IBrowserFile
+            _imagenNombreArchivo = fileName;
             _form.ImagenPreviewUrl = $"data:{mime};base64,{base64}";
             _errorModal = null;
         }
@@ -876,6 +878,8 @@ else
         _mensaje = null;
         _errorModal = null;
         _imagenSeleccionada = null;
+        _imagenBytes = null;
+        _imagenNombreArchivo = null;
         _stockOriginalEdicion = 0;
 
         if (p is null)
@@ -924,6 +928,7 @@ else
         _mostrarModal = false;
         _imagenSeleccionada = null;
         _imagenBytes = null;
+        _imagenNombreArchivo = null;
         _dropZoneIniciada = false;
     }
 
@@ -968,6 +973,7 @@ else
             _form.ImagenPreviewUrl = $"data:{contentType};base64,{base64}";
             _imagenSeleccionada = archivo;
             _imagenBytes = bytes;
+            _imagenNombreArchivo = archivo.Name;
             _mensaje = null;
         }
         catch (Exception ex)
@@ -984,6 +990,7 @@ else
     {
         _imagenSeleccionada = null;
         _imagenBytes = null;
+        _imagenNombreArchivo = null;
         _form.ImagenPreviewUrl = null;
     }
 
@@ -1066,7 +1073,7 @@ else
         // Gestión de imagen
         if (_imagenBytes is not null)
         {
-            var nombreArchivo = _imagenSeleccionada?.Name ?? "imagen.jpg";
+            var nombreArchivo = _imagenNombreArchivo ?? _imagenSeleccionada?.Name ?? "imagen.jpg";
             try
             {
                 using var ms = new MemoryStream(_imagenBytes);
