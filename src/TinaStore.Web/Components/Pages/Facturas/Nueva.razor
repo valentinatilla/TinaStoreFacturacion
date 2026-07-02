@@ -1,8 +1,7 @@
-﻿@page "/ventas/nueva"
+@page "/ventas/nueva"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 @inject NavigationManager Nav
-@inject IConfiguration Config
 
 <PageTitle>Nueva Venta " Tina Store</PageTitle>
 
@@ -94,14 +93,14 @@
                                 @onclick="() => AgregarProducto(p)">
                             <span class="d-flex align-items-center gap-2">
                                 @if (!string.IsNullOrEmpty(p.ImagePath))
-                                {
-                                    <img src="@(_apiBase + p.ImagePath)" alt="@p.Name"
-                                         style="width:32px;height:32px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;" />
-                                }
-                                else
-                                {
-                                    <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#f1f5f9;color:#94a3b8;font-size:.75rem;"><i class="bi bi-image"></i></span>
-                                }
+                                                {
+                                                    <img src="/proxy/img/productos/@(Path.GetFileName(p.ImagePath))" alt="@p.Name"
+                                                         style="width:32px;height:32px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;" />
+                                                }
+                                                else
+                                                {
+                                                    <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#f1f5f9;color:#94a3b8;font-size:.75rem;"><i class="bi bi-image"></i></span>
+                                                }
                                 <span>
                                     @p.Name <small class="text-muted">(@p.Sku)</small>
                                     @if (p.IsLowStock)
@@ -149,7 +148,7 @@
                                     <td class="align-middle text-center">
                                         @if (!string.IsNullOrEmpty(d.ImagePath))
                                         {
-                                            <img src="@(_apiBase + d.ImagePath)" alt="@d.NombreProducto"
+                                            <img src="/proxy/img/productos/@(Path.GetFileName(d.ImagePath))" alt="@d.NombreProducto"
                                                  style="width:32px;height:32px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;" />
                                         }
                                         else
@@ -298,7 +297,6 @@
 }
 
 @code {
-    private string _apiBase = string.Empty;
     private List<ClienteDto> _clientes = [];
     private List<MetodoPagoDto> _metodosPago = [];
     private List<ProductoDto> _productos = [];
@@ -331,7 +329,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _apiBase = Config["ApiBaseUrl"] ?? string.Empty;
         try
         {
             var t1 = Api.GetClientesAsync();

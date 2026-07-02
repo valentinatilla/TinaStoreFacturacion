@@ -105,15 +105,20 @@ else
             </div>
             <div class="col-sm-6 col-md-2">
                 <label class="form-label">Estado</label>
-                <select class="form-select form-select-sm" @onchange="e => { _filtroEstado = e.Value?.ToString() ?? string.Empty; Filtrar(); }">
+                <select class="form-select form-select-sm" value="@_filtroEstado" @onchange="e => { _filtroEstado = e.Value?.ToString() ?? string.Empty; Filtrar(); }">
                     <option value="">Todos</option>
                     <option value="activo">En stock</option>
                     <option value="bajo">Bajo stock</option>
                     <option value="agotado">Agotado</option>
                     <option value="inactivo">Inactivo</option>
+                    <option value="recientes">Recientes (7 días)</option>
                 </select>
             </div>
-            <div class="col-auto d-flex align-items-end">
+            <div class="col-auto d-flex align-items-end gap-2">
+                <button class="btn btn-sm btn-outline-secondary" title="Ver productos añadidos en los últimos 7 días"
+                        @onclick='() => { _filtroEstado = "recientes"; Filtrar(); }'>
+                    <i class="bi bi-clock-history me-1"></i>Recientes
+                </button>
                 <button class="btn-limpiar" @onclick="LimpiarFiltros">
                     <i class="bi bi-x-circle me-1"></i>Limpiar
                 </button>
@@ -236,19 +241,13 @@ else
                         <label class="form-label small fw-semibold">SKU</label>
                         <div class="input-group">
                             <input class="form-control" @bind="_form.Sku" maxlength="30" placeholder="Ej: SKU-001" @onkeydown="HandleModalKeyDown" />
-                            @if (!_editando)
-                            {
-                                <button type="button" class="btn btn-outline-secondary btn-sm"
-                                        title="Sugerir siguiente SKU disponible"
-                                        @onclick="SugerirSiguienteSku">
-                                    <i class="bi bi-magic"></i>
-                                </button>
-                            }
+                            <button type="button" class="btn btn-outline-secondary btn-sm"
+                                    title="Sugerir siguiente SKU disponible"
+                                    @onclick="SugerirSiguienteSku">
+                                <i class="bi bi-magic"></i>
+                            </button>
                         </div>
-                        @if (!_editando)
-                        {
-                            <div class="form-text text-muted">Clic en <i class="bi bi-magic"></i> para sugerir el siguiente SKU.</div>
-                        }
+                        <div class="form-text text-muted">Clic en <i class="bi bi-magic"></i> para sugerir el siguiente SKU disponible.</div>
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Descripción</label>
@@ -345,10 +344,10 @@ else
                             }
                         </div>
                         @* Input nativo oculto fuera del div: el JS lo abre al hacer clic en la zona *@
-                        <input type="file" id="nativeImgProducto" accept=".jpg,.jpeg,.png,.webp" style="display:none" />
+                        <input type="file" id="nativeImgProducto" accept=".jpg,.jpeg,.png,.webp,.avif" style="display:none" />
                         @if (_form.ImagePathActual is null && _form.ImagenPreviewUrl is null)
                         {
-                            <p class="text-muted small mt-1">JPG, PNG o WEBP · Máximo 2 MB</p>
+                            <p class="text-muted small mt-1">JPG, PNG, WEBP o AVIF · Máximo 2 MB</p>
                         }
                     </div>
                 </div>
@@ -450,6 +449,8 @@ else
                                         <th class="text-end"   style="width:130px;">Precio venta</th>
                                         <th class="text-center" style="width:100px;">Stock</th>
                                         <th class="text-end"   style="width:140px;">Valor inventario</th>
+                                        <th style="width:160px;">Categoría</th>
+                                        <th style="width:160px;">Proveedor</th>
                                         <th class="text-center" style="width:110px;">Imagen</th>
                                     </tr>
                                 </thead>
@@ -498,6 +499,27 @@ else
                                             <td class="text-end align-middle text-muted small fw-semibold">
                                                 $@fila.ValorInventario.ToString("N0")
                                             </td>
+                                            <td class="align-middle">
+                                                <select class="form-select form-select-sm"
+                                                        @onchange="e => fila.SetCategoria(int.TryParse(e.Value?.ToString(), out var cid) ? cid : (int?)null)">
+                                                    <option value="">Sin cambio</option>
+                                                    @foreach (var c in _categorias)
+                                                    {
+                                                        <option value="@c.Id" selected="@(fila.NuevaCategoriaId == c.Id)">@c.Name</option>
+                                                    }
+                                                </select>
+                                            </td>
+                                            <td class="align-middle">
+                                                <select class="form-select form-select-sm"
+                                                        @onchange="e => fila.SetProveedor(e.Value?.ToString())">
+                                                    <option value="">Sin cambio</option>
+                                                    <option value="0">-- Sin proveedor --</option>
+                                                    @foreach (var s in _proveedores)
+                                                    {
+                                                        <option value="@s.Id" selected="@(fila.NuevoProveedorId == s.Id)">@s.Name</option>
+                                                    }
+                                                </select>
+                                            </td>
                                             <td class="text-center align-middle">
                                                 @if (fila.TieneImagenNueva)
                                                 {
@@ -522,7 +544,7 @@ else
                                                             <i class="bi bi-image me-1"></i><span>Agregar</span>
                                                         }
                                                         <InputFile OnChange="e => SeleccionarImagenBulk(e, fila)"
-                                                                   accept=".jpg,.jpeg,.png,.webp" class="d-none" />
+                                                                   accept=".jpg,.jpeg,.png,.webp,.avif" class="d-none" />
                                                     </label>
                                                     @if (fila.ErrorImagen is not null)
                                                     {
@@ -534,7 +556,7 @@ else
                                     }
                                     @if (!FilasFiltradas.Any())
                                     {
-                                        <tr><td colspan="7" class="text-center text-muted py-3">Sin productos que coincidan con el filtro.</td></tr>
+                                        <tr><td colspan="9" class="text-center text-muted py-3">Sin productos que coincidan con el filtro.</td></tr>
                                     }
                                 </tbody>
                             </table>
@@ -758,9 +780,9 @@ else
         const long maxBytes = 2 * 1024 * 1024;
 
         var ext = Path.GetExtension(fileName).ToLowerInvariant();
-        if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp"))
+        if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp" or ".avif"))
         {
-            _errorModal = "Solo se permiten imágenes JPG, PNG o WEBP.";
+            _errorModal = "Solo se permiten imágenes JPG, PNG, WEBP o AVIF.";
             await InvokeAsync(StateHasChanged);
             return;
         }
@@ -812,11 +834,12 @@ else
             .Where(p => _filtroProveedorId == 0 || p.SupplierId == _filtroProveedorId)
             .Where(p => _filtroEstado switch
             {
-                "activo"   => p.IsActive && p.CurrentStock > 0 && !p.IsLowStock,
-                "bajo"     => p.IsActive && p.IsLowStock && p.CurrentStock > 0,
-                "agotado"  => p.IsActive && p.CurrentStock == 0,
-                "inactivo" => !p.IsActive,
-                _          => true
+                "activo"    => p.IsActive && p.CurrentStock > 0 && !p.IsLowStock,
+                "bajo"      => p.IsActive && p.IsLowStock && p.CurrentStock > 0,
+                "agotado"   => p.IsActive && p.CurrentStock == 0,
+                "inactivo"  => !p.IsActive,
+                "recientes" => p.CreatedAt >= DateTime.UtcNow.AddDays(-7),
+                _           => true
             });
 
         _filtrados = _ordenCampo switch
@@ -939,9 +962,9 @@ else
 
         // Validar extensión
         var ext = Path.GetExtension(archivo.Name).ToLowerInvariant();
-        if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp"))
+        if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp" or ".avif"))
         {
-            _mensaje = "Solo se permiten imágenes JPG, PNG o WEBP.";
+            _mensaje = "Solo se permiten imágenes JPG, PNG, WEBP o AVIF.";
             _exito = false;
             return;
         }
@@ -967,6 +990,7 @@ else
             {
                 ".png"  => "image/png",
                 ".webp" => "image/webp",
+                ".avif" => "image/avif",
                 _       => "image/jpeg"
             };
             var base64 = Convert.ToBase64String(bytes);
@@ -1186,7 +1210,8 @@ else
 
     private IEnumerable<BulkFila> FilasConCambiosNumericos =>
         _bulkFilas.Where(f => !f.TieneError &&
-            (f.Costo != f.CostoOriginal || f.PrecioVenta != f.PrecioOriginal || f.Stock != f.StockOriginal));
+            (f.Costo != f.CostoOriginal || f.PrecioVenta != f.PrecioOriginal || f.Stock != f.StockOriginal
+             || f.NuevaCategoriaId.HasValue || f.NuevoProveedorId.HasValue || f.LimpiarProveedor));
 
     private IEnumerable<BulkFila> FilasConImagenNueva =>
         _bulkFilas.Where(f => f.TieneImagenNueva);
@@ -1196,9 +1221,9 @@ else
         var archivo = e.File;
         const long maxBytes = 2 * 1024 * 1024;
         var ext = Path.GetExtension(archivo.Name).ToLowerInvariant();
-        if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp"))
+        if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp" or ".avif"))
         {
-            fila.SetErrorImagen("Formato no permitido. Usa JPG, PNG o WebP.");
+            fila.SetErrorImagen("Formato no permitido. Usa JPG, PNG, WebP o AVIF.");
             return;
         }
         if (archivo.Size > maxBytes)
@@ -1212,7 +1237,7 @@ else
             await using var stream = archivo.OpenReadStream(maxBytes);
             await stream.CopyToAsync(ms);
             var bytes = ms.ToArray();
-            var contentType = ext switch { ".png" => "image/png", ".webp" => "image/webp", _ => "image/jpeg" };
+            var contentType = ext switch { ".png" => "image/png", ".webp" => "image/webp", ".avif" => "image/avif", _ => "image/jpeg" };
             var previewUrl = $"data:{contentType};base64,{Convert.ToBase64String(bytes)}";
             fila.SetImagen(bytes, archivo.Name, previewUrl);
         }
@@ -1269,7 +1294,10 @@ else
                     f.ProductId,
                     f.Costo != f.CostoOriginal       ? f.Costo       : null,
                     f.PrecioVenta != f.PrecioOriginal ? f.PrecioVenta : null,
-                    f.Stock != f.StockOriginal        ? f.Stock       : null
+                    f.Stock != f.StockOriginal        ? f.Stock       : null,
+                    f.NuevaCategoriaId,
+                    f.NuevoProveedorId,
+                    f.LimpiarProveedor
                 )).ToList();
                 _bulkResultado = await Api.BulkUpdateProductosAsync(items);
             }
@@ -1356,6 +1384,8 @@ else
         public decimal CostoOriginal  { get; }
         public decimal PrecioOriginal { get; }
         public int     StockOriginal  { get; }
+        public int?    CategoriaOriginalId { get; }
+        public int?    ProveedorOriginalId { get; }
 
         // Valores editables
         private decimal _costo;
@@ -1376,6 +1406,35 @@ else
         {
             get => _stock;
             set { _stock = value; Recalcular(); }
+        }
+
+        // Categoría y proveedor nuevos (null = sin cambio, 0 = quitar proveedor)
+        public int?  NuevaCategoriaId  { get; private set; }
+        public int?  NuevoProveedorId  { get; private set; }
+        public bool  LimpiarProveedor  { get; private set; }
+
+        public void SetCategoria(int? categoriaId)
+        {
+            NuevaCategoriaId = categoriaId == 0 ? null : categoriaId;
+        }
+
+        public void SetProveedor(string? valor)
+        {
+            if (string.IsNullOrEmpty(valor))
+            {
+                NuevoProveedorId = null;
+                LimpiarProveedor = false;
+            }
+            else if (valor == "0")
+            {
+                NuevoProveedorId = null;
+                LimpiarProveedor = true;
+            }
+            else if (int.TryParse(valor, out var pid))
+            {
+                NuevoProveedorId = pid;
+                LimpiarProveedor = false;
+            }
         }
 
         // Imagen nueva
@@ -1409,7 +1468,8 @@ else
         public decimal ValorInventario { get; private set; }
 
         // Estado
-        public bool    Modificada  => Costo != CostoOriginal || PrecioVenta != PrecioOriginal || Stock != StockOriginal || TieneImagenNueva;
+        public bool    Modificada  => Costo != CostoOriginal || PrecioVenta != PrecioOriginal || Stock != StockOriginal
+                                   || TieneImagenNueva || NuevaCategoriaId.HasValue || NuevoProveedorId.HasValue || LimpiarProveedor;
         public string? ErrorCosto  { get; private set; }
         public string? ErrorPrecio { get; private set; }
         public string? ErrorStock  { get; private set; }
@@ -1417,16 +1477,18 @@ else
 
         public BulkFila(ProductoDto p)
         {
-            ProductId       = p.Id;
-            Nombre          = p.Name;
-            Sku             = p.Sku;
-            ImagePathActual = p.ImagePath;
-            CostoOriginal   = p.PurchasePrice;
-            PrecioOriginal  = p.SalePrice;
-            StockOriginal   = p.CurrentStock;
-            _costo          = p.PurchasePrice;
-            _precioVenta    = p.SalePrice;
-            _stock          = p.CurrentStock;
+            ProductId            = p.Id;
+            Nombre               = p.Name;
+            Sku                  = p.Sku;
+            ImagePathActual      = p.ImagePath;
+            CostoOriginal        = p.PurchasePrice;
+            PrecioOriginal       = p.SalePrice;
+            StockOriginal        = p.CurrentStock;
+            CategoriaOriginalId  = p.CategoryId;
+            ProveedorOriginalId  = p.SupplierId;
+            _costo               = p.PurchasePrice;
+            _precioVenta         = p.SalePrice;
+            _stock               = p.CurrentStock;
             Recalcular();
         }
 

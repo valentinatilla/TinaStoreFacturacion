@@ -13,7 +13,7 @@ namespace TinaStore.Api.Controllers;
 [Authorize]
 public sealed class ProductsController : ControllerBase
 {
-    private static readonly string[] _extensionesPermitidas = [".jpg", ".jpeg", ".png", ".webp"];
+    private static readonly string[] _extensionesPermitidas = [".jpg", ".jpeg", ".png", ".webp", ".avif"];
     private const long _tamañoMaximoBytes = 2 * 1024 * 1024; // 2 MB
 
     /// <summary>
@@ -25,20 +25,29 @@ public sealed class ProductsController : ControllerBase
         (new byte[] { 0xFF, 0xD8, 0xFF },             "JPEG"),
         (new byte[] { 0x89, 0x50, 0x4E, 0x47 },       "PNG"),
         (new byte[] { 0x52, 0x49, 0x46, 0x46 },       "WEBP (RIFF)"),
+        // AVIF: empieza con 4 bytes de tamaño (variable) + "ftyp" en bytes 4-7
+        (new byte[] { 0x66, 0x74, 0x79, 0x70 },       "AVIF (ftyp)"),
     ];
 
     private static async Task<bool> EsImagenValidaAsync(IFormFile archivo)
     {
-        var buffer = new byte[8];
+        var buffer = new byte[12];
         await using var stream = archivo.OpenReadStream();
         var leidos = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length));
         if (leidos < 4) return false;
 
-        foreach (var (firma, _) in _firmasPermitidas)
+        // Verificar JPEG, PNG, WEBP (primeros bytes)
+        foreach (var (firma, desc) in _firmasPermitidas)
         {
+            if (desc == "AVIF (ftyp)") continue; // verificación especial más abajo
             if (buffer.Take(firma.Length).SequenceEqual(firma))
                 return true;
         }
+
+        // AVIF: los bytes 4-7 contienen "ftyp" (el tamaño de la caja está en 0-3)
+        if (leidos >= 8 && buffer[4] == 0x66 && buffer[5] == 0x74 && buffer[6] == 0x79 && buffer[7] == 0x70)
+            return true;
+
         return false;
     }
 
@@ -156,11 +165,11 @@ public sealed class ProductsController : ControllerBase
 
         var ext = Path.GetExtension(archivo.FileName).ToLowerInvariant();
         if (!_extensionesPermitidas.Contains(ext))
-            return BadRequest(new { mensaje = "Solo se permiten imágenes JPG, PNG o WEBP." });
+            return BadRequest(new { mensaje = "Solo se permiten imágenes JPG, PNG, WEBP o AVIF." });
 
         // Validar el contenido real del archivo (magic bytes), no solo la extensión
         if (!await EsImagenValidaAsync(archivo))
-            return BadRequest(new { mensaje = "El archivo no es una imagen válida (JPG, PNG o WEBP)." });
+            return BadRequest(new { mensaje = "El archivo no es una imagen válida (JPG, PNG, WEBP o AVIF)." });
 
         var producto = await _service.GetByIdAsync(id);
         if (producto is null)

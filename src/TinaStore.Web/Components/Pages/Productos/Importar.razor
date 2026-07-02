@@ -1,4 +1,4 @@
-﻿@page "/productos/importar"
+@page "/productos/importar"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 @inject IJSRuntime JS
@@ -79,6 +79,7 @@
                         <th style="width:80px;">Mín.</th>
                         <th>Categoría</th>
                         <th>Proveedor</th>
+                        <th style="width:80px;">Imagen</th>
                         <th style="width:40px;"></th>
                     </tr>
                 </thead>
@@ -156,6 +157,32 @@
                             </td>
                             <td>
                                 <span class="small text-muted">@(fila.ProveedorNombre ?? "-")</span>
+                            </td>
+                            <td class="text-center">
+                                @{
+                                    var imgKey = fila.Fila;
+                                    var tieneImg = _imagenesPreview.TryGetValue(imgKey, out var imgData);
+                                }
+                                @if (tieneImg)
+                                {
+                                    <div class="d-flex flex-column align-items-center gap-1">
+                                        <img src="@imgData!.PreviewUrl" alt="preview"
+                                             style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #e2e8f0;" />
+                                        <button type="button" class="btn btn-link btn-sm text-danger p-0"
+                                                style="font-size:.65rem;"
+                                                @onclick="() => QuitarImagenPreview(imgKey)">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <label class="btn btn-outline-secondary btn-sm mb-0 p-1" style="cursor:pointer;font-size:.68rem;">
+                                        <i class="bi bi-image"></i>
+                                        <InputFile OnChange="e => SeleccionarImagenFila(e, imgKey)"
+                                                   accept=".jpg,.jpeg,.png,.webp,.avif" class="d-none" />
+                                    </label>
+                                }
                             </td>
                             <td>
                                 <button class="btn btn-sm btn-outline-danger p-1"
@@ -249,6 +276,9 @@
     private bool _exito;
     private List<CategoriaDto> _categorias = [];
 
+    // Imágenes asignadas a filas de la preview (clave = número de fila del Excel)
+    private Dictionary<int, FilaImagen> _imagenesPreview = [];
+
     // Copia mutable de las filas para edición en tabla
     private List<FilaEditable> _filas = [];
 
@@ -314,6 +344,10 @@
                 _mensaje   = resultado.Errores == 0
                     ? $"Se importaron {resultado.Importados} productos correctamente."
                     : $"Se importaron {resultado.Importados} de {resultado.TotalFilas} productos. Revisa los errores.";
+
+                // Subir imágenes asignadas a filas válidas
+                if (_imagenesPreview.Count > 0 && resultado.Importados > 0)
+                    await SubirImagenesImportadasAsync(filasValidas);
             }
             else
             {
@@ -329,13 +363,103 @@
         finally { _guardando = false; }
     }
 
+    /// <summary>Sube las imágenes asignadas a filas, haciendo match por nombre del producto.</summary>
+    private async Task SubirImagenesImportadasAsync(List<ImportPreviewRowDto> filasValidas)
+    {
+        // Obtener los productos recién creados para obtener sus IDs
+        var productosActualizados = await Api.GetProductosAsync();
+        if (productosActualizados is null) return;
+
+        foreach (var (filaNum, img) in _imagenesPreview)
+        {
+            var fila = filasValidas.FirstOrDefault(f => f.Fila == filaNum);
+            if (fila is null || string.IsNullOrEmpty(fila.Nombre)) continue;
+
+            var producto = productosActualizados.FirstOrDefault(p =>
+                string.Equals(p.Name, fila.Nombre, StringComparison.OrdinalIgnoreCase));
+            if (producto is null) continue;
+
+            try
+            {
+                using var ms = new MemoryStream(img.Bytes);
+                await Api.SubirImagenProductoAsync(producto.Id, ms, img.NombreArchivo);
+            }
+            catch { /* no bloquear si falla una imagen */ }
+        }
+
+        _imagenesPreview = [];
+    }
+
+    private async Task SeleccionarImagenFila(InputFileChangeEventArgs e, int filaNum)
+    {
+        const long maxBytes = 2 * 1024 * 1024;
+        var archivo = e.File;
+        var ext = Path.GetExtension(archivo.Name).ToLowerInvariant();
+        if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp" or ".avif")) return;
+        if (archivo.Size > maxBytes) return;
+
+        try
+        {
+            using var ms = new MemoryStream();
+            await using var stream = archivo.OpenReadStream(maxBytes);
+            await stream.CopyToAsync(ms);
+            var bytes = ms.ToArray();
+            var contentType = ext switch { ".png" => "image/png", ".webp" => "image/webp", ".avif" => "image/avif", _ => "image/jpeg" };
+            var previewUrl = $"data:{contentType};base64,{Convert.ToBase64String(bytes)}";
+            _imagenesPreview[filaNum] = new FilaImagen(bytes, archivo.Name, previewUrl);
+        }
+        catch { }
+    }
+
+    private void QuitarImagenPreview(int filaNum)
+    {
+        _imagenesPreview.Remove(filaNum);
+    }
+
+    private class FilaImagen(byte[] bytes, string nombreArchivo, string previewUrl)
+    {
+        public byte[] Bytes { get; } = bytes;
+        public string NombreArchivo { get; } = nombreArchivo;
+        public string PreviewUrl { get; } = previewUrl;
+    }
+
     private void QuitarFila(ImportPreviewRowDto fila)
     {
         _preview?.Remove(fila);
     }
 
-    // Errores que corresponden al campo Nombre
-    private static bool EsErrorDeNombre(string? msg) =>
+    private void Reiniciar()
+    {
+        _paso    = 1;
+        _archivo = null;
+        _preview = null;
+        _resultado = null;
+        _mensaje = null;
+        _exito   = false;
+        _imagenesPreview = [];
+    }
+
+    private void CorregirErrores()
+    {
+        if (_resultado is null) return;
+        _paso      = 2;
+        _resultado = null;
+        _mensaje   = null;
+    }
+
+    private async Task DescargarPlantilla()
+    {
+        _descargandoPlantilla = true;
+        try
+        {
+            var bytes = await Api.DescargarPlantillaExcelAsync();
+            if (bytes is null) return;
+            var base64 = Convert.ToBase64String(bytes);
+            await JS.InvokeVoidAsync("downloadFile", "plantilla_productos.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", base64);
+        }
+        finally { _descargandoPlantilla = false; }
+    }    private static bool EsErrorDeNombre(string? msg) =>
         msg is not null && (
             msg.Contains("nombre", StringComparison.OrdinalIgnoreCase) ||
             msg.Contains("producto llamado", StringComparison.OrdinalIgnoreCase) ||
@@ -372,7 +496,6 @@
             _                   => fila
         };
         _preview[idx] = RevalidarFila(f, idx);
-        // Revalidar filas hermanas que comparten el mismo SKU
         if (campo == nameof(fila.Sku))
             RevalidarDuplicadosSku();
     }
@@ -407,7 +530,6 @@
         _preview[idx] = RevalidarFila(f, idx);
     }
 
-    /// <summary>Revalida localmente una fila según reglas básicas y duplicados de SKU.</summary>
     private ImportPreviewRowDto RevalidarFila(ImportPreviewRowDto f, int idx)
     {
         if (string.IsNullOrWhiteSpace(f.Nombre))
@@ -417,7 +539,6 @@
         if (f.CategoriaId <= 0)
             return f with { Valido = false, MensajeError = "La categoría no es válida." };
 
-        // Verificar SKU duplicado dentro de la propia lista
         if (!string.IsNullOrWhiteSpace(f.Sku))
         {
             var skuDup = _preview!
@@ -432,43 +553,11 @@
         return f with { Valido = true, MensajeError = null };
     }
 
-    /// <summary>Recorre todas las filas y revalida las que tienen SKU duplicado con alguna otra.</summary>
     private void RevalidarDuplicadosSku()
     {
         if (_preview is null) return;
         for (var i = 0; i < _preview.Count; i++)
             _preview[i] = RevalidarFila(_preview[i], i);
-    }
-
-    private void Reiniciar()
-    {
-        _paso      = 1;
-        _archivo   = null;
-        _preview   = null;
-        _resultado = null;
-        _mensaje   = null;
-    }
-
-    /// <summary>Regresa al paso 2 para corregir las filas con errores.</summary>
-    private void CorregirErrores()
-    {
-        _resultado = null;
-        _mensaje   = null;
-        _paso      = 2;
-    }
-
-    private async Task DescargarPlantilla()
-    {
-        _descargandoPlantilla = true;
-        try
-        {
-            var bytes = await Api.DescargarPlantillaExcelAsync();
-            if (bytes is null) return;
-            var b64 = Convert.ToBase64String(bytes);
-            await JS.InvokeVoidAsync("downloadFileFromBase64", b64, "plantilla-productos.xlsx",
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        }
-        finally { _descargandoPlantilla = false; }
     }
 
     private class FilaEditable { }

@@ -12,12 +12,14 @@ public sealed class ExpenseService : IExpenseService
     private readonly IExpenseRepository _expenses;
     private readonly IRepository<ExpenseCategory> _categories;
     private readonly IProductRepository _products;
+    private readonly IRepository<InvoiceDetail> _invoiceDetails;
 
-    public ExpenseService(IExpenseRepository expenses, IRepository<ExpenseCategory> categories, IProductRepository products)
+    public ExpenseService(IExpenseRepository expenses, IRepository<ExpenseCategory> categories, IProductRepository products, IRepository<InvoiceDetail> invoiceDetails)
     {
         _expenses = expenses;
         _categories = categories;
         _products = products;
+        _invoiceDetails = invoiceDetails;
     }
 
     public async Task<IEnumerable<ExpenseDto>> GetAllAsync()
@@ -97,9 +99,18 @@ public sealed class ExpenseService : IExpenseService
         if (entity is null) return false;
         entity.Status = ExpenseStatus.Cancelled;
 
-        // Si el egreso tiene producto y cantidad, revertir el stock
+        // Si el egreso tiene producto y cantidad, verificar si tiene ventas antes de revertir el stock
         if (entity.ProductId.HasValue && entity.StockQty.HasValue && entity.StockQty.Value > 0)
         {
+            var ventasDelProducto = await _invoiceDetails.FindAsync(
+                d => d.ProductId == entity.ProductId.Value);
+
+            if (ventasDelProducto.Count > 0)
+                throw new DomainException(
+                    $"No se puede anular este egreso: el producto tiene {ventasDelProducto.Count} línea(s) de venta registrada(s). " +
+                    "Anular revertirá el stock, lo cual podría dejar inconsistencias. " +
+                    "Si deseas continuar, elimina primero las ventas asociadas.");
+
             var producto = await _products.GetByIdAsync(entity.ProductId.Value);
             if (producto is not null)
             {

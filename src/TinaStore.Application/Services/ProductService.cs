@@ -271,6 +271,27 @@ public sealed class ProductService : IProductService
                 });
             }
 
+            if (item.NuevaCategoriaId.HasValue && item.NuevaCategoriaId.Value != entity.CategoryId)
+            {
+                var cat = await _categories.GetByIdAsync(item.NuevaCategoriaId.Value);
+                if (cat is not null)
+                {
+                    entity.CategoryId = cat.Id;
+                    entity.Category   = cat;
+                }
+            }
+
+            if (item.LimpiarProveedor)
+            {
+                entity.SupplierId = null;
+            }
+            else if (item.NuevoProveedorId.HasValue && item.NuevoProveedorId.Value != entity.SupplierId)
+            {
+                var prov = await _suppliers.GetByIdAsync(item.NuevoProveedorId.Value);
+                if (prov is not null)
+                    entity.SupplierId = prov.Id;
+            }
+
             await _products.UpdateAsync(entity);
             resultados.Add(new BulkUpdateItemResultDto(entity.Id, entity.Name, true, null));
         }
@@ -325,7 +346,8 @@ public sealed class ProductService : IProductService
         p.Category?.Name ?? string.Empty,
         p.SupplierId,
         p.Supplier?.Name,
-        p.ImagePath
+        p.ImagePath,
+        p.CreatedAt
     );
 
     private static ProductDto ToDto(Product p) => new(

@@ -1,4 +1,4 @@
-﻿@page "/categorias"
+@page "/categorias"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 @using System.Globalization
@@ -78,6 +78,9 @@ else
                             <td class="text-end">
                                 @if (cat.Id != 99)
                                 {
+                                    <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => AbrirEditar(cat)" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
                                     <button class="btn btn-sm btn-outline-danger" @onclick="() => AbrirConfirmarEliminar(cat)">
                                         <i class="bi bi-trash"></i>
                                     </button>
@@ -101,7 +104,7 @@ else
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Nueva categoría</h5>
+                    <h5 class="modal-title">@(_editandoId > 0 ? "Editar" : "Nueva") categoría</h5>
                     <button class="btn-close" @onclick="() => _mostrarModal = false"></button>
                 </div>
                 <div class="modal-body">
@@ -171,6 +174,7 @@ else
     private List<CategoriaDto> _categorias = [];
     private bool _loading = true;
     private bool _mostrarModal;
+    private int _editandoId;
     private string _nombre = "";
     private string? _descripcion;
     private string? _mensaje;
@@ -227,7 +231,17 @@ else
         StateHasChanged();
     }
 
-    private void AbrirModal() { _nombre = ""; _descripcion = null; _errorModal = null; _mostrarModal = true; }
+    private void AbrirModal() { _editandoId = 0; _nombre = ""; _descripcion = null; _errorModal = null; _mostrarModal = true; }
+
+    private void AbrirEditar(CategoriaDto cat)
+    {
+        _editandoId  = cat.Id;
+        _nombre      = cat.Name;
+        _descripcion = cat.Description;
+        _errorModal  = null;
+        _mostrarModal = true;
+        _mensaje = null;
+    }
 
     private void LimpiarFiltro()
     {
@@ -258,17 +272,22 @@ else
     {
         _errorModal = null;
         if (string.IsNullOrWhiteSpace(_nombre)) { _errorModal = "El nombre es obligatorio."; return; }
-        var (ok, error) = await Api.CreateCategoriaAsync(new CreateCategoriaDto(_nombre, _descripcion));
-        if (ok)
+
+        bool ok;
+        string? error;
+
+        if (_editandoId > 0)
         {
-            _exito = true;
-            _mensaje = "Categoría creada.";
-            _mostrarModal = false;
-            await Cargar();
+            var cat = _categorias.FirstOrDefault(c => c.Id == _editandoId);
+            (ok, error) = await Api.UpdateCategoriaAsync(_editandoId, new UpdateCategoriaDto(_nombre, _descripcion, cat?.IsActive ?? true));
+            if (ok) { _exito = true; _mensaje = "Categoría actualizada."; _mostrarModal = false; await Cargar(); }
+            else { _errorModal = error ?? "Error al actualizar la categoría."; }
         }
         else
         {
-            _errorModal = error ?? "Error al crear la categoría.";
+            (ok, error) = await Api.CreateCategoriaAsync(new CreateCategoriaDto(_nombre, _descripcion));
+            if (ok) { _exito = true; _mensaje = "Categoría creada."; _mostrarModal = false; await Cargar(); }
+            else { _errorModal = error ?? "Error al crear la categoría."; }
         }
     }
 

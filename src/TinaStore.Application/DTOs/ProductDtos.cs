@@ -37,7 +37,8 @@ public record ProductSummaryDto(
     string CategoryName,
     int? SupplierId,
     string? SupplierName,
-    string? ImagePath
+    string? ImagePath,
+    DateTime CreatedAt
 );
 
 /// <summary>DTO para crear un nuevo producto.</summary>
@@ -83,7 +84,10 @@ public record BulkUpdateItemDto(
     int ProductId,
     decimal? NuevoCosto,
     decimal? NuevoPrecioVenta,
-    int?     NuevoStock
+    int?     NuevoStock,
+    int?     NuevaCategoriaId = null,
+    int?     NuevoProveedorId = null,
+    bool     LimpiarProveedor = false
 );
 
 /// <summary>Resultado por fila en la respuesta de edición masiva.</summary>

@@ -3,6 +3,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using TinaStore.Application.DTOs;
 using TinaStore.Application.Interfaces;
+using TinaStore.Domain.Exceptions;
 
 namespace TinaStore.Api.Controllers;
 
@@ -76,7 +77,14 @@ public sealed class ExpensesController : ControllerBase
     [HttpPost("{id:int}/anular")]
     public async Task<IActionResult> Cancel(int id)
     {
-        var ok = await _service.CancelAsync(id);
-        return ok ? NoContent() : NotFound(new { mensaje = $"Egreso {id} no encontrado." });
+        try
+        {
+            var ok = await _service.CancelAsync(id);
+            return ok ? NoContent() : NotFound(new { mensaje = $"Egreso {id} no encontrado." });
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
     }
 }

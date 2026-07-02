@@ -34,6 +34,7 @@ public record UpdateClienteDto(string FullName, string? DocumentType, string? Do
 
 public record CategoriaDto(int Id, string Name, string? Description, bool IsActive, int ProductCount);
 public record CreateCategoriaDto(string Name, string? Description);
+public record UpdateCategoriaDto(string Name, string? Description, bool IsActive);
 
 public record ProveedorDto(int Id, string Name, string? TaxId, string? Phone, string? Email, string? Address, string? Notes, bool IsActive, int ProductCount, DateTime CreatedAt);
 public record CreateProveedorDto(string Name, string? TaxId, string? Phone, string? Email, string? Address, string? Notes);
@@ -41,12 +42,12 @@ public record UpdateProveedorDto(string Name, string? TaxId, string? Phone, stri
 
 public record MetodoPagoDto(int Id, string Name, string? Description, bool IsActive, int Type = 0, string TypeName = "");
 
-public record ProductoDto(int Id, string? Sku, string Name, string? Description, string? Unit, decimal SalePrice, decimal PurchasePrice, int CurrentStock, int MinimumStock, bool IsActive, bool IsLowStock, decimal ProfitMargin, int CategoryId, string CategoryName, int? SupplierId, string? SupplierName, string? ImagePath);
+public record ProductoDto(int Id, string? Sku, string Name, string? Description, string? Unit, decimal SalePrice, decimal PurchasePrice, int CurrentStock, int MinimumStock, bool IsActive, bool IsLowStock, decimal ProfitMargin, int CategoryId, string CategoryName, int? SupplierId, string? SupplierName, string? ImagePath, DateTime CreatedAt = default);
 public record CreateProductoDto(string? Sku, string Name, string? Description, string? Unit, decimal PurchasePrice, decimal SalePrice, int CurrentStock, int MinimumStock, int CategoryId, int? SupplierId);
 public record UpdateProductoDto(string? Sku, string Name, string? Description, string? Unit, decimal PurchasePrice, decimal SalePrice, int MinimumStock, bool IsActive, int CategoryId, int? SupplierId, int StockEntrada = 0);
 public record AjusteStockDto(int Cantidad, string? Notas = null);
 
-public record BulkUpdateItemDto(int ProductId, decimal? NuevoCosto, decimal? NuevoPrecioVenta, int? NuevoStock);
+public record BulkUpdateItemDto(int ProductId, decimal? NuevoCosto, decimal? NuevoPrecioVenta, int? NuevoStock, int? NuevaCategoriaId = null, int? NuevoProveedorId = null, bool LimpiarProveedor = false);
 public record BulkUpdateItemResultDto(int ProductId, string ProductName, bool Ok, string? Error);
 public record BulkUpdateResultDto(int TotalSolicitados, int TotalActualizados, int TotalErrores, List<BulkUpdateItemResultDto> Resultados);
 
@@ -305,6 +306,14 @@ public class TinaStoreApiClient
         return (false, await LeerMensajeErrorAsync(r));
     }
 
+    public async Task<(bool Ok, string? Error)> UpdateCategoriaAsync(int id, UpdateCategoriaDto dto)
+    {
+        SetAuthHeader();
+        var r = await _http.PutAsJsonAsync($"/api/categories/{id}", dto);
+        if (r.IsSuccessStatusCode) return (true, null);
+        return (false, await LeerMensajeErrorAsync(r));
+    }
+
     public async Task<(bool Ok, string? Error)> DeleteCategoriaAsync(int id)
     {
         SetAuthHeader();
@@ -384,6 +393,7 @@ public class TinaStoreApiClient
         {
             ".png"  => "image/png",
             ".webp" => "image/webp",
+            ".avif" => "image/avif",
             _       => "image/jpeg"
         };
         var sc = new StreamContent(contenido);
@@ -486,11 +496,12 @@ public class TinaStoreApiClient
         return r.IsSuccessStatusCode;
     }
 
-    public async Task<bool> AnularEgresoAsync(int id)
+    public async Task<(bool Ok, string? Error)> AnularEgresoAsync(int id)
     {
         SetAuthHeader();
         var r = await _http.PostAsync($"/api/expenses/{id}/anular", null);
-        return r.IsSuccessStatusCode;
+        if (r.IsSuccessStatusCode) return (true, null);
+        return (false, await LeerMensajeErrorAsync(r));
     }
 
     // -- Configuración de tienda -----------------------------------------------

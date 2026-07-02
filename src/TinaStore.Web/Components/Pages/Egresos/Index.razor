@@ -359,9 +359,9 @@ else
 
     private async Task AnularEgreso(int id)
     {
-        var ok = await Api.AnularEgresoAsync(id);
+        var (ok, error) = await Api.AnularEgresoAsync(id);
         _exito   = ok;
-        _mensaje = ok ? "Egreso anulado." : "No se pudo anular el egreso.";
+        _mensaje = ok ? "Egreso anulado." : (error ?? "No se pudo anular el egreso.");
         if (ok) await RecargarYFiltrar();
     }
 

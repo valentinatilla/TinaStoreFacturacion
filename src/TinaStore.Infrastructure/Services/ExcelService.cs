@@ -1,4 +1,4 @@
-﻿using ClosedXML.Excel;
+using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
 using TinaStore.Application.DTOs;
 using TinaStore.Application.Interfaces;
@@ -706,7 +706,6 @@ public sealed class ExcelService : IExcelService
         var importados = 0;
 
         // ── Revalidar contra BD antes de intentar guardar ────────────────────
-        // Evita que el SaveChangesAsync explote con un error UNIQUE genérico.
         var nombresEnBd = (await _db.Products.Where(p => !p.IsDeleted).Select(p => p.Name).ToListAsync())
                               .Select(NormalizarTexto).ToHashSet(StringComparer.Ordinal);
         var skusEnBd    = await _db.Products.Where(p => !p.IsDeleted && p.Sku != null)
@@ -722,14 +721,14 @@ public sealed class ExcelService : IExcelService
 
             if (nombresEnBd.Contains(nombreNorm) || nombresEnLote.Contains(nombreNorm))
             {
-                errores.Add($"Fila {fila.Fila}: ya existe un producto llamado '{fila.Nombre}' en el catálogo.");
+                errores.Add($"Fila {fila.Fila}: ya existe un producto llamado '{fila.Nombre}' en el catálogo (descartado).");
                 continue;
             }
             if (!string.IsNullOrWhiteSpace(fila.Sku))
             {
                 if (skusEnBd.Contains(fila.Sku.ToLower()) || skusEnLote.Contains(fila.Sku))
                 {
-                    errores.Add($"Fila {fila.Fila}: el SKU '{fila.Sku}' ya existe en el catálogo.");
+                    errores.Add($"Fila {fila.Fila}: el SKU '{fila.Sku}' ya existe en el catálogo (descartado).");
                     continue;
                 }
                 skusEnLote.Add(fila.Sku);
@@ -737,6 +736,12 @@ public sealed class ExcelService : IExcelService
             nombresEnLote.Add(nombreNorm);
             filasAInsertar.Add(fila);
         }
+
+        // Obtener categoría de egresos "Compras a proveedor" una sola vez
+        const string categoriaComprasNombre = "Compras a proveedor";
+        var categoriaEgreso = await _db.ExpenseCategories
+            .Where(c => c.Name == categoriaComprasNombre && !c.IsDeleted)
+            .FirstOrDefaultAsync();
 
         foreach (var fila in filasAInsertar)
         {
@@ -769,6 +774,41 @@ public sealed class ExcelService : IExcelService
             try
             {
                 await _db.SaveChangesAsync();
+
+                // ── Registrar egresos de compra para productos con stock y costo ──
+                if (categoriaEgreso is not null)
+                {
+                    // Ahora los productos tienen ID asignado; buscar los recién insertados por nombre
+                    var nombresInsertados = filasAInsertar
+                        .Select(f => f.Nombre ?? string.Empty)
+                        .ToHashSet(StringComparer.Ordinal);
+
+                    var productosInsertados = await _db.Products
+                        .Where(p => !p.IsDeleted && nombresInsertados.Contains(p.Name))
+                        .ToListAsync();
+
+                    foreach (var producto in productosInsertados)
+                    {
+                        if (producto.PurchasePrice > 0 && producto.CurrentStock > 0)
+                        {
+                            var egreso = new Expense
+                            {
+                                ExpenseDate       = DateTime.UtcNow,
+                                Description       = $"Compra de {producto.CurrentStock} unidad(es) de '{producto.Name}'",
+                                Amount            = producto.PurchasePrice * producto.CurrentStock,
+                                Notes             = producto.Sku is not null ? $"SKU: {producto.Sku}" : null,
+                                Status            = ExpenseStatus.Active,
+                                ExpenseCategoryId = categoriaEgreso.Id,
+                                SupplierId        = producto.SupplierId,
+                                ProductId         = producto.Id,
+                                StockQty          = producto.CurrentStock
+                            };
+                            await _db.Expenses.AddAsync(egreso);
+                        }
+                    }
+
+                    await _db.SaveChangesAsync();
+                }
             }
             catch (Exception ex) when (ex.InnerException?.Message.Contains("UNIQUE") == true
                                     || ex.Message.Contains("UNIQUE"))
@@ -776,7 +816,6 @@ public sealed class ExcelService : IExcelService
                 foreach (var entry in _db.ChangeTracker.Entries().ToList())
                     entry.State = Microsoft.EntityFrameworkCore.EntityState.Detached;
 
-                // Determinar si el duplicado es de nombre o de SKU para dar un mensaje preciso
                 var rawMsg = ex.InnerException?.Message ?? ex.Message;
                 var msgDetalle = rawMsg.Contains("IX_Products_Name_Unique")
                     ? "uno o más productos tienen el mismo nombre que un producto existente"
