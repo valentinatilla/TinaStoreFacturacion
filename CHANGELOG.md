@@ -11,6 +11,24 @@ El versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [1.7.0] — 2026-07-02
+
+### Añadido
+- **Ventas – Imágenes de productos:** Las imágenes de productos en la pantalla de nueva venta ahora se sirven correctamente a través de la ruta proxy `/proxy/img/productos/...`, resolviendo el renderizado roto en producción.
+- **Soporte .avif:** El servidor acepta, valida (magic bytes) y almacena imágenes en formato `.avif`. Los inputs de archivo en Productos e Importar también aceptan este formato.
+- **Productos – Filtro "Recientes (7 días)":** Nuevo botón de acceso rápido `🕐 Recientes` junto al botón "Limpiar" en la barra de filtros. El selector de Estado también incluye la opción y queda sincronizado al pulsar el botón.
+- **Productos – SKU editable en edición:** El campo SKU ya no está bloqueado en modo edición. El botón de sugerencia ✨ está disponible tanto al crear como al editar.
+- **Importación Excel – Egresos automáticos:** Al confirmar una importación masiva de productos, se crean automáticamente registros de egreso en la categoría "Compras a proveedor" para cada producto importado con precio de costo y stock mayor a cero.
+- **Importación Excel – Imagen por fila:** La tabla de previsualización incluye una columna de imagen. Cada fila permite seleccionar una imagen individual (JPG, PNG, WEBP, AVIF ≤ 2 MB) con vista previa inline. Las imágenes se suben automáticamente tras la importación exitosa.
+- **Importación Excel – Reporte de duplicados:** Los productos cuyo nombre ya existe en la base de datos se descartan y se informan claramente en el resultado de importación.
+- **Edición masiva – Categoría y Proveedor:** La tabla de edición masiva incluye columnas para cambiar la categoría y el proveedor de cada producto seleccionado, con opción de limpiar el proveedor.
+- **Categorías – Editar categoría existente:** Botón ✏️ por fila que abre el mismo modal de creación en modo edición, permitiendo modificar nombre y descripción.
+
+### Corregido
+- **Egresos – Bloqueo de anulación:** Si el producto asociado al egreso ya tiene ventas registradas, la anulación se bloquea con un mensaje claro en la UI en lugar de fallar silenciosamente o revertir stock de forma incorrecta.
+
+---
+
 ## [1.6.0] — 2026-06-25
 
 ### Añadido

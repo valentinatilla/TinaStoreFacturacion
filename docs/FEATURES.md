@@ -4,6 +4,50 @@ Registro de funcionalidades implementadas y planificadas del proyecto.
 
 ---
 
+## v1.7.0 — 2026-07-02 — Imágenes AVIF, Filtros, Importación y Egresos seguros
+
+### ✅ Ventas – Imágenes de productos corregidas
+- Las imágenes se renderizan vía ruta proxy `/proxy/img/productos/...` en la pantalla de nueva venta.
+- Eliminada dependencia de `IConfiguration._apiBase` que generaba URLs rotas en producción.
+
+### ✅ Soporte de imagen .avif
+- API, validación de magic bytes, cliente HTTP y todos los inputs de archivo aceptan `.avif`.
+- `Content-Type` dinámico según extensión en `SubirImagenProductoAsync`.
+
+### ✅ Productos – Filtro "Recientes (7 días)"
+- `CreatedAt` añadido a `ProductSummaryDto` y mapeado en `ProductService.ToSummaryDto`.
+- Selector de Estado incluye opción `recientes`; filtro `CreatedAt >= UtcNow.AddDays(-7)`.
+- Botón de acceso rápido `🕐 Recientes` sincronizado con el select mediante `value="@_filtroEstado"`.
+
+### ✅ Productos – SKU editable en edición
+- Campo SKU editable tanto al crear como al editar producto.
+- Botón ✨ de sugerencia disponible en ambos modos.
+
+### ✅ Importación Excel – Egresos automáticos de compra
+- `ExcelService.ImportFromPreviewAsync` crea egresos en "Compras a proveedor" para productos importados con precio de costo y stock > 0.
+- Duplicados filtrados y reportados claramente en el resultado.
+
+### ✅ Importación Excel – Imagen por fila en previsualización
+- Columna de imagen en la tabla de previsualización del paso 2.
+- Selección individual por fila con previsualización base64 (≤ 2 MB, JPG/PNG/WEBP/AVIF).
+- Subida automática de imágenes tras importación exitosa por matching de nombre.
+
+### ✅ Edición masiva – Categoría y Proveedor
+- Tabla de edición masiva incluye columnas Categoría y Proveedor con selects.
+- `BulkUpdateItemDto` ampliado con `NuevaCategoriaId`, `NuevoProveedorId`, `LimpiarProveedor`.
+- `ProductService.BulkUpdateAsync` aplica los cambios correctamente.
+
+### ✅ Categorías – Editar categoría existente
+- Botón ✏️ por fila; modal reutilizado en modo edición con título dinámico.
+- `TinaStoreApiClient.UpdateCategoriaAsync` y `UpdateCategoriaDto` añadidos.
+
+### ✅ Egresos – Bloqueo de anulación con ventas
+- `ExpenseService.CancelAsync` verifica ventas del producto antes de anular.
+- `ExpensesController.Cancel` retorna `BadRequest` con mensaje legible si el producto tiene ventas.
+- La UI muestra el mensaje de error del servidor (`TinaStoreApiClient.AnularEgresoAsync` retorna `(bool, string?)`).
+
+---
+
 ## v2.8.0 — 2025-07-14 — UX Responsive, Botones, Logo, Filtros y PWA
 
 ### ✅ Ordenamiento en Categorías (Fase A)

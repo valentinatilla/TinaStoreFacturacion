@@ -5,6 +5,75 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [1.7.0] — 2026-07-02 — Imágenes, AVIF, Filtros, Importación mejorada y Egresos seguros
+
+### Módulos afectados
+`Facturas/Nueva.razor`, `ProductsController`, `ProductDtos`, `ProductService`, `ExcelService`, `Importar.razor`, `Productos/Index.razor`, `Categorias/Index.razor`, `Egresos/Index.razor`, `ExpenseService`, `ExpensesController`, `TinaStoreApiClient`, `ExpenseServiceTests`
+
+---
+
+### Añadido
+
+**Ventas – Imágenes de productos corregidas**
+- `Facturas/Nueva.razor`: las URLs de imagen de productos reemplazadas por `/proxy/img/productos/{fileName}`, que funciona correctamente en todos los entornos (dev, staging, producción).
+- Se eliminó la dependencia de `IConfiguration` y el campo `_apiBase` que generaba rutas rotas.
+
+**Soporte de imagen .avif**
+- `ProductsController.UploadImage`: extensiones permitidas ampliadas a `.jpg`, `.jpeg`, `.png`, `.webp`, `.avif`.
+- Validación de magic bytes: detección de AVIF por firma `ftyp` en los bytes 4–7 del archivo.
+- `TinaStoreApiClient.SubirImagenProductoAsync`: `Content-Type` dinámico según extensión, incluye `image/avif`.
+- `Productos/Index.razor` e `Importar.razor`: atributo `accept` de los inputs de archivo ampliado con `.avif`.
+
+**Productos – Filtro "Recientes (7 días)"**
+- `ProductDtos.ProductSummaryDto`: nueva propiedad `CreatedAt` mapeada desde la entidad.
+- `ProductService.ToSummaryDto`: mapea `p.CreatedAt` al DTO.
+- `TinaStoreApiClient.ProductoDto`: incluye `CreatedAt` (default para compatibilidad).
+- `Productos/Index.razor`: opción `recientes` en el selector de Estado filtra `CreatedAt >= UtcNow.AddDays(-7)`.
+- Nuevo botón de acceso rápido `🕐 Recientes` junto al botón "Limpiar"; el select se sincroniza con `value="@_filtroEstado"`.
+
+**Productos – SKU editable en edición con sugerencia**
+- `Productos/Index.razor`: campo SKU `readonly` eliminado en modo edición.
+- Botón ✨ de sugerencia visible siempre (crear y editar); usa el mismo método `SugerirSiguienteSku`.
+- Texto de ayuda unificado: "Clic en ✨ para sugerir el siguiente SKU disponible."
+
+**Importación Excel – Egresos automáticos de compra**
+- `ExcelService.ImportFromPreviewAsync`: tras `SaveChangesAsync`, crea registros `Expense` en categoría "Compras a proveedor" para productos importados con `PurchasePrice > 0` y `CurrentStock > 0`.
+- Preserva el filtro de duplicados (nombre único) antes de persistir; informa los descartados en el resultado.
+
+**Importación Excel – Imagen por fila en previsualización**
+- `Importar.razor`: columna "Imagen" en la tabla de previsualización del paso 2.
+- `SeleccionarImagenFila`: selección individual por fila con vista previa base64 (≤ 2 MB, formatos JPG/PNG/WEBP/AVIF).
+- `QuitarImagenPreview`: elimina la imagen asignada a una fila.
+- `SubirImagenesImportadasAsync`: tras importación exitosa, sube las imágenes haciendo match por nombre de producto.
+- `FilaImagen`: clase interna con bytes, nombre y URL de previsualización.
+
+**Edición masiva – Categoría y Proveedor**
+- `BulkUpdateItemDto`: nuevos campos `NuevaCategoriaId`, `NuevoProveedorId`, `LimpiarProveedor`.
+- `ProductService.BulkUpdateAsync`: aplica cambios de categoría y proveedor junto a costo/precio/stock.
+- `TinaStoreApiClient.BulkUpdateItemDto`: campos de categoría y proveedor añadidos.
+- `Productos/Index.razor`: tabla de edición masiva con columnas Categoría y Proveedor (selects); payload incluye los nuevos campos.
+
+**Categorías – Editar categoría existente**
+- `Categorias/Index.razor`: botón ✏️ por fila abre el modal en modo edición.
+- `AbrirEditar(cat)`: carga nombre y descripción en el formulario; establece `_editandoId`.
+- `Guardar`: llama `UpdateCategoriaAsync` si `_editandoId > 0`, o `CreateCategoriaAsync` si es creación nueva.
+- `TinaStoreApiClient`: nuevo método `UpdateCategoriaAsync` y record `UpdateCategoriaDto`.
+
+---
+
+### Corregido
+
+**Egresos – Bloqueo de anulación con ventas asociadas**
+- `ExpenseService.CancelAsync`: antes de anular, verifica con `IRepository<InvoiceDetail>` si el producto del egreso tiene líneas de venta; si las hay lanza `DomainException` con mensaje descriptivo.
+- `ExpensesController.Cancel`: captura `DomainException` y devuelve `BadRequest({ mensaje })` en lugar de 500.
+- `TinaStoreApiClient.AnularEgresoAsync`: retorna `(bool Ok, string? Error)` en lugar de `bool`.
+- `Egresos/Index.razor`: muestra el mensaje de error del servidor en la UI si la anulación es rechazada.
+
+**Tests – Constructor de ExpenseService actualizado**
+- `ExpenseServiceTests`: añadido `_invoiceDetailRepoMock` (`Mock<IRepository<InvoiceDetail>>`) al constructor del servicio para reflejar la nueva dependencia.
+
+---
+
 ## [1.0.0] — 2026-07-25 — Fase BE–BK: Auditoría final, correcciones de cierre y documentación
 
 ### Tipo de cambio

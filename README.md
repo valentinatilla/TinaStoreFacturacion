@@ -175,10 +175,21 @@ Ver [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md)
 | `v0.7.0` | ✅ Completada | Configuración de tienda + administración de usuarios |
 | `v0.8.0` | ✅ Completada | Cobertura de tests unitarios (78 tests — todos los servicios y validadores) |
 | `v1.0.0` | ✅ Completada | Primera versión estable para producción — auditoría final, seguridad y documentación |
+| `v1.7.0` | ✅ Completada | Imágenes AVIF, filtro recientes, SKU editable, importación con egresos e imágenes, edición masiva categoría/proveedor, bloqueo de anulación de egresos |
 
 ---
 
 ## 🗓️ Historial de cambios recientes
+
+### v1.7.0 — 2026-07-02 — Imágenes, AVIF, Filtros, Importación y Egresos seguros
+- **Ventas**: imágenes de productos renderizadas correctamente mediante ruta proxy.
+- **AVIF**: soporte completo en API (magic bytes), cliente HTTP e inputs de archivo.
+- **Productos – Recientes**: botón `🕐 Recientes` de acceso directo al filtro de productos añadidos en los últimos 7 días.
+- **Productos – SKU**: editable también en modo edición, con botón ✨ de sugerencia disponible siempre.
+- **Importación Excel**: crea egresos de compra automáticamente al importar; columna de imagen por fila en previsualización; duplicados descartados con reporte claro.
+- **Edición masiva**: nuevas columnas Categoría y Proveedor en la tabla de edición masiva.
+- **Categorías**: botón ✏️ para editar categoría existente desde el listado.
+- **Egresos**: anulación bloqueada con notificación clara si el producto ya tiene ventas registradas.
 
 ### v0.8.0 — Tests unitarios
 - Cobertura unitaria real con **xUnit + NSubstitute + FluentAssertions** (**78 tests**, 0 fallos).
