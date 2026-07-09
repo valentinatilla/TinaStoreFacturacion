@@ -46,14 +46,15 @@ else
     </div>
 
     <div class="card ts-table border-0">
-        <div class="table-responsive">
+        <!-- Vista desktop -->
+        <div class="d-none d-md-block table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
                         <th style="cursor:pointer" @onclick='() => OrdenarPor("nombre")'>
                             Nombre <i class="@SortIconClass("nombre") ms-1 small"></i>
                         </th>
-                        <th class="ts-table-hide-mobile">Descripción</th>
+                        <th>Descripción</th>
                         <th style="cursor:pointer" @onclick='() => OrdenarPor("productos")'>
                             Productos <i class="@SortIconClass("productos") ms-1 small"></i>
                         </th>
@@ -73,7 +74,7 @@ else
                                     </span>
                                 }
                             </td>
-                            <td class="text-muted ts-table-hide-mobile">@cat.Description</td>
+                            <td class="text-muted">@cat.Description</td>
                             <td><span class="badge bg-secondary">@cat.ProductCount</span></td>
                             <td class="text-end">
                                 @if (cat.Id != 99)
@@ -94,6 +95,52 @@ else
                     }
                 </tbody>
             </table>
+        </div>
+
+        <!-- Vista móvil: cards -->
+        <div class="d-md-none p-2">
+            @foreach (var cat in CategoriasOrdenadas)
+            {
+                <div class="ts-mobile-card">
+                    <div class="ts-mc-header">
+                        <div class="ts-mc-title">
+                            @cat.Name
+                            @if (cat.Id == 99)
+                            {
+                                <span class="badge bg-secondary ms-1" style="font-size:.65rem;"><i class="bi bi-lock-fill"></i> Sistema</span>
+                            }
+                        </div>
+                        @if (cat.Id != 99)
+                        {
+                            <div class="ts-mc-actions">
+                                <button class="btn btn-sm btn-outline-primary" @onclick="() => AbrirEditar(cat)">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => AbrirConfirmarEliminar(cat)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                    <div class="ts-mc-body ts-mc-cols-1">
+                        @if (!string.IsNullOrWhiteSpace(cat.Description))
+                        {
+                            <div class="ts-mc-field">
+                                <span class="ts-mc-label">Descripción</span>
+                                <span class="ts-mc-value">@cat.Description</span>
+                            </div>
+                        }
+                        <div class="ts-mc-field">
+                            <span class="ts-mc-label">Productos</span>
+                            <span class="ts-mc-value"><span class="badge bg-secondary">@cat.ProductCount</span></span>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (!CategoriasOrdenadas.Any())
+            {
+                <div class="text-center text-muted py-4">Sin categorías</div>
+            }
         </div>
     </div>
 }

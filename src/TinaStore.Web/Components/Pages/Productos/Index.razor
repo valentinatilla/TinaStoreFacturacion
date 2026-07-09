@@ -132,7 +132,8 @@ else
         </div>
     </div>
     <div class="card ts-table border-0">
-        <div class="table-responsive">
+        <!-- Vista desktop: tabla -->
+        <div class="d-none d-md-block table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
                     <tr class="align-middle">
@@ -218,6 +219,80 @@ else
                     }
                 </tbody>
             </table>
+        </div>
+
+        <!-- Vista móvil: cards -->
+        <div class="d-md-none p-2">
+            @foreach (var p in _filtrados)
+            {
+                <div class="ts-mobile-card">
+                    <div class="ts-mc-header">
+                        <div class="d-flex align-items-center gap-2">
+                            @if (!string.IsNullOrEmpty(p.ImagePath))
+                            {
+                                <img src="/proxy/img/productos/@(Path.GetFileName(p.ImagePath))" alt="@p.Name" class="ts-mc-img" />
+                            }
+                            else
+                            {
+                                <span class="ts-mc-img-placeholder"><i class="bi bi-image"></i></span>
+                            }
+                            <div>
+                                <div class="ts-mc-title">@p.Name</div>
+                                <span class="text-muted" style="font-size:.72rem;">@p.Sku</span>
+                            </div>
+                        </div>
+                        <div class="ts-mc-actions">
+                            <button class="btn btn-sm btn-outline-primary" @onclick="() => AbrirModal(p)">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" @onclick="() => AbrirModalEliminar(p)">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="ts-mc-body">
+                        <div class="ts-mc-field">
+                            <span class="ts-mc-label">Precio</span>
+                            <span class="ts-mc-value text-purple">$@p.SalePrice.ToString("N0")</span>
+                        </div>
+                        <div class="ts-mc-field">
+                            <span class="ts-mc-label">Stock</span>
+                            <span class="ts-mc-value">
+                                <span class="badge @(!p.IsActive ? "bg-secondary" : p.CurrentStock == 0 ? "badge-sin-stock" : p.IsLowStock ? "badge-bajo-stock" : "bg-success")">@p.CurrentStock</span>
+                            </span>
+                        </div>
+                        <div class="ts-mc-field">
+                            <span class="ts-mc-label">Categoría</span>
+                            <span class="ts-mc-value">@p.CategoryName</span>
+                        </div>
+                        <div class="ts-mc-field">
+                            <span class="ts-mc-label">Estado</span>
+                            <span class="ts-mc-value">
+                                @if (!p.IsActive)
+                                {
+                                    <span class="badge badge-estado-inactivo">Inactivo</span>
+                                }
+                                else if (p.CurrentStock == 0)
+                                {
+                                    <span class="badge badge-sin-stock">Agotado</span>
+                                }
+                                else if (p.IsLowStock)
+                                {
+                                    <span class="badge badge-bajo-stock">Bajo stock</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-estado-activo">En stock</span>
+                                }
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (!_filtrados.Any())
+            {
+                <div class="text-center text-muted py-4">Sin resultados</div>
+            }
         </div>
     </div>
 }

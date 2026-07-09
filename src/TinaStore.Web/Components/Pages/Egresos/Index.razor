@@ -66,7 +66,8 @@ else
     <!-- Tabla 1: Compras de productos -->
     <h6 class="fw-bold mb-2 mt-3"><i class="bi bi-box-seam me-2 text-purple"></i>Compras de productos</h6>
     <div class="card ts-table border-0 mb-4">
-        <div class="table-responsive">
+        <!-- Vista desktop -->
+        <div class="d-none d-md-block table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
                     <tr><th>Fecha</th><th>Descripción</th><th>Proveedor</th><th class="text-end">Monto</th><th></th></tr>
@@ -105,6 +106,52 @@ else
                 </tbody>
             </table>
         </div>
+
+        <!-- Vista móvil: cards compras -->
+        <div class="d-md-none p-2">
+            @foreach (var e in _filtradosCompras)
+            {
+                var anulado = e.Status != 0;
+                <div class="ts-mobile-card" style="@(anulado ? "opacity:.55" : "")">
+                    <div class="ts-mc-header">
+                        <div class="ts-mc-title" style="@(anulado ? "text-decoration:line-through" : "")">@e.Description</div>
+                        <div class="ts-mc-actions">
+                            @if (e.Status == 0)
+                            {
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => PedirConfirmacionAnular(e)">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Anulado</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="ts-mc-body">
+                        <div class="ts-mc-field">
+                            <span class="ts-mc-label">Fecha</span>
+                            <span class="ts-mc-value">@e.ExpenseDate.ToString("dd/MM/yy")</span>
+                        </div>
+                        <div class="ts-mc-field">
+                            <span class="ts-mc-label">Monto</span>
+                            <span class="ts-mc-value @(anulado ? "" : "text-purple")">$@e.Amount.ToString("N0")</span>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(e.SupplierName))
+                        {
+                            <div class="ts-mc-field">
+                                <span class="ts-mc-label">Proveedor</span>
+                                <span class="ts-mc-value">@e.SupplierName</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            @if (!_filtradosCompras.Any())
+            {
+                <div class="text-center text-muted py-3">Sin compras de productos en el período</div>
+            }
+        </div>
     </div>
 
     <!-- Tabla 2: Otros egresos -->
@@ -112,10 +159,11 @@ else
         <h6 class="fw-bold mb-0"><i class="bi bi-receipt me-2 text-purple"></i>Otros egresos</h6>
     </div>
     <div class="card ts-table border-0">
-        <div class="table-responsive">
+        <!-- Vista desktop -->
+        <div class="d-none d-md-block table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
-                    <tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th class="ts-table-hide-mobile">Método de pago</th><th class="text-end">Monto</th><th></th></tr>
+                    <tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th>Método de pago</th><th class="text-end">Monto</th><th></th></tr>
                 </thead>
                 <tbody>
                     @foreach (var e in _filtradosOtros)
@@ -126,7 +174,7 @@ else
                             <td class="text-muted small">@e.ExpenseDate.ToString("dd/MM/yyyy")</td>
                             <td>@if (anulado){<s>@e.Description</s>}else{@e.Description}</td>
                             <td><span class="badge @(anulado ? "bg-danger" : "bg-secondary")">@e.ExpenseCategoryName</span></td>
-                            <td class="text-muted small ts-table-hide-mobile">
+                            <td class="text-muted small">
                                 @(string.IsNullOrWhiteSpace(e.PaymentMethodName) ? string.Empty : e.PaymentMethodName)
                             </td>
                             <td class="text-end fw-semibold">
@@ -157,6 +205,59 @@ else
                     }
                 </tbody>
             </table>
+        </div>
+
+        <!-- Vista móvil: cards otros egresos -->
+        <div class="d-md-none p-2">
+            @foreach (var e in _filtradosOtros)
+            {
+                var anulado = e.Status != 0;
+                <div class="ts-mobile-card" style="@(anulado ? "opacity:.55" : "")">
+                    <div class="ts-mc-header">
+                        <div class="ts-mc-title" style="@(anulado ? "text-decoration:line-through" : "")">@e.Description</div>
+                        <div class="ts-mc-actions">
+                            @if (e.Status == 0)
+                            {
+                                <button class="btn btn-sm btn-outline-secondary" @onclick="() => AbrirEditar(e)">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => PedirConfirmacionAnular(e)">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Anulado</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="ts-mc-body">
+                        <div class="ts-mc-field">
+                            <span class="ts-mc-label">Fecha</span>
+                            <span class="ts-mc-value">@e.ExpenseDate.ToString("dd/MM/yy")</span>
+                        </div>
+                        <div class="ts-mc-field">
+                            <span class="ts-mc-label">Monto</span>
+                            <span class="ts-mc-value @(anulado ? "" : "text-purple")">$@e.Amount.ToString("N0")</span>
+                        </div>
+                        <div class="ts-mc-field">
+                            <span class="ts-mc-label">Categoría</span>
+                            <span class="ts-mc-value"><span class="badge @(anulado ? "bg-danger" : "bg-secondary")">@e.ExpenseCategoryName</span></span>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(e.PaymentMethodName))
+                        {
+                            <div class="ts-mc-field">
+                                <span class="ts-mc-label">Método pago</span>
+                                <span class="ts-mc-value">@e.PaymentMethodName</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            @if (!_filtradosOtros.Any())
+            {
+                <div class="text-center text-muted py-3">Sin egresos registrados</div>
+            }
         </div>
     </div>
 }

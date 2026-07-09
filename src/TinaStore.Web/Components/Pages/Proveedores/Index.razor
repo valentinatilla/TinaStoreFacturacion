@@ -42,7 +42,8 @@ else
         </div>
     </div>
     <div class="card ts-table border-0">
-        <div class="table-responsive">
+        <!-- Vista desktop -->
+        <div class="d-none d-md-block table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
                     <tr><th>Nombre</th><th>NIT</th><th>Teléfono</th><th>Email</th><th></th></tr>
@@ -72,6 +73,53 @@ else
                     }
                 </tbody>
             </table>
+        </div>
+
+        <!-- Vista móvil: cards -->
+        <div class="d-md-none p-2">
+            @foreach (var p in _filtrados)
+            {
+                <div class="ts-mobile-card">
+                    <div class="ts-mc-header">
+                        <div class="ts-mc-title">@p.Name</div>
+                        <div class="ts-mc-actions">
+                            <button class="btn btn-sm btn-outline-secondary" @onclick="() => AbrirEditar(p)">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" @onclick="() => AbrirConfirmarEliminar(p)">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="ts-mc-body">
+                        @if (!string.IsNullOrWhiteSpace(p.TaxId))
+                        {
+                            <div class="ts-mc-field">
+                                <span class="ts-mc-label">NIT</span>
+                                <span class="ts-mc-value">@p.TaxId</span>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(p.Phone))
+                        {
+                            <div class="ts-mc-field">
+                                <span class="ts-mc-label">Teléfono</span>
+                                <span class="ts-mc-value">@p.Phone</span>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(p.Email))
+                        {
+                            <div class="ts-mc-field">
+                                <span class="ts-mc-label">Email</span>
+                                <span class="ts-mc-value" style="word-break:break-all;">@p.Email</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            @if (!_filtrados.Any())
+            {
+                <div class="text-center text-muted py-4">Sin resultados</div>
+            }
         </div>
     </div>
 }

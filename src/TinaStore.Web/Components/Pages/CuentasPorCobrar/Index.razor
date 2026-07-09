@@ -109,6 +109,8 @@ else if (_data is not null)
                                         {
                                             @if (facturas.Any())
                                             {
+                                                <!-- Vista desktop: tabla -->
+                                                <div class="d-none d-md-block">
                                                 <table class="table table-sm mb-0">
                                                     <thead class="table-light">
                                                         <tr>
@@ -145,6 +147,39 @@ else if (_data is not null)
                                                         </tr>
                                                     </tfoot>
                                                 </table>
+                                                </div>
+
+                                                <!-- Vista móvil: cards -->
+                                                <div class="d-md-none">
+                                                    @foreach (var f in facturas)
+                                                    {
+                                                        <div class="ts-mobile-factura-card">
+                                                            <div class="ts-factura-header">
+                                                                <span class="badge bg-secondary">@f.InvoiceNumber</span>
+                                                                <span class="badge badge-estado-@f.StatusName.ToLower()">@f.StatusName</span>
+                                                            </div>
+                                                            <div class="ts-factura-row">
+                                                                <span class="ts-label">Fecha</span>
+                                                                <span class="ts-value">@f.InvoiceDate.ToString("dd/MM/yyyy")</span>
+                                                            </div>
+                                                            <div class="ts-factura-row">
+                                                                <span class="ts-label">Total</span>
+                                                                <span class="ts-value">$@f.Total.ToString("N0")</span>
+                                                            </div>
+                                                            <div class="ts-factura-row">
+                                                                <span class="ts-label">Pagado</span>
+                                                                <span class="ts-value text-success">$@f.AmountPaid.ToString("N0")</span>
+                                                            </div>
+                                                            <div class="ts-factura-row">
+                                                                <span class="ts-label">Saldo</span>
+                                                                <span class="ts-value text-danger fw-bold">$@f.Balance.ToString("N0")</span>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    <div class="text-end fw-bold text-danger small mt-1">
+                                                        Total pendiente: $@facturas.Sum(f => f.Balance).ToString("N0")
+                                                    </div>
+                                                </div>
                                             }
                                             else
                                             {

@@ -198,6 +198,8 @@ body {
 .ts-content {
     flex: 1;
     padding: 1.5rem;
+    overflow-x: hidden;
+    max-width: 100%;
 }
 
 /* ── Tarjetas generales ─────────────────────────────────────────────── */
@@ -1394,6 +1396,11 @@ tr.bulk-row-modified td:first-child {
         width: 100%;
     }
 
+    /* Evitar scroll horizontal en listado de búsqueda de productos */
+    .list-group-item.list-group-item-action {
+        word-break: break-word;
+    }
+
     /* Compactar columna de acciones */
     .ts-tabla-ventas td:last-child,
     .ts-tabla-ventas th:last-child {
@@ -1754,4 +1761,250 @@ h6.fw-bold {
         min-width: 56px;
         font-size: .8rem;
     }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RESPONSIVE MÓVIL — Cards alternativas para tablas
+   Muestra datos legibles en formato vertical en pantallas < 768px
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Cards de facturas pendientes (Cuentas por Cobrar) ──────────── */
+.ts-mobile-factura-card {
+    background: var(--ts-surface);
+    border: 1px solid var(--ts-accent);
+    border-radius: 12px;
+    padding: .75rem 1rem;
+    margin-bottom: .5rem;
+    box-shadow: var(--ts-shadow-soft);
+}
+
+.ts-mobile-factura-card .ts-factura-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: .5rem;
+}
+
+.ts-mobile-factura-card .ts-factura-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .2rem 0;
+    font-size: .85rem;
+}
+
+.ts-mobile-factura-card .ts-factura-row .ts-label {
+    color: var(--ts-text-soft);
+    font-weight: 600;
+}
+
+.ts-mobile-factura-card .ts-factura-row .ts-value {
+    font-weight: 700;
+}
+
+/* ── Cards de productos del carrito (Nueva Venta) ───────────────── */
+.ts-mobile-cart-card {
+    background: var(--ts-surface);
+    border: 1px solid var(--ts-accent);
+    border-radius: 12px;
+    padding: .75rem;
+    margin-bottom: .5rem;
+    box-shadow: var(--ts-shadow-soft);
+    position: relative;
+}
+
+.ts-mobile-cart-card .ts-cart-top {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin-bottom: .5rem;
+}
+
+.ts-mobile-cart-card .ts-cart-img {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.ts-mobile-cart-card .ts-cart-img-placeholder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: #94a3b8;
+    font-size: .85rem;
+    flex-shrink: 0;
+}
+
+.ts-mobile-cart-card .ts-cart-name {
+    font-weight: 700;
+    font-size: .9rem;
+    flex: 1;
+    word-break: break-word;
+}
+
+.ts-mobile-cart-card .ts-cart-remove {
+    position: absolute;
+    top: .5rem;
+    right: .5rem;
+}
+
+.ts-mobile-cart-card .ts-cart-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .35rem .75rem;
+    font-size: .85rem;
+}
+
+.ts-mobile-cart-card .ts-cart-fields .ts-field-label {
+    color: var(--ts-text-soft);
+    font-size: .75rem;
+    font-weight: 600;
+}
+
+.ts-mobile-cart-card .ts-cart-fields .ts-field-value {
+    font-weight: 700;
+}
+
+.ts-mobile-cart-card .ts-cart-subtotal {
+    text-align: right;
+    font-weight: 800;
+    font-size: .95rem;
+    color: var(--ts-purple);
+    margin-top: .35rem;
+    padding-top: .35rem;
+    border-top: 1px dashed var(--ts-accent);
+}
+
+/* ── Resumen totales móvil (Nueva Venta) ────────────────────────── */
+.ts-mobile-totals {
+    background: var(--ts-surface);
+    border: 1px solid var(--ts-accent);
+    border-radius: 12px;
+    padding: .75rem 1rem;
+    margin-top: .5rem;
+}
+
+.ts-mobile-totals .ts-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .35rem 0;
+    font-size: .9rem;
+}
+
+.ts-mobile-totals .ts-total-row.ts-total-final {
+    border-top: 2px solid var(--ts-primary);
+    padding-top: .5rem;
+    margin-top: .25rem;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--ts-purple);
+}
+
+.ts-mobile-totals .ts-total-row input {
+    width: 70px;
+    text-align: right;
+}
+
+/* ── Card genérica para vistas móvil de tablas ──────────────────── */
+.ts-mobile-card {
+    background: var(--ts-surface);
+    border: 1px solid var(--ts-accent);
+    border-radius: 12px;
+    padding: .75rem 1rem;
+    margin-bottom: .5rem;
+    box-shadow: var(--ts-shadow-soft);
+    position: relative;
+}
+
+.ts-mobile-card .ts-mc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: .5rem;
+    margin-bottom: .4rem;
+}
+
+.ts-mobile-card .ts-mc-title {
+    font-weight: 700;
+    font-size: .92rem;
+    word-break: break-word;
+    flex: 1;
+}
+
+.ts-mobile-card .ts-mc-actions {
+    display: flex;
+    gap: .35rem;
+    flex-shrink: 0;
+}
+
+.ts-mobile-card .ts-mc-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .25rem .75rem;
+    font-size: .84rem;
+}
+
+.ts-mobile-card .ts-mc-body.ts-mc-cols-1 {
+    grid-template-columns: 1fr;
+}
+
+.ts-mobile-card .ts-mc-body.ts-mc-cols-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.ts-mobile-card .ts-mc-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.ts-mobile-card .ts-mc-label {
+    font-size: .7rem;
+    font-weight: 600;
+    color: var(--ts-text-soft);
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+
+.ts-mobile-card .ts-mc-value {
+    font-weight: 600;
+    color: var(--ts-text-main);
+}
+
+.ts-mobile-card .ts-mc-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: .4rem;
+    padding-top: .4rem;
+    border-top: 1px dashed var(--ts-accent);
+}
+
+.ts-mobile-card .ts-mc-img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.ts-mobile-card .ts-mc-img-placeholder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: #94a3b8;
+    font-size: .8rem;
+    flex-shrink: 0;
 }

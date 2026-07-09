@@ -17,7 +17,7 @@
     <div class="alert alert-danger py-2">@_error</div>
 }
 
-<div class="row g-4">
+<div class="row g-4" style="overflow-x:hidden;">
     <!-- Columna izquierda: cliente y pago -->
     <div class="col-lg-4">
         <div class="card border-0 shadow-sm p-3 mb-3">
@@ -55,7 +55,7 @@
     </div>
 
     <!-- Columna derecha: productos -->
-    <div class="col-lg-8">
+    <div class="col-lg-8" style="min-width:0;">
         <div class="card border-0 shadow-sm p-3">
             <div class="mb-3">
                 <h6 class="fw-bold mb-2">Detalle de productos</h6>
@@ -89,19 +89,20 @@
                         ? _productosFiltrados
                         : _productosFiltrados.Take(10))
                     {
-                        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2"
+                        <button class="list-group-item list-group-item-action d-flex flex-wrap justify-content-between align-items-center py-2 gap-1"
+                                style="min-width:0;"
                                 @onclick="() => AgregarProducto(p)">
-                            <span class="d-flex align-items-center gap-2">
+                            <span class="d-flex align-items-center gap-2" style="min-width:0; flex:1;">
                                 @if (!string.IsNullOrEmpty(p.ImagePath))
                                                 {
                                                     <img src="/proxy/img/productos/@(Path.GetFileName(p.ImagePath))" alt="@p.Name"
-                                                         style="width:32px;height:32px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;" />
+                                                         style="width:32px;height:32px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;flex-shrink:0;" />
                                                 }
                                                 else
                                                 {
-                                                    <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#f1f5f9;color:#94a3b8;font-size:.75rem;"><i class="bi bi-image"></i></span>
+                                                    <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#f1f5f9;color:#94a3b8;font-size:.75rem;flex-shrink:0;"><i class="bi bi-image"></i></span>
                                                 }
-                                <span>
+                                <span style="min-width:0; overflow:hidden; text-overflow:ellipsis;">
                                     @p.Name <small class="text-muted">(@p.Sku)</small>
                                     @if (p.IsLowStock)
                                     {
@@ -109,7 +110,7 @@
                                     }
                                 </span>
                             </span>
-                            <span class="d-flex align-items-center gap-2">
+                            <span class="d-flex align-items-center gap-2 flex-shrink-0">
                                 <span class="text-purple fw-semibold">$@p.SalePrice.ToString("N0")</span>
                                 <span class="text-muted small">Stock: @p.CurrentStock</span>
                                 @if (p.CurrentStock == 0)
@@ -136,7 +137,8 @@
 
             @if (_detalles.Any())
             {
-                <div class="table-responsive">
+                <!-- Vista desktop: tabla -->
+                <div class="d-none d-md-block table-responsive">
                 <table class="table table-sm mb-3">
                         <thead class="table-light">
                             <tr><th style="width:44px"></th><th>Producto</th><th class="text-center" style="width:80px">Cant.</th><th class="text-end" style="width:90px">P. Unit.</th><th class="text-end" style="width:100px">Dto. (%)</th><th class="text-end" style="width:90px">Subtotal</th><th style="width:32px"></th></tr>
@@ -231,6 +233,103 @@
                         </tr>
                     </tfoot>
                 </table>
+                </div>
+
+                <!-- Vista móvil: cards de productos -->
+                <div class="d-md-none">
+                    @foreach (var d in _detalles)
+                    {
+                        <div class="ts-mobile-cart-card">
+                            <div class="ts-cart-remove">
+                                <button class="btn btn-sm btn-link text-danger p-0" @onclick="() => QuitarProducto(d)">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                            <div class="ts-cart-top">
+                                @if (!string.IsNullOrEmpty(d.ImagePath))
+                                {
+                                    <img src="/proxy/img/productos/@(Path.GetFileName(d.ImagePath))" alt="@d.NombreProducto"
+                                         class="ts-cart-img" />
+                                }
+                                else
+                                {
+                                    <span class="ts-cart-img-placeholder"><i class="bi bi-image"></i></span>
+                                }
+                                <span class="ts-cart-name">@d.NombreProducto</span>
+                            </div>
+                            <div class="ts-cart-fields">
+                                <div>
+                                    <div class="ts-field-label">Cantidad</div>
+                                    <input type="number"
+                                           class="form-control form-control-sm text-center @(d.Cantidad > d.StockDisponible ? "is-invalid" : "")"
+                                           style="width:65px"
+                                           min="1" max="@d.StockDisponible"
+                                           @bind="d.Cantidad" @bind:after="() => RecalcularTotales()" />
+                                    @if (d.Cantidad > d.StockDisponible)
+                                    {
+                                        <div class="text-danger" style="font-size:0.7rem;">Máx. @d.StockDisponible</div>
+                                    }
+                                </div>
+                                <div>
+                                    <div class="ts-field-label">P. Unitario</div>
+                                    <div class="ts-field-value">$@d.PrecioUnitario.ToString("N0")</div>
+                                </div>
+                                <div>
+                                    <div class="ts-field-label">Dto. (%)</div>
+                                    <input type="number" class="form-control form-control-sm text-center"
+                                           style="width:65px"
+                                           min="0" max="100" step="0.01"
+                                           placeholder="0"
+                                           @bind="d.DescuentoPct" @bind:after="() => RecalcularTotales()" />
+                                    @if (d.DescuentoMonto > 0)
+                                    {
+                                        <div class="text-muted" style="font-size:.7rem;">-$@d.DescuentoMonto.ToString("N0")</div>
+                                    }
+                                </div>
+                                <div>
+                                    <div class="ts-field-label">Subtotal</div>
+                                    <div class="ts-field-value">$@d.Subtotal.ToString("N0")</div>
+                                </div>
+                            </div>
+                            <div class="ts-cart-subtotal">$@d.Subtotal.ToString("N0")</div>
+                        </div>
+                    }
+
+                    <!-- Totales móvil -->
+                    <div class="ts-mobile-totals">
+                        <div class="ts-total-row">
+                            <span>Subtotal:</span>
+                            <span class="fw-semibold">$@_subtotal.ToString("N0")</span>
+                        </div>
+                        <div class="ts-total-row">
+                            <span>Descuento (%):</span>
+                            <span class="d-flex align-items-center gap-2">
+                                <input type="number" class="form-control form-control-sm text-end @(_advertenciaDescuento is not null ? "is-invalid" : "")"
+                                       style="width:70px"
+                                       min="0" max="100" step="0.01"
+                                       @bind="_descuentoPct" @bind:after="RecalcularTotales" />
+                                @if (_descuento > 0)
+                                {
+                                    <span class="text-muted small">-$@_descuento.ToString("N0")</span>
+                                }
+                            </span>
+                        </div>
+                        @if (_advertenciaDescuento is not null)
+                        {
+                            <div class="text-danger small">@_advertenciaDescuento</div>
+                        }
+                        <div class="ts-total-row">
+                            <span>Impuesto (%):</span>
+                            <input type="number" class="form-control form-control-sm text-end"
+                                   style="width:70px"
+                                   min="0" max="100" step="0.01"
+                                   @bind="_impuestoPct" @bind:after="RecalcularTotales" />
+                        </div>
+                        <div class="ts-total-row ts-total-final">
+                            <span>Total:</span>
+                            <span>$@_total.ToString("N0")</span>
+                        </div>
+                    </div>
                 </div>
             }
             else

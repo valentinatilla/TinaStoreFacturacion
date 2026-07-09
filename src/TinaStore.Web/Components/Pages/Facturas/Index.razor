@@ -74,26 +74,27 @@ else
     </div>
 
     <div class="card ts-table border-0">
-        <div class="table-responsive">
+        <!-- Vista desktop: tabla -->
+        <div class="d-none d-md-block table-responsive">
             <table class="table table-hover mb-0 ts-tabla-ventas">
                 <thead>
                     <tr>
                         <th style="width:32px"></th>
-                        <th class="ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("numero")'>
+                        <th style="cursor:pointer" @onclick='() => OrdenarPor("numero")'>
                             N° Venta <i class="@(SortIconClass("numero")) ms-1 small"></i>
                         </th>
                         <th>Cliente</th>
                         <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("total")'>
                             Total <i class="@(SortIconClass("total")) ms-1 small"></i>
                         </th>
-                        <th class="text-end ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("pagado")'>
+                        <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("pagado")'>
                             Pagado <i class="@(SortIconClass("pagado")) ms-1 small"></i>
                         </th>
-                        <th class="text-end ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("saldo")'>
+                        <th class="text-end" style="cursor:pointer" @onclick='() => OrdenarPor("saldo")'>
                             Saldo <i class="@(SortIconClass("saldo")) ms-1 small"></i>
                         </th>
                         <th>Estado</th>
-                        <th class="ts-table-hide-mobile" style="cursor:pointer" @onclick='() => OrdenarPor("fecha")'>
+                        <th style="cursor:pointer" @onclick='() => OrdenarPor("fecha")'>
                             Fecha <i class="@(SortIconClass("fecha")) ms-1 small"></i>
                         </th>
                         <th></th>
@@ -107,22 +108,19 @@ else
                             <td class="text-center align-middle px-2">
                                 <i class="bi @(expandida ? "bi-chevron-up text-purple" : "bi-chevron-down text-muted") small"></i>
                             </td>
-                            <td class="ts-table-hide-mobile"><span class="badge bg-dark">@f.InvoiceNumber</span></td>
-                            <td>
-                                <span class="d-block">@f.CustomerName</span>
-                                <span class="d-md-none text-muted" style="font-size:.72rem;">@f.InvoiceNumber · @f.InvoiceDate.ToString("dd/MM/yy")</span>
-                            </td>
+                            <td><span class="badge bg-dark">@f.InvoiceNumber</span></td>
+                            <td>@f.CustomerName</td>
                             <td class="text-end fw-semibold">$@f.Total.ToString("N0")</td>
-                            <td class="text-end ts-table-hide-mobile @(f.AmountPaid < f.Total ? "text-danger" : "text-success")">
+                            <td class="text-end @(f.AmountPaid < f.Total ? "text-danger" : "text-success")">
                                 $@f.AmountPaid.ToString("N0")
                             </td>
-                            <td class="text-end ts-table-hide-mobile @(f.Balance > 0 ? "text-danger fw-semibold" : "text-muted")">
+                            <td class="text-end @(f.Balance > 0 ? "text-danger fw-semibold" : "text-muted")">
                                 $@f.Balance.ToString("N0")
                             </td>
                             <td>
                                 <span class="badge badge-estado-@f.StatusName.ToLower()">@f.StatusName</span>
                             </td>
-                            <td class="text-muted small ts-table-hide-mobile">@f.InvoiceDate.ToString("dd/MM/yyyy")</td>
+                            <td class="text-muted small">@f.InvoiceDate.ToString("dd/MM/yyyy")</td>
                             <td class="text-end" @onclick:stopPropagation="true">
                                 <div class="d-flex gap-1 justify-content-end align-items-center">
                                 @if (_pdfDescargando.Contains(f.Id))
@@ -352,6 +350,108 @@ else
                     }
                 </tbody>
             </table>
+        </div>
+
+        <!-- Vista móvil: cards -->
+        <div class="d-md-none p-2">
+            @foreach (var f in _filtradas)
+            {
+                var expandidaM = _expandidas.Contains(f.Id);
+                <div class="ts-mobile-card" style="cursor:pointer" @onclick="() => ToggleDetalle(f.Id)">
+                    <div class="ts-mc-header">
+                        <div>
+                            <div class="ts-mc-title">
+                                <i class="bi @(expandidaM ? "bi-chevron-up text-purple" : "bi-chevron-down text-muted") small me-1"></i>
+                                @f.CustomerName
+                            </div>
+                            <span class="text-muted" style="font-size:.72rem;">@f.InvoiceNumber · @f.InvoiceDate.ToString("dd/MM/yy")</span>
+                        </div>
+                        <span class="badge badge-estado-@f.StatusName.ToLower()">@f.StatusName</span>
+                    </div>
+                    <div class="ts-mc-body">
+                        <div class="ts-mc-field">
+                            <span class="ts-mc-label">Total</span>
+                            <span class="ts-mc-value">$@f.Total.ToString("N0")</span>
+                        </div>
+                        <div class="ts-mc-field">
+                            <span class="ts-mc-label">Saldo</span>
+                            <span class="ts-mc-value @(f.Balance > 0 ? "text-danger" : "text-success")">$@f.Balance.ToString("N0")</span>
+                        </div>
+                    </div>
+                    <div class="ts-mc-footer" @onclick:stopPropagation="true">
+                        <span class="text-muted small">@f.InvoiceDate.ToString("dd/MM/yyyy")</span>
+                        <div class="d-flex gap-1">
+                            @if (_pdfDescargando.Contains(f.Id))
+                            {
+                                <button class="btn btn-sm btn-outline-secondary" disabled>
+                                    <span class="spinner-border spinner-border-sm"></span>
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-sm btn-outline-secondary" @onclick="() => DescargarPdf(f.Id)">
+                                    <i class="bi bi-file-earmark-pdf"></i>
+                                </button>
+                            }
+                            @if (f.StatusName != "Anulada")
+                            {
+                                @if (f.Balance > 0)
+                                {
+                                    <button class="btn btn-sm btn-outline-success" @onclick="() => AbrirPago(f)">
+                                        <i class="bi bi-cash-coin"></i>
+                                    </button>
+                                }
+                                <button class="btn btn-sm btn-outline-primary" @onclick="() => AbrirEditar(f)">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => Anular(f.Id)">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    @if (expandidaM)
+                    {
+                        <div class="mt-2 pt-2" style="border-top:1px dashed var(--ts-accent);">
+                            @if (_detallesCargando.Contains(f.Id))
+                            {
+                                <div class="text-center py-2">
+                                    <span class="spinner-border spinner-border-sm text-purple me-2"></span>
+                                    <span class="text-muted small">Cargando...</span>
+                                </div>
+                            }
+                            else if (_detallesCache.TryGetValue(f.Id, out var detalleM))
+                            {
+                                @if (detalleM.Details.Any())
+                                {
+                                    @foreach (var linea in detalleM.Details)
+                                    {
+                                        <div class="d-flex justify-content-between align-items-center py-1" style="font-size:.82rem;">
+                                            <span>@linea.ProductName <small class="text-muted">x@linea.Quantity</small></span>
+                                            <span class="fw-semibold">$@linea.Subtotal.ToString("N0")</span>
+                                        </div>
+                                    }
+                                }
+                                @if (detalleM.Payments.Any())
+                                {
+                                    <div class="mt-1 pt-1" style="border-top:1px dotted var(--ts-accent); font-size:.78rem;">
+                                        <span class="text-purple fw-semibold"><i class="bi bi-cash-coin me-1"></i>Pagos:</span>
+                                        @foreach (var pago in detalleM.Payments)
+                                        {
+                                            <span class="d-block text-muted">$@pago.Amount.ToString("N0") · @pago.PaymentMethodName · @pago.PaymentDate.ToString("dd/MM/yy")</span>
+                                        }
+                                    </div>
+                                }
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            @if (!_filtradas.Any())
+            {
+                <div class="text-center text-muted py-4">Sin ventas</div>
+            }
         </div>
     </div>
 }

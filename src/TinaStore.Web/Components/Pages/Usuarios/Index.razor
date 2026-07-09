@@ -1,4 +1,4 @@
-﻿@page "/usuarios"
+@page "/usuarios"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 @inject SessionStateService Session
@@ -37,15 +37,16 @@
 else
 {
     <div class="card ts-table border-0">
-        <div class="table-responsive">
+        <!-- Vista desktop -->
+        <div class="d-none d-md-block table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
                         <th>Nombre</th>
-                        <th class="ts-table-hide-mobile">Email</th>
+                        <th>Email</th>
                         <th>Rol</th>
-                        <th class="ts-table-hide-mobile">Estado</th>
-                        <th class="ts-table-hide-mobile">Último acceso</th>
+                        <th>Estado</th>
+                        <th>Último acceso</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -54,16 +55,16 @@ else
                     {
                         <tr>
                             <td class="fw-semibold">@u.FullName</td>
-                            <td class="text-muted ts-table-hide-mobile">@u.Email</td>
+                            <td class="text-muted">@u.Email</td>
                             <td>
                                 <span class="badge @RolBadge(u.Role)">@RolTexto(u.Role)</span>
                             </td>
-                            <td class="ts-table-hide-mobile">
+                            <td>
                                 <span class="badge @(u.IsActive ? "bg-success" : "bg-secondary")">
                                     @(u.IsActive ? "Activo" : "Inactivo")
                                 </span>
                             </td>
-                            <td class="text-muted small ts-table-hide-mobile">
+                            <td class="text-muted small">
                                 @(u.LastLoginAt.HasValue ? u.LastLoginAt.Value.ToString("dd/MM/yyyy HH:mm") : string.Empty)
                             </td>
                             <td class="text-end">
@@ -98,6 +99,60 @@ else
                     }
                 </tbody>
             </table>
+        </div>
+
+        <!-- Vista móvil: cards -->
+        <div class="d-md-none p-2">
+            @foreach (var u in _usuarios)
+            {
+                <div class="ts-mobile-card">
+                    <div class="ts-mc-header">
+                        <div>
+                            <div class="ts-mc-title">@u.FullName</div>
+                            <span class="text-muted" style="font-size:.72rem;">@u.Email</span>
+                        </div>
+                        <div class="ts-mc-actions">
+                            <button class="btn btn-sm btn-outline-secondary" @onclick="() => AbrirEditar(u)">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning" @onclick="() => AbrirReset(u)">
+                                <i class="bi bi-key"></i>
+                            </button>
+                            @if (u.Email != Session.UserEmail && u.IsActive)
+                            {
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => PedirConfirmacionDesactivar(u)">
+                                    <i class="bi bi-person-dash"></i>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                    <div class="ts-mc-body">
+                        <div class="ts-mc-field">
+                            <span class="ts-mc-label">Rol</span>
+                            <span class="ts-mc-value"><span class="badge @RolBadge(u.Role)">@RolTexto(u.Role)</span></span>
+                        </div>
+                        <div class="ts-mc-field">
+                            <span class="ts-mc-label">Estado</span>
+                            <span class="ts-mc-value">
+                                <span class="badge @(u.IsActive ? "bg-success" : "bg-secondary")">
+                                    @(u.IsActive ? "Activo" : "Inactivo")
+                                </span>
+                            </span>
+                        </div>
+                        @if (u.LastLoginAt.HasValue)
+                        {
+                            <div class="ts-mc-field">
+                                <span class="ts-mc-label">Último acceso</span>
+                                <span class="ts-mc-value">@u.LastLoginAt.Value.ToString("dd/MM/yy HH:mm")</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            @if (!_usuarios.Any())
+            {
+                <div class="text-center text-muted py-4">Sin usuarios registrados</div>
+            }
         </div>
     </div>
 }
