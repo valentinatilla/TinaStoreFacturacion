@@ -1,4 +1,4 @@
-﻿@page "/ventas/libre"
+@page "/ventas/libre"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 @inject NavigationManager Nav
@@ -69,6 +69,8 @@
 
             @if (_lineas.Any())
             {
+                <!-- Vista desktop: tabla -->
+                <div class="d-none d-md-block">
                 <table class="table table-sm mb-3">
                     <thead class="table-light">
                         <tr>
@@ -152,6 +154,82 @@
                         </tr>
                     </tfoot>
                 </table>
+                </div>
+
+                <!-- Vista móvil: cards -->
+                <div class="d-md-none">
+                    @foreach (var l in _lineas)
+                    {
+                        <div class="ts-mobile-card mb-2">
+                            <div class="ts-mc-header">
+                                <div class="ts-mc-title" style="flex:1;">
+                                    <input type="text"
+                                           class="form-control form-control-sm @(string.IsNullOrWhiteSpace(l.Descripcion) && _intentoGuardar ? "is-invalid" : "")"
+                                           placeholder="Descripción..."
+                                           @bind="l.Descripcion" />
+                                </div>
+                                <button class="btn btn-sm btn-link text-danger p-0 ms-2" @onclick="() => QuitarLinea(l)">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                            <div class="ts-mc-body mt-2">
+                                <div class="ts-mc-field">
+                                    <span class="ts-mc-label">Cantidad</span>
+                                    <input type="number"
+                                           class="form-control form-control-sm text-center @(l.Cantidad <= 0 && _intentoGuardar ? "is-invalid" : "")"
+                                           style="width:65px"
+                                           min="1" @bind="l.Cantidad"
+                                           @bind:after="RecalcularTotales" />
+                                </div>
+                                <div class="ts-mc-field">
+                                    <span class="ts-mc-label">Precio unit.</span>
+                                    <input type="number"
+                                           class="form-control form-control-sm text-end @(l.PrecioUnitario < 0 && _intentoGuardar ? "is-invalid" : "")"
+                                           style="width:90px"
+                                           min="0" step="0.01"
+                                           @bind="l.PrecioUnitario"
+                                           @bind:after="RecalcularTotales" />
+                                </div>
+                                <div class="ts-mc-field">
+                                    <span class="ts-mc-label">Subtotal</span>
+                                    <span class="ts-mc-value fw-bold">$@((l.Cantidad * l.PrecioUnitario).ToString("N0"))</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Totales móvil -->
+                    <div class="ts-mobile-totals">
+                        <div class="ts-total-row">
+                            <span>Subtotal:</span>
+                            <span class="fw-semibold">$@_subtotal.ToString("N0")</span>
+                        </div>
+                        <div class="ts-total-row">
+                            <span>Descuento (%):</span>
+                            <span class="d-flex align-items-center gap-2">
+                                <input type="number" class="form-control form-control-sm text-end"
+                                       style="width:70px"
+                                       min="0" max="100" step="0.01"
+                                       @bind="_descuentoPct" @bind:after="RecalcularTotales" />
+                                @if (_descuento > 0)
+                                {
+                                    <span class="text-muted small">-$@_descuento.ToString("N0")</span>
+                                }
+                            </span>
+                        </div>
+                        <div class="ts-total-row">
+                            <span>Impuesto (%):</span>
+                            <input type="number" class="form-control form-control-sm text-end"
+                                   style="width:70px"
+                                   min="0" max="100" step="0.01"
+                                   @bind="_impuestoPct" @bind:after="RecalcularTotales" />
+                        </div>
+                        <div class="ts-total-row ts-total-final">
+                            <span>Total:</span>
+                            <span>$@_total.ToString("N0")</span>
+                        </div>
+                    </div>
+                </div>
             }
             else
             {

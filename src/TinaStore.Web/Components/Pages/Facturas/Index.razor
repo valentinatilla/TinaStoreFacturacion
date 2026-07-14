@@ -428,7 +428,7 @@ else
                                     @foreach (var linea in detalleM.Details)
                                     {
                                         <div class="d-flex justify-content-between align-items-center py-1" style="font-size:.82rem;">
-                                            <span>@linea.ProductName <small class="text-muted">x@linea.Quantity</small></span>
+                                            <span>@linea.ProductName <small class="text-muted">x@(linea.Quantity)</small></span>
                                             <span class="fw-semibold">$@linea.Subtotal.ToString("N0")</span>
                                         </div>
                                     }
