@@ -455,8 +455,8 @@
             var bytes = await Api.DescargarPlantillaExcelAsync();
             if (bytes is null) return;
             var base64 = Convert.ToBase64String(bytes);
-            await JS.InvokeVoidAsync("downloadFile", "plantilla_productos.xlsx",
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", base64);
+            await JS.InvokeVoidAsync("downloadFileFromBase64", base64, "plantilla_productos.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         }
         finally { _descargandoPlantilla = false; }
     }    private static bool EsErrorDeNombre(string? msg) =>
