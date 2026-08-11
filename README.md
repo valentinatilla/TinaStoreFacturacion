@@ -14,7 +14,7 @@ Tina Store es una aplicación web desarrollada en **.NET 10** con **Blazor** que
 
 | Módulo | Descripción |
 |---|---|
-| 🧾 **Facturación** | Crear, editar y anular facturas. Generación de PDF. |
+| 🧾 **Facturación** | Crear, editar y anular facturas; descuentos, obsequios de inventario, PDF y acceso a despachos Ever. |
 | 📦 **Inventario** | Productos, categorías, control de stock, alertas de bajo stock. |
 | 👥 **Clientes** | Registro, historial de compras, estado de deudas. |
 | 🚚 **Proveedores** | Gestión de proveedores y relación con productos. |
@@ -180,6 +180,13 @@ Ver [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md)
 ---
 
 ## 🗓️ Historial de cambios recientes
+
+### Unreleased — Mejoras de ventas y experiencia móvil
+- **Edición de ventas**: búsqueda de productos por nombre o SKU en cada línea; al eliminar una línea, el total se recalcula de inmediato y el inventario se ajusta al guardar la edición.
+- **Detalle de venta**: las imágenes de productos se cargan mediante la ruta proxy, igual que en el carrito de nueva venta.
+- **Despachos Ever**: el encabezado de Ventas incluye el botón **Despachar envío**, que abre el panel externo de Ever en una nueva pestaña.
+- **Obsequios**: Nueva Venta permite agregar un producto de inventario como obsequio. Se registra con descuento del 100 %, aporta $0 al total y descuenta existencias; la validación considera la cantidad conjunta de productos vendidos y obsequiados.
+- **Importación de productos**: corregida la descarga de la plantilla Excel mediante la función JavaScript de descarga base64 registrada por la aplicación.
 
 ### v1.7.0 — 2026-07-02 — Imágenes, AVIF, Filtros, Importación y Egresos seguros
 - **Ventas**: imágenes de productos renderizadas correctamente mediante ruta proxy.

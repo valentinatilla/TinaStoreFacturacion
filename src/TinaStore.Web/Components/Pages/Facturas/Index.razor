@@ -9,6 +9,9 @@
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h4 class="fw-bold mb-0"><i class="bi bi-receipt me-2 text-purple"></i>Ventas</h4>
     <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-outline-success" href="https://app.goevery.co/dashboard/" target="_blank" rel="noopener noreferrer">
+            <i class="bi bi-truck me-1"></i>Despachar envío
+        </a>
         <button class="btn btn-outline-purple" @onclick="ExportarExcel" disabled="@_exportandoVentas">
             @if (_exportandoVentas) { <span class="spinner-border spinner-border-sm me-1"></span> }
             else { <i class="bi bi-file-earmark-excel me-1"></i> }
@@ -239,7 +242,7 @@ else
                                                                         <td class="align-middle text-center">
                                                                             @if (!string.IsNullOrEmpty(linea.ImagePath))
                                                                             {
-                                                                                <img src="@(_apiBase + linea.ImagePath)" alt="@linea.ProductName"
+                                                                                <img src="/proxy/img/productos/@(Path.GetFileName(linea.ImagePath))" alt="@linea.ProductName"
                                                                                      style="width:32px;height:32px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;" />
                                                                             }
                                                                             else
@@ -568,16 +571,33 @@ else
                     @foreach (var (linea, idx) in _editarLineas.Select((l, i) => (l, i)))
                     {
                         <div class="row g-2 align-items-end mb-2 border-bottom pb-2">
-                            <div class="col-md-4">
+                            <div class="col-md-4 position-relative">
                                 <label class="form-label small">Producto</label>
-                                <select class="form-select form-select-sm" value="@linea.ProductId"
-                                        @onchange="e => CambiarProductoLinea(linea, e)">
-                                    <option value="">— Línea libre —</option>
-                                    @foreach (var p in _productosDisponibles)
-                                    {
-                                        <option value="@p.Id">@p.Name</option>
-                                    }
-                                </select>
+                                <input class="form-control form-control-sm" placeholder="Buscar por nombre o SKU..." autocomplete="off"
+                                       @bind="linea.ProductSearch" @bind:event="oninput"
+                                       @bind:after="() => BuscarProductoLinea(linea)" @onfocus="() => linea.ShowProductResults = true" />
+                                @if (linea.ShowProductResults && !string.IsNullOrWhiteSpace(linea.ProductSearch))
+                                {
+                                    <div class="list-group position-absolute w-100 shadow-sm" style="z-index:1060;max-height:190px;overflow-y:auto;">
+                                        @foreach (var p in ProductosParaEditar(linea).Take(8))
+                                        {
+                                            <button type="button" class="list-group-item list-group-item-action py-2"
+                                                    @onclick="() => SeleccionarProductoLinea(linea, p)">
+                                                <span class="d-flex justify-content-between gap-2">
+                                                    <span>@p.Name <small class="text-muted">@p.Sku</small></span>
+                                                    <small class="text-muted text-nowrap">Stock: @p.CurrentStock</small>
+                                                </span>
+                                            </button>
+                                        }
+                                        @if (!ProductosParaEditar(linea).Any())
+                                        {
+                                            <span class="list-group-item text-muted small">No hay productos con stock disponibles.</span>
+                                        }
+                                    </div>
+                                }
+                                <button type="button" class="btn btn-link btn-sm p-0 mt-1" @onclick="() => ConvertirEnLineaLibre(linea)">
+                                    Usar línea libre
+                                </button>
                             </div>
                             @if (linea.ProductId == null)
                             {
@@ -899,6 +919,10 @@ else
         public decimal UnitPrice       { get; set; }
         public decimal DiscountAmount  { get; set; }
         public string? FreeDescription { get; set; }
+        public string ProductSearch { get; set; } = "";
+        public int? OriginalProductId { get; set; }
+        public int OriginalQuantity { get; set; }
+        public bool ShowProductResults { get; set; }
     }
 
     private async Task AbrirEditar(FacturaDto f)
@@ -924,7 +948,10 @@ else
             Quantity        = d.Quantity,
             UnitPrice       = d.UnitPrice,
             DiscountAmount  = d.DiscountAmount,
-            FreeDescription = d.ProductId == null ? d.ProductName : null
+            FreeDescription = d.ProductId == null ? d.ProductName : null,
+            ProductSearch   = d.ProductName,
+            OriginalProductId = d.ProductId,
+            OriginalQuantity = d.Quantity
         }).ToList() ?? [new EditarLineaVm()];
 
         _editarDescuento = f.DiscountAmount;
@@ -944,23 +971,44 @@ else
     private void AgregarLinea() =>
         _editarLineas.Add(new EditarLineaVm { Quantity = 1 });
 
-    private void EliminarLinea(EditarLineaVm linea) =>
-        _editarLineas.Remove(linea);
-
-    private void CambiarProductoLinea(EditarLineaVm linea, ChangeEventArgs e)
+    private void EliminarLinea(EditarLineaVm linea)
     {
-        if (int.TryParse(e.Value?.ToString(), out var pid))
-        {
-            linea.ProductId = pid;
-            var prod = _productosDisponibles.FirstOrDefault(p => p.Id == pid);
-            if (prod is not null) linea.UnitPrice = prod.SalePrice;
-            linea.FreeDescription = null;
-        }
-        else
-        {
+        _editarLineas.Remove(linea);
+        RecalcularTotales();
+    }
+
+    private IEnumerable<ProductoDto> ProductosParaEditar(EditarLineaVm linea)
+    {
+        var busqueda = linea.ProductSearch.Trim();
+        return _productosDisponibles.Where(p => p.IsActive && p.CurrentStock > 0 &&
+            (p.Name.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ||
+             (p.Sku?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ?? false)));
+    }
+
+    private void BuscarProductoLinea(EditarLineaVm linea)
+    {
+        linea.ShowProductResults = true;
+        if (linea.ProductId.HasValue &&
+            !_productosDisponibles.Any(p => p.Id == linea.ProductId && p.Name == linea.ProductSearch))
             linea.ProductId = null;
-            linea.UnitPrice = 0;
-        }
+    }
+
+    private void SeleccionarProductoLinea(EditarLineaVm linea, ProductoDto producto)
+    {
+        linea.ProductId = producto.Id;
+        linea.UnitPrice = producto.SalePrice;
+        linea.ProductSearch = producto.Name;
+        linea.FreeDescription = null;
+        linea.ShowProductResults = false;
+        RecalcularTotales();
+    }
+
+    private void ConvertirEnLineaLibre(EditarLineaVm linea)
+    {
+        linea.ProductId = null;
+        linea.ProductSearch = "";
+        linea.UnitPrice = 0;
+        linea.ShowProductResults = false;
         RecalcularTotales();
     }
 
@@ -989,6 +1037,27 @@ else
             if (l.Quantity < 1)
             {
                 _errorEditar = "La cantidad de cada línea debe ser al menos 1.";
+                return;
+            }
+        }
+
+        foreach (var grupo in _editarLineas.Where(l => l.ProductId.HasValue).GroupBy(l => l.ProductId!.Value))
+        {
+            var producto = _productosDisponibles.FirstOrDefault(p => p.Id == grupo.Key);
+            if (producto is null)
+            {
+                _errorEditar = "Uno de los productos seleccionados ya no está disponible.";
+                return;
+            }
+
+            var cantidadOriginal = _editarLineas
+                .Where(l => l.OriginalProductId == grupo.Key)
+                .Sum(l => l.OriginalQuantity);
+            var disponibleAlEditar = producto.CurrentStock + cantidadOriginal;
+            var cantidadSolicitada = grupo.Sum(l => l.Quantity);
+            if (cantidadSolicitada > disponibleAlEditar)
+            {
+                _errorEditar = $"No hay suficientes unidades de '{producto.Name}'. Puedes asignar hasta {disponibleAlEditar}; intentas asignar {cantidadSolicitada}. Reduce la cantidad o elige otro producto.";
                 return;
             }
         }
