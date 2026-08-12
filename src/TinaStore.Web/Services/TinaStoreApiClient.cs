@@ -208,15 +208,27 @@ public class TinaStoreApiClient
     }
 
     // -- Auth ------------------------------------------------------------------
-    public async Task<TokenResponseDto?> LoginAsync(string email, string password)
+    public async Task<(TokenResponseDto? Token, string? Error)> LoginAsync(string email, string password)
     {
         try
         {
             var response = await _http.PostAsJsonAsync("/api/auth/login", new { email, password });
-            if (!response.IsSuccessStatusCode) return null;
-            return await response.Content.ReadFromJsonAsync<TokenResponseDto>();
+            if (response.IsSuccessStatusCode)
+                return (await response.Content.ReadFromJsonAsync<TokenResponseDto>(), null);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                return (null, "Credenciales inválidas. Verifique su correo y contraseña.");
+
+            return (null, await LeerMensajeErrorAsync(response));
         }
-        catch { return null; }
+        catch (HttpRequestException)
+        {
+            return (null, "No se pudo conectar con el servidor. Intenta de nuevo en unos minutos.");
+        }
+        catch
+        {
+            return (null, "Ocurrió un error al iniciar sesión. Intenta de nuevo.");
+        }
     }
 
     public async Task<(TokenResponseDto? Token, string? Error)> LoginConGoogleAsync(string idToken)

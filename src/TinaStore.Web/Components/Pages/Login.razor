@@ -1,4 +1,4 @@
-﻿@page "/login"
+@page "/login"
 @layout EmptyLayout
 @inject TinaStoreApiClient Api
 @inject SessionStateService Session
@@ -111,14 +111,14 @@
         _mostrarPassword = false;
         try
         {
-            var response = await Api.LoginAsync(_model.Email, _model.Password);
-            if (response is null)
+            var (token, error) = await Api.LoginAsync(_model.Email, _model.Password);
+            if (token is null)
             {
-                _error = "Credenciales inválidas. Verifique su correo y contraseña.";
+                _error = error ?? "No se pudo iniciar sesión. Intenta de nuevo.";
                 return;
             }
-            Session.SetSession(response.AccessToken, response.User.FullName, response.User.Email, response.User.Role);
-            await SessionStateService.PersistAsync(JS, response.AccessToken);
+            Session.SetSession(token.AccessToken, token.User.FullName, token.User.Email, token.User.Role);
+            await SessionStateService.PersistAsync(JS, token.AccessToken);
             Nav.NavigateTo("/", forceLoad: false);
         }
         catch

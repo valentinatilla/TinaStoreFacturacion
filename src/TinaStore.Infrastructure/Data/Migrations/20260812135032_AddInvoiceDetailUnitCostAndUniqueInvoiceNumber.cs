@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -17,6 +17,24 @@ namespace TinaStore.Infrastructure.Data.Migrations
                 precision: 18,
                 scale: 2,
                 nullable: true);
+
+            // Conserva el número de la primera factura de cada grupo y renumera
+            // únicamente las repetidas antes de imponer la restricción única.
+            migrationBuilder.Sql("""
+                UPDATE "Invoices"
+                SET "InvoiceNumber" = "InvoiceNumber" || '-DUP-' || "Id"
+                WHERE "Id" IN (
+                    SELECT "Id"
+                    FROM (
+                        SELECT "Id",
+                               ROW_NUMBER() OVER (
+                                   PARTITION BY "InvoiceNumber"
+                                   ORDER BY "Id") AS "RowNumber"
+                        FROM "Invoices"
+                    )
+                    WHERE "RowNumber" > 1
+                );
+                """);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Invoices_InvoiceNumber_Unique",
