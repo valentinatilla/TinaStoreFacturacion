@@ -138,7 +138,10 @@ public sealed class InvoiceService : IInvoiceService
                 ProductName = nombreLinea,
                 Quantity = linea.Quantity,
                 UnitPrice = linea.UnitPrice,
-                DiscountAmount = linea.DiscountAmount
+                DiscountAmount = linea.DiscountAmount,
+                UnitCost = linea.ProductId.HasValue
+                    ? lineasInventario.First(x => x.linea == linea).producto.PurchasePrice
+                    : null
             });
         }
 
@@ -369,7 +372,10 @@ public sealed class InvoiceService : IInvoiceService
                 ProductName = nombreLinea,
                 Quantity = linea.Quantity,
                 UnitPrice = linea.UnitPrice,
-                DiscountAmount = linea.DiscountAmount
+                DiscountAmount = linea.DiscountAmount,
+                UnitCost = linea.ProductId.HasValue
+                    ? lineasInventario.First(x => x.linea == linea).producto.PurchasePrice
+                    : null
             });
         }
 

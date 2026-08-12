@@ -25,6 +25,10 @@ public sealed class ReportService : IReportService
         var totalVentas    = facturas.Sum(i => i.Total);
         var totalCobrado   = facturas.Sum(i => i.AmountPaid);
         var totalPendiente = facturas.Sum(i => i.Balance);
+        var obsequios = detalles.Where(d => d.ProductId.HasValue
+            && d.DiscountAmount >= d.UnitPrice * d.Quantity);
+        var costoObsequios = obsequios.Sum(d => (d.UnitCost ?? d.Product?.PurchasePrice ?? 0m) * d.Quantity);
+        var unidadesObsequiadas = obsequios.Sum(d => d.Quantity);
 
         // Agrupar por fecha local (UTC-5)
         var ventasPorDia = facturas
@@ -52,7 +56,7 @@ public sealed class ReportService : IReportService
             .ToList();
 
         return new ReporteVentasDto(from, to, totalVentas, totalCobrado, totalPendiente,
-            facturas.Count, ventasPorDia, topProductos);
+            costoObsequios, unidadesObsequiadas, facturas.Count, ventasPorDia, topProductos);
     }
 
     public async Task<ReporteGastosDto> GetExpensesReportAsync(DateTime from, DateTime to)

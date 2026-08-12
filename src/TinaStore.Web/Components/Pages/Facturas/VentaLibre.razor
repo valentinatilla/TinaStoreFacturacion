@@ -348,9 +348,9 @@
                     FreeDescription: l.Descripcion)).ToList(),
                 PagoInicial: pagoInicial);
 
-            var ok = await Api.CreateFacturaAsync(dto);
+            var (ok, error) = await Api.CreateFacturaAsync(dto);
             if (ok) Nav.NavigateTo("/ventas");
-            else _error = "Error al registrar la venta. Verifique los campos requeridos.";
+            else _error = error ?? "No se pudo registrar la venta. Verifique los campos requeridos.";
         }
         catch { _error = "Error al comunicarse con la API."; }
         finally { _creando = false; }

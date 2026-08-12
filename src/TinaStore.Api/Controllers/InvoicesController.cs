@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using TinaStore.Application.DTOs;
@@ -75,6 +76,10 @@ public sealed class InvoicesController : ControllerBase
         catch (EntityNotFoundException ex)
         {
             return NotFound(new { mensaje = ex.Message });
+        }
+        catch (DbUpdateException)
+        {
+            return Conflict(new { mensaje = "La venta no pudo registrarse porque otra operación usó el mismo consecutivo. Verifica el listado de ventas antes de intentarlo nuevamente." });
         }
     }
 

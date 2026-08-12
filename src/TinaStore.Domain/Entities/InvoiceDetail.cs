@@ -14,5 +14,7 @@ public class InvoiceDetail : BaseEntity
     public int Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal DiscountAmount { get; set; } = 0;
+    /// <summary>Costo de adquisición del producto al momento de facturar.</summary>
+    public decimal? UnitCost { get; set; }
     public decimal Subtotal => (UnitPrice * Quantity) - DiscountAmount;
 }

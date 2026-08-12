@@ -561,6 +561,8 @@
 
     private async Task CrearFactura()
     {
+        if (_creando) return;
+
         _error = null;
 
         // -- Validaciones de negocio -------------------------------------------
@@ -585,6 +587,7 @@
                                         { _error = "El pago inicial no puede ser mayor al total de la factura."; return; }
 
         _creando = true;
+        await InvokeAsync(StateHasChanged);
         try
         {
             CreatePagoInicialDto? pagoInicial = null;
@@ -602,9 +605,9 @@
                 Details:        _detalles.Select(d => new CreateDetalleFacturaDto(d.ProductoId, d.Cantidad, d.PrecioUnitario, d.DescuentoMonto)).ToList(),
                 PagoInicial:    pagoInicial);
 
-            var ok = await Api.CreateFacturaAsync(dto);
+            var (ok, error) = await Api.CreateFacturaAsync(dto);
             if (ok) Nav.NavigateTo("/ventas");
-            else _error = "Error al registrar la venta. Verifique stock y campos requeridos.";
+            else _error = error ?? "No se pudo registrar la venta. Inténtalo nuevamente.";
         }
         catch { _error = "Error al comunicarse con la API."; }
         finally { _creando = false; }

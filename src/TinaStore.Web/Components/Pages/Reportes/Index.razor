@@ -1,4 +1,4 @@
-﻿@page "/reportes"
+@page "/reportes"
 @attribute [Authorize]
 @inject TinaStoreApiClient Api
 
@@ -46,6 +46,25 @@ else if (_ventasData is null && _gastosData is null && _cxcData is null)
 }
 else
 {
+    @if (_ventasData is not null)
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-md-6 col-lg-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <span class="rounded-circle bg-danger-subtle text-danger d-inline-flex align-items-center justify-content-center" style="width:44px;height:44px;">
+                            <i class="bi bi-gift fs-5"></i>
+                        </span>
+                        <div>
+                            <div class="text-muted small">Costo de obsequios</div>
+                            <div class="fs-5 fw-bold text-danger">$@_ventasData.CostoObsequios.ToString("N0")</div>
+                            <div class="text-muted small">@_ventasData.UnidadesObsequiadas unidad(es) entregada(s)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
     <div class="row g-4">
         <!-- Reporte de ventas -->
         <div class="col-lg-7">
