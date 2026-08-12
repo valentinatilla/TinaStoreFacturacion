@@ -79,18 +79,26 @@ public sealed class InvoiceService : IInvoiceService
 
         foreach (var linea in dto.Details)
         {
+            if (linea.Quantity <= 0)
+                throw new DomainException("La cantidad de cada producto debe ser mayor que cero.");
+
             if (linea.ProductId.HasValue)
             {
                 var producto = await _products.GetByIdAsync(linea.ProductId.Value)
                     ?? throw new EntityNotFoundException(nameof(Product), linea.ProductId.Value);
 
-                if (!settings.AllowNegativeStock && producto.CurrentStock < linea.Quantity)
-                    throw new InsufficientStockException(producto.Name, linea.Quantity, producto.CurrentStock);
-
                 lineasInventario.Add((producto, linea));
             }
 
             subtotal += (linea.UnitPrice * linea.Quantity) - linea.DiscountAmount;
+        }
+
+        foreach (var grupo in lineasInventario.GroupBy(x => x.producto.Id))
+        {
+            var cantidadSolicitada = grupo.Sum(x => x.linea.Quantity);
+            var producto = grupo.First().producto;
+            if (!settings.AllowNegativeStock && producto.CurrentStock < cantidadSolicitada)
+                throw new InsufficientStockException(producto.Name, cantidadSolicitada, producto.CurrentStock);
         }
 
         var total = subtotal - dto.DiscountAmount + dto.TaxAmount;
@@ -130,7 +138,10 @@ public sealed class InvoiceService : IInvoiceService
                 ProductName = nombreLinea,
                 Quantity = linea.Quantity,
                 UnitPrice = linea.UnitPrice,
-                DiscountAmount = linea.DiscountAmount
+                DiscountAmount = linea.DiscountAmount,
+                UnitCost = linea.ProductId.HasValue
+                    ? lineasInventario.First(x => x.linea == linea).producto.PurchasePrice
+                    : null
             });
         }
 
@@ -302,17 +313,25 @@ public sealed class InvoiceService : IInvoiceService
 
         foreach (var linea in dto.Details)
         {
+            if (linea.Quantity <= 0)
+                throw new DomainException("La cantidad de cada producto debe ser mayor que cero.");
+
             if (linea.ProductId.HasValue)
             {
                 var prod = await _products.GetByIdAsync(linea.ProductId.Value)
                     ?? throw new EntityNotFoundException(nameof(Product), linea.ProductId.Value);
 
-                if (!settings.AllowNegativeStock && prod.CurrentStock < linea.Quantity)
-                    throw new InsufficientStockException(prod.Name, linea.Quantity, prod.CurrentStock);
-
                 lineasInventario.Add((prod, linea));
             }
             subtotal += (linea.UnitPrice * linea.Quantity) - linea.DiscountAmount;
+        }
+
+        foreach (var grupo in lineasInventario.GroupBy(x => x.producto.Id))
+        {
+            var cantidadSolicitada = grupo.Sum(x => x.linea.Quantity);
+            var producto = grupo.First().producto;
+            if (!settings.AllowNegativeStock && producto.CurrentStock < cantidadSolicitada)
+                throw new InsufficientStockException(producto.Name, cantidadSolicitada, producto.CurrentStock);
         }
 
         var total = subtotal - dto.DiscountAmount + dto.TaxAmount;
@@ -353,7 +372,10 @@ public sealed class InvoiceService : IInvoiceService
                 ProductName = nombreLinea,
                 Quantity = linea.Quantity,
                 UnitPrice = linea.UnitPrice,
-                DiscountAmount = linea.DiscountAmount
+                DiscountAmount = linea.DiscountAmount,
+                UnitCost = linea.ProductId.HasValue
+                    ? lineasInventario.First(x => x.linea == linea).producto.PurchasePrice
+                    : null
             });
         }
 

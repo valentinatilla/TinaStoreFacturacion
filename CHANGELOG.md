@@ -9,6 +9,17 @@ El versionado sigue [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Añadido
+- **Ventas — búsqueda al editar:** Cada línea del editor de factura incluye un buscador que filtra productos activos por nombre o SKU.
+- **Ventas — despachos Ever:** Botón **Despachar envío** en el encabezado de Ventas; abre `https://app.goevery.co/dashboard/` en una pestaña nueva.
+- **Ventas — obsequios de inventario:** Nueva Venta incorpora el botón de regalo por producto. El obsequio conserva el precio de referencia y registra un descuento del 100 %, por lo que suma `$0` a la venta mientras descuenta el stock.
+
+### Corregido
+- **Ventas — total al eliminar líneas:** El subtotal y el total de una venta en edición se recalculan inmediatamente al eliminar un producto. Al guardar, el servicio revierte el inventario previo y descuenta únicamente las líneas resultantes.
+- **Ventas — stock combinado:** Se valida en cliente y servidor que la cantidad vendida y obsequiada del mismo producto no supere el inventario disponible.
+- **Ventas — imágenes en detalle:** Las fotos del detalle desplegable se resuelven a través de `/proxy/img/productos/...`, igual que en Nueva Venta.
+- **Importación de productos — plantilla Excel:** Corregida la invocación JavaScript y el orden de parámetros para descargar la plantilla de importación.
+
 ---
 
 ## [1.7.0] — 2026-07-02

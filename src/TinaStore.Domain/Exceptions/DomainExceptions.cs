@@ -8,7 +8,7 @@ public class DomainException : Exception
 public class InsufficientStockException : DomainException
 {
     public InsufficientStockException(string productName, int available, int requested)
-        : base($"Stock insuficiente para '{productName}'. Disponible: {available}, solicitado: {requested}.") { }
+        : base($"No hay suficientes unidades de '{productName}'. Disponibles: {available}; solicitadas: {requested}. Reduce la cantidad o selecciona otro producto.") { }
 }
 
 public class InvoiceCancelledException : DomainException

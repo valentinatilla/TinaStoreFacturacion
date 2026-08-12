@@ -113,6 +113,10 @@
                             <span class="d-flex align-items-center gap-2 flex-shrink-0">
                                 <span class="text-purple fw-semibold">$@p.SalePrice.ToString("N0")</span>
                                 <span class="text-muted small">Stock: @p.CurrentStock</span>
+                                <button class="btn btn-xs btn-outline-primary py-0 px-1" title="Agregar como obsequio"
+                                        @onclick:stopPropagation="true" @onclick="() => AgregarObsequio(p)">
+                                    <i class="bi bi-gift"></i>
+                                </button>
                                 @if (p.CurrentStock == 0)
                                 {
                                     <button class="btn btn-xs btn-outline-warning py-0 px-1"
@@ -158,7 +162,7 @@
                                             <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#f1f5f9;color:#94a3b8;font-size:.75rem;"><i class="bi bi-image"></i></span>
                                         }
                                     </td>
-                                    <td class="align-middle">@d.NombreProducto</td>
+                                    <td class="align-middle">@d.NombreProducto @if (d.EsObsequio) { <span class="badge bg-primary ms-1"><i class="bi bi-gift me-1"></i>Obsequio</span> }</td>
                                 <td class="text-center">
                                     <input type="number"
                                            class="form-control form-control-sm text-center @(d.Cantidad > d.StockDisponible ? "is-invalid" : "")"
@@ -175,7 +179,7 @@
                                     <input type="number" class="form-control form-control-sm text-end w-100"
                                            min="0" max="100" step="0.01"
                                            placeholder="0"
-                                           @bind="d.DescuentoPct" @bind:after="() => RecalcularTotales()" />
+                                            @bind="d.DescuentoPct" @bind:after="() => RecalcularTotales()" disabled="@d.EsObsequio" />
                                     @if (d.DescuentoMonto > 0)
                                     {
                                         <div class="text-muted" style="font-size:.7rem;">-$@d.DescuentoMonto.ToString("N0")</div>
@@ -256,6 +260,7 @@
                                     <span class="ts-cart-img-placeholder"><i class="bi bi-image"></i></span>
                                 }
                                 <span class="ts-cart-name">@d.NombreProducto</span>
+                                 @if (d.EsObsequio) { <span class="badge bg-primary"><i class="bi bi-gift me-1"></i>Obsequio</span> }
                             </div>
                             <div class="ts-cart-fields">
                                 <div>
@@ -280,7 +285,7 @@
                                            style="width:65px"
                                            min="0" max="100" step="0.01"
                                            placeholder="0"
-                                           @bind="d.DescuentoPct" @bind:after="() => RecalcularTotales()" />
+                                            @bind="d.DescuentoPct" @bind:after="() => RecalcularTotales()" disabled="@d.EsObsequio" />
                                     @if (d.DescuentoMonto > 0)
                                     {
                                         <div class="text-muted" style="font-size:.7rem;">-$@d.DescuentoMonto.ToString("N0")</div>
@@ -484,35 +489,32 @@
 
     private string? _advertenciaStock;
 
-    private void AgregarProducto(ProductoDto p)
+    private void AgregarProducto(ProductoDto p) => AgregarProducto(p, false);
+
+    private void AgregarObsequio(ProductoDto p) => AgregarProducto(p, true);
+
+    private void AgregarProducto(ProductoDto p, bool esObsequio)
     {
-        var existente = _detalles.FirstOrDefault(d => d.ProductoId == p.Id);
-        if (existente is not null)
+        var existente = _detalles.FirstOrDefault(d => d.ProductoId == p.Id && d.EsObsequio == esObsequio);
+        var cantidadActual = _detalles.Where(d => d.ProductoId == p.Id).Sum(d => d.Cantidad);
+        if (cantidadActual >= p.CurrentStock)
         {
-            if (existente.Cantidad >= existente.StockDisponible)
-            {
-                _advertenciaStock = $"Stock máximo alcanzado para '{p.Name}' ({existente.StockDisponible} unid.)";
-                return;
-            }
-            existente.Cantidad++;
+            _advertenciaStock = $"Stock máximo alcanzado para '{p.Name}' ({p.CurrentStock} unid.)";
+            return;
         }
+
+        if (existente is not null)
+            existente.Cantidad++;
         else
         {
-            if (p.CurrentStock <= 0)
-            {
-                _advertenciaStock = $"'{p.Name}' no tiene stock disponible. Añade stock antes de facturar.";
-                return;
-            }
             _detalles.Add(new DetalleLinea
             {
-                ProductoId       = p.Id,
-                NombreProducto   = p.Name,
-                PrecioUnitario   = p.SalePrice,
-                Cantidad         = 1,
-                StockDisponible  = p.CurrentStock,
-                ImagePath        = p.ImagePath
+                ProductoId = p.Id, NombreProducto = p.Name, PrecioUnitario = p.SalePrice,
+                Cantidad = 1, StockDisponible = p.CurrentStock, ImagePath = p.ImagePath,
+                EsObsequio = esObsequio, DescuentoPct = esObsequio ? 100 : 0
             });
         }
+
         _advertenciaStock = null;
         _busquedaProducto = "";
         AplicarFiltros();
@@ -527,7 +529,7 @@
         foreach (var d in _detalles)
         {
             if (d.DescuentoPct < 0)   d.DescuentoPct = 0;
-            else if (d.DescuentoPct > 100) d.DescuentoPct = 100;
+            else if (d.EsObsequio || d.DescuentoPct > 100) d.DescuentoPct = 100;
         }
 
         _subtotal = _detalles.Sum(d => d.Subtotal);
@@ -559,6 +561,8 @@
 
     private async Task CrearFactura()
     {
+        if (_creando) return;
+
         _error = null;
 
         // -- Validaciones de negocio -------------------------------------------
@@ -568,6 +572,8 @@
                                         { _error = "La cantidad de cada producto debe ser mayor a cero.";    return; }
         if (_detalles.Any(d => d.Cantidad > d.StockDisponible))
                                         { _error = "Una o más líneas superan el stock disponible. Corrija las cantidades antes de registrar."; return; }
+        if (_detalles.GroupBy(d => d.ProductoId).Any(g => g.Sum(d => d.Cantidad) > g.First().StockDisponible))
+                                        { _error = "La cantidad total de un producto, incluyendo obsequios, supera el stock disponible."; return; }
         if (_detalles.Any(d => d.PrecioUnitario <= 0))
                                         { _error = "El precio unitario debe ser mayor a cero.";               return; }
         if (_detalles.Any(d => d.DescuentoPct < 0 || d.DescuentoPct > 100))
@@ -581,6 +587,7 @@
                                         { _error = "El pago inicial no puede ser mayor al total de la factura."; return; }
 
         _creando = true;
+        await InvokeAsync(StateHasChanged);
         try
         {
             CreatePagoInicialDto? pagoInicial = null;
@@ -598,9 +605,9 @@
                 Details:        _detalles.Select(d => new CreateDetalleFacturaDto(d.ProductoId, d.Cantidad, d.PrecioUnitario, d.DescuentoMonto)).ToList(),
                 PagoInicial:    pagoInicial);
 
-            var ok = await Api.CreateFacturaAsync(dto);
+            var (ok, error) = await Api.CreateFacturaAsync(dto);
             if (ok) Nav.NavigateTo("/ventas");
-            else _error = "Error al registrar la venta. Verifique stock y campos requeridos.";
+            else _error = error ?? "No se pudo registrar la venta. Inténtalo nuevamente.";
         }
         catch { _error = "Error al comunicarse con la API."; }
         finally { _creando = false; }
@@ -659,6 +666,7 @@
         public decimal PrecioUnitario { get; set; }
         public int Cantidad { get; set; }
         public int StockDisponible { get; set; }
+        public bool EsObsequio { get; set; }
         public decimal DescuentoPct { get; set; }  // porcentaje 0-100
         public decimal DescuentoMonto => Math.Round(PrecioUnitario * Cantidad * (DescuentoPct / 100m), 2);
         public decimal Subtotal => Math.Max(0, PrecioUnitario * Cantidad - DescuentoMonto);

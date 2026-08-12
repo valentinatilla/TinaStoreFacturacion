@@ -29,6 +29,8 @@ public record ReporteVentasDto(
     decimal TotalVentas,
     decimal TotalCobrado,
     decimal TotalPendiente,
+    decimal CostoObsequios,
+    int UnidadesObsequiadas,
     int TotalFacturas,
     List<VentasPorPeriodoDto> VentasPorDia,
     List<TopProductoDto> TopProductos

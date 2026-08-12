@@ -67,6 +67,11 @@ public class AppDbContext : DbContext
             .HasDatabaseName("IX_Products_Sku_Unique")
             .HasFilter("\"IsDeleted\" = 0 AND \"Sku\" IS NOT NULL AND \"Sku\" != ''");
 
+        modelBuilder.Entity<Invoice>()
+            .HasIndex(i => i.InvoiceNumber)
+            .IsUnique()
+            .HasDatabaseName("IX_Invoices_InvoiceNumber_Unique");
+
         // Precisión decimal para columnas de dinero
         foreach (var property in modelBuilder.Model.GetEntityTypes()
             .SelectMany(t => t.GetProperties())
